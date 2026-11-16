@@ -54,6 +54,7 @@ spec:
         image: {{ $.Values.mock.image }}
         command: ["python", "-u", "/mock/mock_vllm.py"]
         args: ["--model", {{ $m.name | quote }}]
+        securityContext: { runAsUser: 1000, runAsNonRoot: true }
         volumeMounts:
           - { name: mock, mountPath: /mock }
         resources:
