@@ -1,1 +1,5 @@
-{}
+kserve:
+  llmisvcConfigs:
+    enabled: true        # presets LLMInferenceServiceConfig (decode template, scheduler, router-route...)
+  servingruntime:
+    enabled: false       # runtimes InferenceService classiques : inutiles ici
