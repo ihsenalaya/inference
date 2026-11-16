@@ -3,6 +3,9 @@
 # installé par l'opérateur. Voir docs/DECISIONS.md.
 driver:
   enabled: true
+  # Les modules ouverts (kernel-open) ne compilent pas sur le noyau 5.15.0-1126-azure d'AKS Ubuntu 22.04
+  # (conflit de signature de pci_resize_resource) : modules propriétaires, supportés sur le T4.
+  kernelModuleType: proprietary
   version: "580.95.05"     # branche production 580 : supporte le T4 (Turing) et CUDA 13.0 requis par l'image vLLM (>= 580)
 toolkit:
   enabled: true

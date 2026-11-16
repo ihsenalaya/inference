@@ -113,8 +113,11 @@ tf_vars() {
 }
 
 kubeconfig_aks() {
-  az aks get-credentials -g "$RG" -n "$AKS" --overwrite-existing --file "${TMPDIR:-/tmp}/kubeconfig-aks-$PREFIX" >/dev/null
-  export KUBECONFIG="${TMPDIR:-/tmp}/kubeconfig-aks-$PREFIX"
+  # az (Windows sous WSL) ne sait pas écrire dans /tmp : on récupère le kubeconfig sur stdout.
+  local f="${TMPDIR:-/tmp}/kubeconfig-aks-$PREFIX"
+  az aks get-credentials -g "$RG" -n "$AKS" --overwrite-existing --file - | tr -d '\r' >"$f"
+  chmod 600 "$f"
+  export KUBECONFIG="$f"
 }
 
 use_cluster() { # cluster courant : AKS si le RG existe, sinon kind
