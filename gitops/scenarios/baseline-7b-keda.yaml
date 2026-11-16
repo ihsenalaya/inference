@@ -1,0 +1,16 @@
+# P0 : le même modèle avec KEDA (1 à 2 réplicas) sur la file d'attente vLLM par réplica.
+# Pas de scale-to-zero : un nouveau réplica met plusieurs minutes à charger le modèle (piège F2).
+scenario: baseline-7b-keda
+models:
+  - alias: qwen-7b-awq
+    name: Qwen/Qwen2.5-7B-Instruct-AWQ
+    resourceName: qwen-7b-awq
+    uri: hf://Qwen/Qwen2.5-7B-Instruct-AWQ
+    replicas: 1
+    scaling:
+      minReplicas: 1
+      maxReplicas: 2
+      pollingInterval: 15
+      cooldownPeriod: 300
+      threshold: "2"
+      query: sum(vllm:num_requests_waiting{namespace="inference",pod=~"qwen-7b-awq-kserve.*"}) / count(vllm:num_requests_waiting{namespace="inference",pod=~"qwen-7b-awq-kserve.*"})

@@ -1,0 +1,18 @@
+# Gateway Gateway API de classe "istio" : point d'entrée de l'inférence (ClusterIP).
+# Pas d'injection de sidecar dans le namespace inference (KServe issue #5331).
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: inference-gateway
+  namespace: inference
+  annotations:
+    networking.istio.io/service-type: ClusterIP
+spec:
+  gatewayClassName: istio
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: Same

@@ -1,0 +1,12 @@
+.env
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl.bak
+terraform.tfvars
+*.auto.tfvars
+kubeconfig*
+.kube/
+results/*/raw/
+*.log
+.scratch/

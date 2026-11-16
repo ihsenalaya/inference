@@ -1,0 +1,29 @@
+# Valeurs par défaut. Chaque scénario (gitops/scenarios/<nom>.yaml) les surcharge.
+scenario: baseline-7b
+env: azure
+gpuNodes: 1                # nombre de nœuds GPU réellement disponibles (Terraform gpu_node_count)
+namespace: inference
+gateway: { name: inference-gateway, namespace: inference }
+
+vllm:
+  # Image officielle vLLM : l'image llm-d-cuda:v0.9.0 de KServe est compilée sans sm_75 (T4), cf. docs/DECISIONS.md D-03.
+  image: vllm/vllm-openai@sha256:befccf0e7e4089aa23926bb6f887a85c0d46c2a99e6de5c5ffdf5cb7957c5b34   # v0.32.0
+  dtype: float16
+  maxModelLen: 4096
+  gpuMemoryUtilization: 0.90
+  maxNumSeqs: null
+  maxNumBatchedTokens: null
+  prefixCaching: true
+  optimizationLevel: null     # -O
+  extraArgs: []
+resources:
+  requests: { cpu: "2500m", memory: 18Gi }
+  limits: { memory: 22Gi, nvidia.com/gpu: "1" }
+scheduler:                    # EPP llm-d : petit, il tourne sur le pool système
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 1Gi }
+startupFailureThreshold: 120  # x 10 s = 20 min : image de plusieurs Go + téléchargement + chargement du modèle
+mock:
+  enabled: false
+models: []

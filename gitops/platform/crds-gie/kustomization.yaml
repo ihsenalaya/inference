@@ -1,0 +1,5 @@
+# CRDs de la Gateway API Inference Extension (InferencePool...), version imposée par KServe v0.21.0.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - https://github.com/kubernetes-sigs/gateway-api-inference-extension/config/crd?ref=v1.5.0

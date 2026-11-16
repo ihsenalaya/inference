@@ -1,0 +1,31 @@
+repoURL: https://github.com/ihsenalaya/inference.git
+revision: main
+env: azure              # azure | kind
+scenario: baseline-7b   # remplacé par kind-mock sur kind
+gpuHourlyPrice: "0.526"
+gpuNodes: "1"
+
+# Une Application par composant. wave = ordre de synchronisation.
+# type helm : chart amont (versions.yaml) + valeurs dans <valuesDir>/values.yaml et values-<env>.yaml
+# type path : manifestes ou Kustomize du dépôt
+# type chart-scenario : chart local + gitops/scenarios/<scenario>.yaml (modèles, réglages vLLM)
+components:
+  - { name: crds-gateway-api, wave: 0, type: path, path: gitops/platform/crds-gateway-api, namespace: kube-system, serverSide: true }
+  - { name: crds-gie,         wave: 0, type: path, path: gitops/platform/crds-gie,         namespace: kube-system, serverSide: true }
+  - { name: cert-manager,     wave: 1, type: helm, chartKey: certManager,    namespace: cert-manager,  valuesDir: gitops/platform/cert-manager }
+  - { name: kube-prometheus-stack, wave: 1, type: helm, chartKey: kubePrometheus, namespace: monitoring, valuesDir: gitops/observability/kube-prometheus-stack }
+  - { name: istio-base,       wave: 2, type: helm, chartKey: istioBase,      namespace: istio-system,  valuesDir: gitops/platform/istio-base }
+  - { name: istiod,           wave: 3, type: helm, chartKey: istiod,         namespace: istio-system,  valuesDir: gitops/platform/istiod }
+  - { name: gpu-operator,     wave: 3, type: helm, chartKey: gpuOperator,    namespace: gpu-operator,  valuesDir: gitops/platform/gpu-operator, envs: [azure] }
+  - { name: keda,             wave: 3, type: helm, chartKey: keda,           namespace: keda,          valuesDir: gitops/platform/keda }
+  - { name: lws,              wave: 3, type: helm, chartKey: lws,            namespace: lws-system,    valuesDir: gitops/platform/lws }
+  - { name: loki,             wave: 3, type: helm, chartKey: loki,           namespace: monitoring,    valuesDir: gitops/observability/loki }
+  - { name: alloy,            wave: 3, type: helm, chartKey: alloy,          namespace: monitoring,    valuesDir: gitops/observability/alloy }
+  - { name: kserve-crd,       wave: 4, type: helm, chartKey: kserveCrd,      namespace: kserve,        valuesDir: gitops/platform/kserve-crd }
+  - { name: kserve-resources, wave: 5, type: helm, chartKey: kserveResources, namespace: kserve,       valuesDir: gitops/platform/kserve-resources }
+  - { name: kserve-runtime-configs, wave: 6, type: helm, chartKey: kserveRuntimes, namespace: kserve, valuesDir: gitops/platform/kserve-runtime-configs }
+  - { name: inference-gateway, wave: 6, type: path, path: gitops/gateway/inference-gateway, namespace: inference }
+  - { name: serving,          wave: 7, type: chart-scenario, path: gitops/serving/chart, namespace: inference }
+  - { name: postgres,         wave: 7, type: path, path: gitops/gateway/postgres, namespace: gateway }
+  - { name: litellm,          wave: 8, type: chart-scenario, path: gitops/gateway/litellm, namespace: gateway }
+  - { name: observability-config, wave: 9, type: path, path: gitops/observability/config, namespace: monitoring }

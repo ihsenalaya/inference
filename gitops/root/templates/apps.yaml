@@ -1,0 +1,67 @@
+{{- $v := .Files.Get "versions.yaml" | fromYaml }}
+{{- range .Values.components }}
+{{- if or (not .envs) (has $.Values.env .envs) }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .name }}
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .wave | quote }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .namespace }}
+  {{- if eq .type "helm" }}
+  {{- $c := index $v.charts .chartKey }}
+  sources:
+    - repoURL: {{ $c.repo }}
+      chart: {{ $c.chart }}
+      targetRevision: {{ $c.version }}
+      helm:
+        releaseName: {{ .name }}
+        ignoreMissingValueFiles: true
+        valueFiles:
+          - $values/{{ .valuesDir }}/values.yaml
+          - $values/{{ .valuesDir }}/values-{{ $.Values.env }}.yaml
+    - repoURL: {{ $.Values.repoURL }}
+      targetRevision: {{ $.Values.revision }}
+      ref: values
+  {{- else if eq .type "chart-scenario" }}
+  sources:
+    - repoURL: {{ $.Values.repoURL }}
+      targetRevision: {{ $.Values.revision }}
+      path: {{ .path }}
+      helm:
+        releaseName: {{ .name }}
+        valueFiles:
+          - $values/gitops/scenarios/{{ $.Values.scenario }}.yaml
+        parameters:
+          - { name: env, value: {{ $.Values.env | quote }} }
+          - { name: gpuNodes, value: {{ $.Values.gpuNodes | quote }} }
+    - repoURL: {{ $.Values.repoURL }}
+      targetRevision: {{ $.Values.revision }}
+      ref: values
+  {{- else }}
+  source:
+    repoURL: {{ $.Values.repoURL }}
+    targetRevision: {{ $.Values.revision }}
+    path: {{ .path }}
+  {{- end }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 15
+      backoff: { duration: 20s, factor: 2, maxDuration: 6m }
+{{- end }}
+{{- end }}

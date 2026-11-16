@@ -1,0 +1,8 @@
+# P0 : itérations rapides, routage, montée en charge.
+scenario: small-fp16
+models:
+  - alias: qwen-1.5b
+    name: Qwen/Qwen2.5-1.5B-Instruct
+    resourceName: qwen-1-5b
+    uri: hf://Qwen/Qwen2.5-1.5B-Instruct
+    replicas: 2

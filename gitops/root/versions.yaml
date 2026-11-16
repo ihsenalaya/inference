@@ -1,0 +1,27 @@
+# Source unique des versions épinglées (relevées le 16/11/2026).
+# Chaque entrée : version, date de publication, source. Les écarts avec le prompt
+# d'origine sont expliqués dans docs/DECISIONS.md.
+charts:
+  certManager:      { repo: https://charts.jetstack.io, chart: cert-manager, version: v1.17.4, source: "https://github.com/cert-manager/cert-manager (mineure 1.17 imposée par KServe v0.21.0)" }
+  kubePrometheus:   { repo: https://prometheus-community.github.io/helm-charts, chart: kube-prometheus-stack, version: 93.3.0, source: "https://github.com/prometheus-community/helm-charts" }
+  istioBase:        { repo: https://istio-release.storage.googleapis.com/charts, chart: base, version: 1.30.8, source: "https://istio.io (chart 1.31/1.32 non publié dans le dépôt Helm au 16/11/2026)" }
+  istiod:           { repo: https://istio-release.storage.googleapis.com/charts, chart: istiod, version: 1.30.8, source: "https://istio.io" }
+  gpuOperator:      { repo: https://helm.ngc.nvidia.com/nvidia, chart: gpu-operator, version: v26.7.2, source: "https://github.com/NVIDIA/gpu-operator (2026-10-14)" }
+  keda:             { repo: https://kedacore.github.io/charts, chart: keda, version: 2.21.1, source: "https://github.com/kedacore/keda (2026-11-15)" }
+  lws:              { repo: registry.k8s.io/lws/charts, chart: lws, version: 0.8.0, source: "https://github.com/kubernetes-sigs/lws (version imposée par KServe v0.21.0)" }
+  loki:             { repo: https://grafana-community.github.io/helm-charts, chart: loki, version: 21.2.3, source: "https://github.com/grafana-community/helm-charts (Loki 3.7.10)" }
+  alloy:            { repo: https://grafana.github.io/helm-charts, chart: alloy, version: 1.16.0, source: "https://github.com/grafana/alloy (Alloy v1.22.0)" }
+  kserveCrd:        { repo: ghcr.io/kserve/charts, chart: kserve-llmisvc-crd, version: v0.21.0, source: "https://github.com/kserve/kserve/releases/tag/v0.21.0 (2026-09-25)" }
+  kserveResources:  { repo: ghcr.io/kserve/charts, chart: kserve-llmisvc-resources, version: v0.21.0, source: "idem" }
+  kserveRuntimes:   { repo: ghcr.io/kserve/charts, chart: kserve-runtime-configs, version: v0.21.0, source: "idem" }
+refs:
+  gatewayApi: { version: v1.5.1, source: "hack/setup/quick-install/kserve-deps.env de KServe v0.21.0" }
+  gie:        { version: v1.5.0, source: "idem" }
+images:
+  llmdCuda:    ghcr.io/llm-d/llm-d-cuda:v0.9.0          # image vLLM des presets KServe v0.21.0
+  llmdEpp:     ghcr.io/llm-d/llm-d-router-endpoint-picker:v0.10.0
+  postgres:    postgres:16.11-alpine
+tools:
+  argocdChart: { version: 10.18.0, app: v3.6.1 }
+  terraform:   ">= 1.9, azurerm 5.14.0, helm 3.3.0, kubernetes 3.5.0, random 3.9.1"
+  kind:        v0.31.0

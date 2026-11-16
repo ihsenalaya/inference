@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.repoURL }}
+    targetRevision: {{ .Values.revision }}
+    path: gitops/root
+    helm:
+      parameters:
+        - { name: repoURL, value: {{ .Values.repoURL | quote }} }
+        - { name: revision, value: {{ .Values.revision | quote }} }
+        - { name: env, value: {{ .Values.env | quote }} }
+        - { name: scenario, value: {{ .Values.scenario | quote }} }
+        - { name: gpuHourlyPrice, value: {{ .Values.gpuHourlyPrice | quote }} }
+        - { name: gpuNodes, value: {{ .Values.gpuNodes | quote }} }
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [ServerSideApply=true]
+    retry: { limit: 10, backoff: { duration: 15s, factor: 2, maxDuration: 5m } }

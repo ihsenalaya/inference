@@ -1,0 +1,16 @@
+# Istio upstream en passerelle seulement : profil minimal, pas de sidecar.
+profile: minimal
+autoscaleEnabled: false
+replicaCount: 1
+resources:
+  requests: { cpu: 50m, memory: 192Mi }
+pilot:
+  env:
+    SUPPORT_GATEWAY_API_INFERENCE_EXTENSION: "true"
+    ENABLE_GATEWAY_API_INFERENCE_EXTENSION: "true"
+meshConfig:
+  accessLogFile: /dev/stdout
+  accessLogEncoding: JSON
+  defaultConfig:
+    proxyStatsMatcher:
+      inclusionRegexps: [".*"]

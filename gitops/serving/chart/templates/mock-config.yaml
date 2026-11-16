@@ -1,0 +1,10 @@
+{{- if .Values.mock.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mock-vllm
+  namespace: {{ .Values.namespace }}
+data:
+  mock_vllm.py: |
+{{ .Files.Get "files/mock_vllm.py" | indent 4 }}
+{{- end }}

@@ -1,0 +1,99 @@
+{{- range .Values.models }}
+{{- $m := . }}
+{{- $v := mergeOverwrite (deepCopy $.Values.vllm) (default dict $m.vllm) }}
+---
+apiVersion: serving.kserve.io/v1alpha2
+kind: LLMInferenceService
+metadata:
+  name: {{ $m.resourceName }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    lab/scenario: {{ $.Values.scenario }}
+    lab/alias: {{ $m.alias }}
+spec:
+  model:
+    uri: {{ $m.uri }}
+    name: {{ $m.name }}
+  {{- if $m.scaling }}
+  scaling:
+    minReplicas: {{ $m.scaling.minReplicas }}
+    maxReplicas: {{ $m.scaling.maxReplicas }}
+    keda:
+      pollingInterval: {{ $m.scaling.pollingInterval | default 15 }}
+      cooldownPeriod: {{ $m.scaling.cooldownPeriod | default 300 }}
+      triggers:
+        - type: prometheus
+          metadata:
+            serverAddress: http://kps-prometheus.monitoring.svc:9090
+            query: {{ $m.scaling.query | quote }}
+            threshold: {{ $m.scaling.threshold | default "2" | quote }}
+  {{- else }}
+  replicas: {{ if eq $.Values.env "azure" }}{{ min (int $m.replicas) (int $.Values.gpuNodes) }}{{ else }}{{ $m.replicas }}{{ end }}
+  {{- end }}
+  router:
+    gateway:
+      refs:
+        - name: {{ $.Values.gateway.name }}
+          namespace: {{ $.Values.gateway.namespace }}
+    route: {}
+    scheduler:
+      template:
+        containers:
+          - name: main
+            resources: {{ toYaml $.Values.scheduler.resources | nindent 14 }}
+  template:
+    {{- if not $.Values.mock.enabled }}
+    nodeSelector:
+      workload: inference
+    tolerations:
+      - { key: sku, operator: Equal, value: gpu, effect: NoSchedule }
+    {{- end }}
+    containers:
+      - name: main
+        {{- if $.Values.mock.enabled }}
+        image: {{ $.Values.mock.image }}
+        command: ["python", "-u", "/mock/mock_vllm.py"]
+        args: ["--model", {{ $m.name | quote }}]
+        volumeMounts:
+          - { name: mock, mountPath: /mock }
+        resources:
+          requests: { cpu: 20m, memory: 48Mi }
+          limits: { memory: 128Mi }
+        {{- else }}
+        image: {{ $v.image }}
+        args:
+          - --dtype
+          - {{ $v.dtype | quote }}
+          - --max-model-len
+          - {{ $v.maxModelLen | quote }}
+          - --gpu-memory-utilization
+          - {{ $v.gpuMemoryUtilization | quote }}
+          {{- if $v.maxNumSeqs }}
+          - --max-num-seqs
+          - {{ $v.maxNumSeqs | quote }}
+          {{- end }}
+          {{- if $v.maxNumBatchedTokens }}
+          - --max-num-batched-tokens
+          - {{ $v.maxNumBatchedTokens | quote }}
+          {{- end }}
+          {{- if $v.prefixCaching }}
+          - --enable-prefix-caching
+          {{- else }}
+          - --no-enable-prefix-caching
+          {{- end }}
+          {{- if $v.optimizationLevel }}
+          - -O{{ $v.optimizationLevel }}
+          {{- end }}
+          {{- range $v.extraArgs }}
+          - {{ . | quote }}
+          {{- end }}
+        resources: {{ toYaml (default $.Values.resources $m.resources) | nindent 10 }}
+        startupProbe:
+          failureThreshold: {{ $.Values.startupFailureThreshold }}
+        {{- end }}
+    {{- if $.Values.mock.enabled }}
+    volumes:
+      - name: mock
+        configMap: { name: mock-vllm }
+    {{- end }}
+{{- end }}

@@ -1,0 +1,13 @@
+# P1 : comparaison FP16 / AWQ à taille égale (un modèle par GPU).
+scenario: quant-ab
+models:
+  - alias: qwen-1.5b
+    name: Qwen/Qwen2.5-1.5B-Instruct
+    resourceName: qwen-1-5b
+    uri: hf://Qwen/Qwen2.5-1.5B-Instruct
+    replicas: 1
+  - alias: qwen-1.5b-awq
+    name: Qwen/Qwen2.5-1.5B-Instruct-AWQ
+    resourceName: qwen-1-5b-awq
+    uri: hf://Qwen/Qwen2.5-1.5B-Instruct-AWQ
+    replicas: 1

@@ -1,0 +1,2 @@
+# CRDs Istio. Les CRDs Gateway API / GIE sont installées avant (vague 0).
+defaultRevision: ""

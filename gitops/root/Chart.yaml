@@ -1,0 +1,4 @@
+apiVersion: v2
+name: root
+description: App-of-apps du lab d'inférence. Une Application Argo CD par composant.
+version: 0.1.0

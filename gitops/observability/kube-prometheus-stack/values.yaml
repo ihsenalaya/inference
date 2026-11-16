@@ -1,0 +1,93 @@
+# kube-prometheus-stack sur AKS / kind. Plan de contrôle managé : pas de scrape de
+# scheduler, controller-manager, etcd, proxy (fausses alertes).
+fullnameOverride: kps
+kubeControllerManager: { enabled: false }
+kubeScheduler: { enabled: false }
+kubeEtcd: { enabled: false }
+kubeProxy: { enabled: false }
+defaultRules:
+  rules:
+    etcd: false
+    kubeControllerManager: false
+    kubeSchedulerAlerting: false
+    kubeProxy: false
+crds:
+  upgradeJob: { enabled: false }
+prometheusOperator:
+  resources:
+    requests: { cpu: 20m, memory: 64Mi }
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    retention: 7d
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+    resources:
+      requests: { cpu: 200m, memory: 768Mi }
+      limits: { memory: 1536Mi }
+alertmanager:
+  alertmanagerSpec:
+    secrets: [alert-webhook]
+    resources:
+      requests: { cpu: 10m, memory: 32Mi }
+  config:
+    route:
+      receiver: webhook
+      group_by: [alertname, model]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      routes:
+        - receiver: "null"
+          matchers: [alertname = "Watchdog"]
+    inhibit_rules:
+      # Une cible absente inhibe les alertes SLO du même composant.
+      - source_matchers: [alertname = "LabScrapeTargetMissing"]
+        target_matchers: [category = "slo"]
+        equal: [component]
+      - source_matchers: [severity = "critical"]
+        target_matchers: [severity = "warning"]
+        equal: [alertname, model]
+    receivers:
+      - name: "null"
+      - name: webhook
+        webhook_configs:
+          - url_file: /etc/alertmanager/secrets/alert-webhook/url
+            send_resolved: true
+grafana:
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  defaultDashboardsTimezone: Europe/Paris
+  persistence: { enabled: false }
+  resources:
+    requests: { cpu: 50m, memory: 192Mi }
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+      folderAnnotation: grafana_folder
+      provider:
+        foldersFromFilesStructure: true
+    datasources:
+      enabled: true
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      uid: loki
+      url: http://loki.monitoring.svc:3100
+      access: proxy
+kube-state-metrics:
+  resources:
+    requests: { cpu: 10m, memory: 48Mi }
+prometheus-node-exporter:
+  resources:
+    requests: { cpu: 10m, memory: 24Mi }
+  tolerations:
+    - { operator: Exists }

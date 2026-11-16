@@ -1,0 +1,15 @@
+# P1 : un modèle par GPU, LiteLLM route par modèle avec fallback 1.5B -> 7B.
+scenario: multi-model
+models:
+  - alias: qwen-7b-awq
+    name: Qwen/Qwen2.5-7B-Instruct-AWQ
+    resourceName: qwen-7b-awq
+    uri: hf://Qwen/Qwen2.5-7B-Instruct-AWQ
+    replicas: 1
+  - alias: qwen-1.5b
+    name: Qwen/Qwen2.5-1.5B-Instruct
+    resourceName: qwen-1-5b
+    uri: hf://Qwen/Qwen2.5-1.5B-Instruct
+    replicas: 1
+fallbacks:
+  - { from: qwen-1.5b, to: [qwen-7b-awq] }

@@ -1,0 +1,9 @@
+prometheus:
+  prometheusSpec:
+    resources:
+      requests: { cpu: 100m, memory: 400Mi }
+      limits: { memory: 900Mi }
+prometheus-node-exporter:
+  # kind : le noyau WSL2 n'expose pas tout, le DaemonSet reste utile mais léger.
+  resources:
+    requests: { cpu: 5m, memory: 16Mi }

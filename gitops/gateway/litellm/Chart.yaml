@@ -1,0 +1,4 @@
+apiVersion: v2
+name: litellm
+description: LiteLLM (AI gateway) + hook de création des équipes et clés virtuelles.
+version: 0.1.0

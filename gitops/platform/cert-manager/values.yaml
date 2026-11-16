@@ -1,0 +1,14 @@
+crds:
+  enabled: true
+resources:
+  requests: { cpu: 20m, memory: 64Mi }
+webhook:
+  resources:
+    requests: { cpu: 10m, memory: 32Mi }
+cainjector:
+  resources:
+    requests: { cpu: 20m, memory: 96Mi }
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: false   # activé via observability/config (ServiceMonitors du lab)

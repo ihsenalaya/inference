@@ -1,0 +1,62 @@
+# LiteLLM : Service + Deployment (image épinglée par digest, v1.109.1).
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm
+  namespace: gateway
+  labels: { app.kubernetes.io/name: litellm }
+spec:
+  selector: { app.kubernetes.io/name: litellm }
+  ports:
+    - { name: http, port: 4000, targetPort: http }
+    - { name: metrics, port: 9400, targetPort: metrics }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  namespace: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: litellm }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: litellm }
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum | trunc 16 }}
+    spec:
+      containers:
+        - name: litellm
+          image: {{ .Values.image }}
+          args: ["--config", "/etc/litellm/config.yaml", "--port", "4000", "--num_workers", "1", "--prometheus_metrics_port", "9400"]
+          ports:
+            - { name: http, containerPort: 4000 }
+            - { name: metrics, containerPort: 9400 }
+          envFrom:
+            - secretRef: { name: litellm-secrets }
+          env:
+            - { name: PROMETHEUS_MULTIPROC_DIR, value: /tmp/prom }
+            - { name: LITELLM_LOG, value: INFO }
+          livenessProbe:
+            httpGet: { path: /health/liveliness, port: http }
+            periodSeconds: 20
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet: { path: /health/readiness, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 5
+          startupProbe:
+            httpGet: { path: /health/liveliness, port: http }
+            periodSeconds: 10
+            failureThreshold: 60
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - { name: config, mountPath: /etc/litellm }
+            - { name: prom, mountPath: /tmp/prom }
+      volumes:
+        - name: config
+          configMap: { name: litellm-config }
+        - name: prom
+          emptyDir: {}

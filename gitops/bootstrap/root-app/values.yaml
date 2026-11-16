@@ -1,0 +1,6 @@
+repoURL: https://github.com/ihsenalaya/inference.git
+revision: main
+env: azure          # azure | kind
+scenario: baseline-7b
+gpuHourlyPrice: "0.526"
+gpuNodes: "1"

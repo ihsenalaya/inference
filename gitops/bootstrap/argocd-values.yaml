@@ -1,0 +1,34 @@
+# Argo CD minimal : pas de Dex, pas de notifications, pas d'ApplicationSet.
+global:
+  domain: argocd.local
+configs:
+  params:
+    server.insecure: true
+  cm:
+    application.resourceTrackingMethod: annotation
+    timeout.reconciliation: 60s
+    resource.customizations.ignoreDifferences.all: |
+      managedFieldsManagers:
+        - kube-controller-manager
+dex:
+  enabled: false
+notifications:
+  enabled: false
+applicationSet:
+  enabled: false
+server:
+  resources:
+    requests: { cpu: 50m, memory: 128Mi }
+    limits: { memory: 256Mi }
+controller:
+  resources:
+    requests: { cpu: 200m, memory: 512Mi }
+    limits: { memory: 1Gi }
+repoServer:
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 768Mi }
+redis:
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { memory: 128Mi }

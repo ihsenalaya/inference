@@ -1,0 +1,5 @@
+# CRDs Gateway API (canal standard), version imposée par KServe v0.21.0 (cf. versions.yaml).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/standard-install.yaml

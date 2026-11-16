@@ -1,0 +1,7 @@
+subscription_id = "60f9b06a-66b1-437f-ac92-3b5e9720e34a"
+location        = "eastus"
+prefix          = "inflab"
+gpu_node_count  = 1
+git_repo_url    = "https://github.com/ihsenalaya/inference.git"
+git_revision    = "main"
+scenario        = "baseline-7b"

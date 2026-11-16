@@ -1,0 +1,4 @@
+apiVersion: v2
+name: serving
+description: LLMInferenceService KServe pour le scénario actif (valeurs dans gitops/scenarios/<nom>.yaml).
+version: 0.1.0

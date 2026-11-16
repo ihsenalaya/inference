@@ -1,0 +1,22 @@
+# P1 : time-slicing du GPU Operator (2 parts par T4) : qwen-1.5b et bge-m3 sur le même T4.
+# Prérequis : gitops/platform/gpu-operator/values-sharing.yaml (devicePlugin.config time-slicing). MIG indisponible sur T4.
+scenario: gpu-sharing
+models:
+  - alias: qwen-1.5b
+    name: Qwen/Qwen2.5-1.5B-Instruct
+    resourceName: qwen-1-5b
+    uri: hf://Qwen/Qwen2.5-1.5B-Instruct
+    replicas: 1
+    vllm: { gpuMemoryUtilization: 0.45 }
+    resources:
+      requests: { cpu: "1500m", memory: 8Gi }
+      limits: { memory: 10Gi, nvidia.com/gpu: "1" }
+  - alias: bge-m3
+    name: BAAI/bge-m3
+    resourceName: bge-m3
+    uri: hf://BAAI/bge-m3
+    replicas: 1
+    vllm: { gpuMemoryUtilization: 0.40, extraArgs: ["--runner", "pooling"] }
+    resources:
+      requests: { cpu: "1500m", memory: 8Gi }
+      limits: { memory: 10Gi, nvidia.com/gpu: "1" }

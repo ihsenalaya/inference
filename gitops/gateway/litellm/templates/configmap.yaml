@@ -1,0 +1,29 @@
+# LiteLLM : AI gateway (clés virtuelles, budgets, quotas, routage par modèle).
+# Image épinglée par digest (v1.109.1). Les versions PyPI 1.82.7 et 1.82.8 ont été compromises (24/03/2026).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config
+  namespace: gateway
+data:
+  config.yaml: |
+    model_list:
+    {{- range .Values.models }}
+      - model_name: {{ .alias }}
+        litellm_params:
+          model: hosted_vllm/{{ .name }}
+          api_base: http://{{ $.Values.gateway.name }}-istio.{{ $.Values.gateway.namespace }}.svc.cluster.local/{{ $.Values.namespace }}/{{ .resourceName }}/v1
+          api_key: none
+    {{- end }}
+    litellm_settings:
+      callbacks: ["prometheus"]
+      drop_params: true
+      {{- if .Values.fallbacks }}
+      fallbacks:
+      {{- range .Values.fallbacks }}
+        - {{ .from }}: {{ toJson .to }}
+      {{- end }}
+      {{- end }}
+    general_settings:
+      master_key: os.environ/LITELLM_MASTER_KEY
+      database_url: os.environ/DATABASE_URL
