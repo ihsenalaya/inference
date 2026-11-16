@@ -1,0 +1,616 @@
+{
+ "uid": "lab-anatomy",
+ "title": "01 - Anatomie d'une requête",
+ "description": "Décomposition du temps d'une requête : LiteLLM, Gateway, EPP, file vLLM, prefill, decode.",
+ "tags": [
+  "lab"
+ ],
+ "schemaVersion": 39,
+ "version": 1,
+ "editable": true,
+ "time": {
+  "from": "now-1h",
+  "to": "now"
+ },
+ "refresh": "30s",
+ "timezone": "browser",
+ "templating": {
+  "list": [
+   {
+    "name": "model",
+    "type": "query",
+    "datasource": {
+     "type": "prometheus",
+     "uid": "prometheus"
+    },
+    "query": {
+     "query": "label_values(vllm:num_requests_running, model_name)",
+     "refId": "m"
+    },
+    "refresh": 2,
+    "includeAll": true,
+    "allValue": ".*",
+    "multi": true,
+    "current": {
+     "text": "All",
+     "value": "$__all"
+    }
+   },
+   {
+    "name": "pod",
+    "type": "query",
+    "datasource": {
+     "type": "prometheus",
+     "uid": "prometheus"
+    },
+    "query": {
+     "query": "label_values(vllm:num_requests_running, pod)",
+     "refId": "p"
+    },
+    "refresh": 2,
+    "includeAll": true,
+    "allValue": ".*",
+    "multi": true,
+    "current": {
+     "text": "All",
+     "value": "$__all"
+    }
+   },
+   {
+    "name": "namespace",
+    "type": "query",
+    "datasource": {
+     "type": "prometheus",
+     "uid": "prometheus"
+    },
+    "query": {
+     "query": "label_values(vllm:num_requests_running, namespace)",
+     "refId": "n"
+    },
+    "refresh": 2,
+    "includeAll": true,
+    "allValue": ".*",
+    "multi": true,
+    "current": {
+     "text": "All",
+     "value": "$__all"
+    }
+   }
+  ]
+ },
+ "panels": [
+  {
+   "id": 1,
+   "type": "row",
+   "title": "Décomposition du temps (p95)",
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 0
+   },
+   "panels": []
+  },
+  {
+   "id": 2,
+   "type": "timeseries",
+   "title": "Où va le temps ?",
+   "description": "File + prefill + decode côté vLLM, plus surcoût LiteLLM. Montre quel étage optimiser.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 0,
+    "y": 1
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "histogram_quantile(0.95, sum by (le, model_name) (rate(vllm:request_queue_time_seconds_bucket{model_name=~\"$model\"}[$__rate_interval])))",
+     "legendFormat": "file {{model_name}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "histogram_quantile(0.95, sum by (le, model_name) (rate(vllm:request_prefill_time_seconds_bucket{model_name=~\"$model\"}[$__rate_interval])))",
+     "legendFormat": "prefill {{model_name}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    },
+    {
+     "refId": "C",
+     "expr": "histogram_quantile(0.95, sum by (le, model_name) (rate(vllm:request_decode_time_seconds_bucket{model_name=~\"$model\"}[$__rate_interval])))",
+     "legendFormat": "decode {{model_name}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    },
+    {
+     "refId": "D",
+     "expr": "lab:litellm_overhead_seconds:p95",
+     "legendFormat": "surcoût LiteLLM",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "custom": {
+      "fillOpacity": 15,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "normal"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 3,
+   "type": "timeseries",
+   "title": "Surcoût de la Gateway Istio (p95)",
+   "description": "Latence ajoutée par Envoy (istio_request_duration) vs vLLM.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 12,
+    "y": 1
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "histogram_quantile(0.95, sum by (le) (rate(istio_request_duration_milliseconds_bucket{reporter=\"source\"}[$__rate_interval]))) / 1000",
+     "legendFormat": "Gateway p95",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 4,
+   "type": "row",
+   "title": "Distributions",
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 8
+   },
+   "panels": []
+  },
+  {
+   "id": 5,
+   "type": "heatmap",
+   "title": "TTFT",
+   "description": "Histogramme du TTFT (heatmap).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 9
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (le) (increase(vllm:time_to_first_token_seconds_bucket{model_name=~\"$model\"}[$__rate_interval]))",
+     "format": "heatmap",
+     "legendFormat": "{{le}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "options": {
+    "calculate": false,
+    "yAxis": {
+     "unit": "s"
+    },
+    "color": {
+     "scheme": "Spectral"
+    }
+   }
+  },
+  {
+   "id": 6,
+   "type": "heatmap",
+   "title": "Latence de bout en bout",
+   "description": "Histogramme de la latence totale.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 9
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (le) (increase(vllm:e2e_request_latency_seconds_bucket{model_name=~\"$model\"}[$__rate_interval]))",
+     "format": "heatmap",
+     "legendFormat": "{{le}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "options": {
+    "calculate": false,
+    "yAxis": {
+     "unit": "s"
+    },
+    "color": {
+     "scheme": "Spectral"
+    }
+   }
+  },
+  {
+   "id": 7,
+   "type": "heatmap",
+   "title": "Temps de file",
+   "description": "Histogramme du temps en file.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 17
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (le) (increase(vllm:request_queue_time_seconds_bucket{model_name=~\"$model\"}[$__rate_interval]))",
+     "format": "heatmap",
+     "legendFormat": "{{le}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "options": {
+    "calculate": false,
+    "yAxis": {
+     "unit": "s"
+    },
+    "color": {
+     "scheme": "Spectral"
+    }
+   }
+  },
+  {
+   "id": 8,
+   "type": "heatmap",
+   "title": "Prefill",
+   "description": "Histogramme du temps de prefill.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 12,
+    "y": 17
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (le) (increase(vllm:request_prefill_time_seconds_bucket{model_name=~\"$model\"}[$__rate_interval]))",
+     "format": "heatmap",
+     "legendFormat": "{{le}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "options": {
+    "calculate": false,
+    "yAxis": {
+     "unit": "s"
+    },
+    "color": {
+     "scheme": "Spectral"
+    }
+   }
+  },
+  {
+   "id": 9,
+   "type": "row",
+   "title": "Tailles",
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 25
+   },
+   "panels": []
+  },
+  {
+   "id": 10,
+   "type": "timeseries",
+   "title": "Tokens de prompt par seconde",
+   "description": "Charge de prefill.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 0,
+    "y": 26
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "lab:prompt_tokens:rate1m",
+     "legendFormat": "{{model_name}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 11,
+   "type": "timeseries",
+   "title": "Tokens générés par seconde",
+   "description": "Charge de decode.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 12,
+    "y": 26
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "lab:generation_tokens:rate1m",
+     "legendFormat": "{{model_name}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 12,
+   "type": "timeseries",
+   "title": "Taille moyenne des prompts / générations",
+   "description": "Tokens moyens par requête.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 0,
+    "y": 33
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum(rate(vllm:prompt_tokens_total{model_name=~\"$model\"}[$__rate_interval])) / sum(rate(vllm:request_success_total{model_name=~\"$model\"}[$__rate_interval]))",
+     "legendFormat": "prompt",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "sum(rate(vllm:generation_tokens_total{model_name=~\"$model\"}[$__rate_interval])) / sum(rate(vllm:request_success_total{model_name=~\"$model\"}[$__rate_interval]))",
+     "legendFormat": "génération",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 13,
+   "type": "timeseries",
+   "title": "Décision de l'EPP",
+   "description": "Durée de décision du scheduler llm-d (nom de métrique à confirmer sur /metrics, voir docs/METRIQUES.md).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 12,
+    "y": 33
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "histogram_quantile(0.95, sum by (le) (rate({__name__=~\"(llm_d_epp|inference)_.*scheduler.*duration.*_bucket\"}[$__rate_interval])))",
+     "legendFormat": "EPP p95",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "s",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  }
+ ],
+ "annotations": {
+  "list": [
+   {
+    "builtIn": 1,
+    "datasource": {
+     "type": "grafana",
+     "uid": "-- Grafana --"
+    },
+    "enable": true,
+    "hide": false,
+    "iconColor": "rgba(0, 211, 255, 1)",
+    "name": "Annotations & Alerts",
+    "type": "dashboard"
+   }
+  ]
+ }
+}

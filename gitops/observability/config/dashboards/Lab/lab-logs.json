@@ -1,0 +1,193 @@
+{
+ "uid": "lab-logs",
+ "title": "05 - Logs",
+ "description": "Loki : erreurs vLLM, événements Kubernetes, access logs de la gateway, alignés sur le temps des métriques.",
+ "tags": [
+  "lab"
+ ],
+ "schemaVersion": 39,
+ "version": 1,
+ "editable": true,
+ "time": {
+  "from": "now-1h",
+  "to": "now"
+ },
+ "refresh": "30s",
+ "timezone": "browser",
+ "templating": {
+  "list": []
+ },
+ "panels": [
+  {
+   "id": 1,
+   "type": "row",
+   "title": "Erreurs et événements",
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 0
+   },
+   "panels": []
+  },
+  {
+   "id": 2,
+   "type": "logs",
+   "title": "Logs vLLM (erreurs)",
+   "description": "Lignes ERROR / Traceback / OOM des pods vLLM.",
+   "datasource": {
+    "type": "loki",
+    "uid": "loki"
+   },
+   "gridPos": {
+    "h": 10,
+    "w": 24,
+    "x": 0,
+    "y": 1
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "{namespace=\"inference\", container=\"main\"} |~ \"(?i)error|traceback|oom|cuda\"",
+     "datasource": {
+      "type": "loki",
+      "uid": "loki"
+     }
+    }
+   ],
+   "options": {
+    "showTime": true,
+    "wrapLogMessage": true,
+    "enableLogDetails": true
+   }
+  },
+  {
+   "id": 3,
+   "type": "logs",
+   "title": "Événements Kubernetes",
+   "description": "Événements du cluster (scheduling, pull, probes).",
+   "datasource": {
+    "type": "loki",
+    "uid": "loki"
+   },
+   "gridPos": {
+    "h": 10,
+    "w": 24,
+    "x": 0,
+    "y": 11
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "{job=~\".*events.*\"} or {namespace=\"inference\"} |= \"Warning\"",
+     "datasource": {
+      "type": "loki",
+      "uid": "loki"
+     }
+    }
+   ],
+   "options": {
+    "showTime": true,
+    "wrapLogMessage": true,
+    "enableLogDetails": true
+   }
+  },
+  {
+   "id": 4,
+   "type": "logs",
+   "title": "Access logs de la gateway Istio",
+   "description": "JSON Envoy : code, durée, upstream.",
+   "datasource": {
+    "type": "loki",
+    "uid": "loki"
+   },
+   "gridPos": {
+    "h": 10,
+    "w": 24,
+    "x": 0,
+    "y": 21
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "{namespace=\"inference\", container=\"istio-proxy\"}",
+     "datasource": {
+      "type": "loki",
+      "uid": "loki"
+     }
+    }
+   ],
+   "options": {
+    "showTime": true,
+    "wrapLogMessage": true,
+    "enableLogDetails": true
+   }
+  },
+  {
+   "id": 5,
+   "type": "timeseries",
+   "title": "Débit de logs d'erreur",
+   "description": "Erreurs par minute, alignées sur les métriques.",
+   "datasource": {
+    "type": "loki",
+    "uid": "loki"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 24,
+    "x": 0,
+    "y": 31
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (pod) (count_over_time({namespace=\"inference\"} |~ \"(?i)error\" [1m]))",
+     "legendFormat": "{{pod}}",
+     "datasource": {
+      "type": "loki",
+      "uid": "loki"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  }
+ ],
+ "annotations": {
+  "list": [
+   {
+    "builtIn": 1,
+    "datasource": {
+     "type": "grafana",
+     "uid": "-- Grafana --"
+    },
+    "enable": true,
+    "hide": false,
+    "iconColor": "rgba(0, 211, 255, 1)",
+    "name": "Annotations & Alerts",
+    "type": "dashboard"
+   }
+  ]
+ }
+}

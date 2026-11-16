@@ -1,0 +1,4 @@
+apiVersion: v2
+name: observability-config
+description: ServiceMonitors, règles d'enregistrement, alertes, dashboards Grafana et récepteur d'alertes du lab.
+version: 0.1.0

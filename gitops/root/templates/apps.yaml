@@ -43,6 +43,7 @@ spec:
         parameters:
           - { name: env, value: {{ $.Values.env | quote }} }
           - { name: gpuNodes, value: {{ $.Values.gpuNodes | quote }} }
+          - { name: gpuHourlyPrice, value: {{ $.Values.gpuHourlyPrice | quote }} }
     - repoURL: {{ $.Values.repoURL }}
       targetRevision: {{ $.Values.revision }}
       ref: values

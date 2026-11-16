@@ -1,0 +1,20 @@
+scenario: baseline-7b
+env: azure
+namespace: inference
+gpuHourlyPrice: "0.526"
+runbookBase: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks
+# Seuils d'alerte. Les seuils SLO sont posés après la première mesure (docs/BASELINE.md), pas inventés :
+# valeurs larges par défaut, à resserrer dans gitops/scenarios/<nom>.yaml (clé alertThresholds).
+alertThresholds:
+  ttftP95Seconds: 5
+  itlP95Seconds: 0.5
+  e2eP95Seconds: 60
+  queueP95Seconds: 5
+  errorRatio: 0.05
+  waitingRequests: 4
+  kvCacheRatio: 0.90
+  preemptionsPerSecond: 0.1
+  gpuTempCelsius: 85
+  gpuMemoryRatio: 0.95
+  gpuIdleMinutes: 30
+  gpuLowUtilWithQueue: 20

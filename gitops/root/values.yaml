@@ -28,4 +28,4 @@ components:
   - { name: serving,          wave: 7, type: chart-scenario, path: gitops/serving/chart, namespace: inference }
   - { name: postgres,         wave: 7, type: path, path: gitops/gateway/postgres, namespace: gateway }
   - { name: litellm,          wave: 8, type: chart-scenario, path: gitops/gateway/litellm, namespace: gateway }
-  - { name: observability-config, wave: 9, type: path, path: gitops/observability/config, namespace: monitoring }
+  - { name: observability-config, wave: 9, type: chart-scenario, path: gitops/observability/config, namespace: monitoring }

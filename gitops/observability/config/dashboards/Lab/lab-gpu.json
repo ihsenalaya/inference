@@ -1,0 +1,700 @@
+{
+ "uid": "lab-gpu",
+ "title": "02 - GPU en profondeur",
+ "description": "Par GPU, nœud et pod : utilisation face à l'activité moteur, mémoire, énergie, erreurs, PCIe.",
+ "tags": [
+  "lab"
+ ],
+ "schemaVersion": 39,
+ "version": 1,
+ "editable": true,
+ "time": {
+  "from": "now-1h",
+  "to": "now"
+ },
+ "refresh": "30s",
+ "timezone": "browser",
+ "templating": {
+  "list": []
+ },
+ "panels": [
+  {
+   "id": 1,
+   "type": "row",
+   "title": "Charge",
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 0
+   },
+   "panels": []
+  },
+  {
+   "id": 2,
+   "type": "timeseries",
+   "title": "Utilisation vs activité du moteur graphique",
+   "description": "GPU_UTIL dit « un noyau tourne » ; PROF_GR_ENGINE_ACTIVE dit « le moteur est réellement occupé ». Un grand écart = noyaux peu efficaces.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 0,
+    "y": 1
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "DCGM_FI_DEV_GPU_UTIL / 100",
+     "legendFormat": "GPU_UTIL {{gpu}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "DCGM_FI_PROF_GR_ENGINE_ACTIVE",
+     "legendFormat": "ENGINE_ACTIVE {{gpu}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percentunit",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     },
+     "min": 0,
+     "max": 1
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 3,
+   "type": "timeseries",
+   "title": "Activité DRAM (bande passante mémoire)",
+   "description": "Le decode est limité par la bande passante mémoire : proche de 1 = on a atteint la limite du T4 (320 Go/s).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 12,
+    "y": 1
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "DCGM_FI_PROF_DRAM_ACTIVE",
+     "legendFormat": "DRAM {{gpu}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percentunit",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     },
+     "min": 0,
+     "max": 1
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 4,
+   "type": "row",
+   "title": "Mémoire",
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 8
+   },
+   "panels": []
+  },
+  {
+   "id": 5,
+   "type": "timeseries",
+   "title": "Mémoire utilisée / libre",
+   "description": "Framebuffer du GPU (16 Go sur T4).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 0,
+    "y": 9
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "DCGM_FI_DEV_FB_USED * 1024 * 1024",
+     "legendFormat": "utilisée {{gpu}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "DCGM_FI_DEV_FB_FREE * 1024 * 1024",
+     "legendFormat": "libre {{gpu}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bytes",
+     "custom": {
+      "fillOpacity": 15,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "normal"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 6,
+   "type": "timeseries",
+   "title": "Mémoire par pod",
+   "description": "Jointure DCGM / pod (honorLabels) : qui consomme la mémoire.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 12,
+    "y": 9
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "sum by (pod) (DCGM_FI_DEV_FB_USED) * 1024 * 1024",
+     "legendFormat": "{{pod}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "bytes",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 7,
+   "type": "row",
+   "title": "Énergie et thermique",
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 16
+   },
+   "panels": []
+  },
+  {
+   "id": 8,
+   "type": "timeseries",
+   "title": "Puissance",
+   "description": "Plafond du T4 : 70 W.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 8,
+    "x": 0,
+    "y": 17
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "DCGM_FI_DEV_POWER_USAGE",
+     "legendFormat": "{{gpu}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "watt",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 9,
+   "type": "timeseries",
+   "title": "Énergie cumulée (taux)",
+   "description": "Watts moyens via le compteur d'énergie.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 8,
+    "x": 8,
+    "y": 17
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "rate(DCGM_FI_DEV_TOTAL_ENERGY_CONSUMPTION[$__rate_interval]) / 1000",
+     "legendFormat": "{{gpu}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "watt",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 10,
+   "type": "timeseries",
+   "title": "Température",
+   "description": "Au-delà de ~85 °C le GPU réduit ses fréquences.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 8,
+    "x": 16,
+    "y": 17
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "DCGM_FI_DEV_GPU_TEMP",
+     "legendFormat": "{{gpu}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "celsius",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 11,
+   "type": "row",
+   "title": "Fiabilité et PCIe",
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 24
+   },
+   "panels": []
+  },
+  {
+   "id": 12,
+   "type": "timeseries",
+   "title": "Erreurs XID / ECC / rejeux PCIe",
+   "description": "Doivent rester à zéro.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 8,
+    "x": 0,
+    "y": 25
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "DCGM_FI_DEV_XID_ERRORS",
+     "legendFormat": "XID {{gpu}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "DCGM_FI_DEV_ECC_DBE_VOL_TOTAL",
+     "legendFormat": "ECC DBE {{gpu}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    },
+    {
+     "refId": "C",
+     "expr": "increase(DCGM_FI_DEV_PCIE_REPLAY_COUNTER[$__rate_interval])",
+     "legendFormat": "PCIe replay {{gpu}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 13,
+   "type": "timeseries",
+   "title": "Raisons de throttling",
+   "description": "Bitmask des raisons de bridage (puissance, thermique...).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 8,
+    "x": 8,
+    "y": 25
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "DCGM_FI_DEV_CLOCK_THROTTLE_REASONS",
+     "legendFormat": "{{gpu}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 14,
+   "type": "timeseries",
+   "title": "PCIe TX / RX",
+   "description": "Trafic PCIe (chargement du modèle, copies).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 8,
+    "x": 16,
+    "y": 25
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "rate(DCGM_FI_PROF_PCIE_TX_BYTES[$__rate_interval])",
+     "legendFormat": "TX {{gpu}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "rate(DCGM_FI_PROF_PCIE_RX_BYTES[$__rate_interval])",
+     "legendFormat": "RX {{gpu}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "Bps",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 15,
+   "type": "row",
+   "title": "Corrélation",
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 32
+   },
+   "panels": []
+  },
+  {
+   "id": 16,
+   "type": "timeseries",
+   "title": "Utilisation GPU vs tokens/s",
+   "description": "Si les tokens/s montent sans que l'utilisation GPU suive, le goulot n'est pas le GPU.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 24,
+    "x": 0,
+    "y": 33
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "avg(DCGM_FI_DEV_GPU_UTIL)",
+     "legendFormat": "GPU util (%)",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "sum(lab:generation_tokens:rate1m)",
+     "legendFormat": "tokens/s",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  }
+ ],
+ "annotations": {
+  "list": [
+   {
+    "builtIn": 1,
+    "datasource": {
+     "type": "grafana",
+     "uid": "-- Grafana --"
+    },
+    "enable": true,
+    "hide": false,
+    "iconColor": "rgba(0, 211, 255, 1)",
+    "name": "Annotations & Alerts",
+    "type": "dashboard"
+   }
+  ]
+ }
+}

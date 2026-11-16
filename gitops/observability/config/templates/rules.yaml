@@ -1,0 +1,244 @@
+{{- $t := .Values.alertThresholds }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: lab-recording
+  namespace: monitoring
+  labels: { lab/part: observability }
+spec:
+  groups:
+    - name: lab.latency
+      interval: 30s
+      rules:
+        {{- range $q := list "50" "95" "99" }}
+        - record: lab:ttft_seconds:p{{ $q }}
+          expr: histogram_quantile(0.{{ $q }}, sum by (le, model_name) (rate(vllm:time_to_first_token_seconds_bucket[5m])))
+        {{- end }}
+        {{- range $q := list "50" "95" }}
+        - record: lab:itl_seconds:p{{ $q }}
+          expr: histogram_quantile(0.{{ $q }}, sum by (le, model_name) (rate(vllm:inter_token_latency_seconds_bucket[5m])))
+        {{- end }}
+        {{- range $r, $m := dict "e2e" "e2e_request_latency_seconds" "queue" "request_queue_time_seconds" "prefill" "request_prefill_time_seconds" "decode" "request_decode_time_seconds" }}
+        - record: lab:{{ $r }}_seconds:p95
+          expr: histogram_quantile(0.95, sum by (le, model_name) (rate(vllm:{{ $m }}_bucket[5m])))
+        {{- end }}
+        - record: lab:ttft_seconds:p95_by_pod
+          expr: histogram_quantile(0.95, sum by (le, model_name, pod) (rate(vllm:time_to_first_token_seconds_bucket[5m])))
+    - name: lab.throughput
+      interval: 30s
+      rules:
+        - record: lab:generation_tokens:rate1m
+          expr: sum by (model_name) (rate(vllm:generation_tokens_total[1m]))
+        - record: lab:prompt_tokens:rate1m
+          expr: sum by (model_name) (rate(vllm:prompt_tokens_total[1m]))
+        - record: lab:requests:rate1m
+          expr: sum by (model_name) (rate(vllm:request_success_total[1m]))
+    - name: lab.saturation
+      interval: 30s
+      rules:
+        - record: lab:requests_running
+          expr: sum by (model_name) (vllm:num_requests_running)
+        - record: lab:requests_waiting
+          expr: sum by (model_name) (vllm:num_requests_waiting)
+        - record: lab:kv_cache_usage:max
+          expr: max by (model_name) (vllm:kv_cache_usage_perc)
+        - record: lab:preemptions:rate5m
+          expr: sum by (model_name) (rate(vllm:num_preemptions_total[5m]))
+        - record: lab:prefix_cache_hit_ratio
+          expr: sum by (model_name) (rate(vllm:prefix_cache_hits_total[5m])) / sum by (model_name) (rate(vllm:prefix_cache_queries_total[5m]))
+    - name: lab.efficiency
+      interval: 30s
+      rules:
+        - record: lab:gpu_hourly_price_usd
+          expr: vector({{ .Values.gpuHourlyPrice }})
+        - record: lab:gpu_count
+          expr: count(DCGM_FI_DEV_GPU_UTIL) or vector(0)
+        - record: lab:gpu_idle_ratio
+          expr: 1 - avg(DCGM_FI_DEV_GPU_UTIL) / 100
+        - record: lab:tokens_per_second_per_gpu
+          expr: sum(rate(vllm:generation_tokens_total[5m])) / count(DCGM_FI_DEV_GPU_UTIL)
+        - record: lab:tokens_per_joule
+          expr: sum(rate(vllm:generation_tokens_total[5m])) / (sum(rate(DCGM_FI_DEV_TOTAL_ENERGY_CONSUMPTION[5m])) / 1000)
+        - record: lab:cost_per_million_tokens_usd
+          expr: (count(DCGM_FI_DEV_GPU_UTIL) * lab:gpu_hourly_price_usd) / (sum(rate(vllm:generation_tokens_total[5m])) * 3600) * 1e6
+    - name: lab.routing
+      interval: 30s
+      rules:
+        - record: lab:replica_load_gap
+          expr: max by (model_name) (vllm:num_requests_running + vllm:num_requests_waiting) - min by (model_name) (vllm:num_requests_running + vllm:num_requests_waiting)
+    - name: lab.gateway
+      interval: 30s
+      rules:
+        - record: lab:litellm_overhead_seconds:p95
+          expr: histogram_quantile(0.95, sum by (le) (rate(litellm_overhead_latency_metric_bucket[5m])))
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: lab-alerts
+  namespace: monitoring
+  labels: { lab/part: observability }
+spec:
+  groups:
+    - name: lab.slo
+      rules:
+        - alert: LabTTFTHigh
+          expr: lab:ttft_seconds:p95 > {{ $t.ttftP95Seconds }}
+          for: 5m
+          labels: { severity: warning, category: slo, component: vllm }
+          annotations:
+            summary: "TTFT p95 élevé ({{ "{{ $value | humanizeDuration }}" }}) pour {{ "{{ $labels.model_name }}" }}"
+            runbook_url: {{ $.Values.runbookBase }}/LabTTFTHigh.md
+        - alert: LabInterTokenLatencyHigh
+          expr: lab:itl_seconds:p95 > {{ $t.itlP95Seconds }}
+          for: 5m
+          labels: { severity: warning, category: slo, component: vllm }
+          annotations:
+            summary: "Latence inter-token p95 élevée pour {{ "{{ $labels.model_name }}" }}"
+            runbook_url: {{ $.Values.runbookBase }}/LabInterTokenLatencyHigh.md
+        - alert: LabErrorRateHigh
+          expr: |
+            (sum by (model) (rate(litellm_proxy_failed_requests_metric_total[5m])) / sum by (model) (rate(litellm_proxy_total_requests_metric_total[5m]))) > {{ $t.errorRatio }}
+          for: 5m
+          labels: { severity: critical, category: slo, component: litellm }
+          annotations:
+            summary: "Taux d'erreur élevé pour {{ "{{ $labels.model }}" }}"
+            runbook_url: {{ $.Values.runbookBase }}/LabErrorRateHigh.md
+        - alert: LabQueueTimeHigh
+          expr: lab:queue_seconds:p95 > {{ $t.queueP95Seconds }}
+          for: 5m
+          labels: { severity: warning, category: slo, component: vllm }
+          annotations:
+            summary: "Temps de file p95 élevé pour {{ "{{ $labels.model_name }}" }}"
+            runbook_url: {{ $.Values.runbookBase }}/LabQueueTimeHigh.md
+    - name: lab.saturation
+      rules:
+        - alert: LabRequestsWaiting
+          expr: lab:requests_waiting > {{ $t.waitingRequests }}
+          for: 5m
+          labels: { severity: warning, category: saturation, component: vllm }
+          annotations:
+            summary: "Requêtes en attente depuis 5 min pour {{ "{{ $labels.model_name }}" }}"
+            runbook_url: {{ $.Values.runbookBase }}/LabRequestsWaiting.md
+        - alert: LabKVCacheSaturated
+          expr: lab:kv_cache_usage:max > {{ $t.kvCacheRatio }}
+          for: 5m
+          labels: { severity: warning, category: saturation, component: vllm }
+          annotations:
+            summary: "Cache KV au-delà de {{ mulf $t.kvCacheRatio 100 }} % pour {{ "{{ $labels.model_name }}" }}"
+            runbook_url: {{ $.Values.runbookBase }}/LabKVCacheSaturated.md
+        - alert: LabPreemptions
+          expr: lab:preemptions:rate5m > {{ $t.preemptionsPerSecond }}
+          for: 5m
+          labels: { severity: warning, category: saturation, component: vllm }
+          annotations:
+            summary: "Préemptions vLLM pour {{ "{{ $labels.model_name }}" }}"
+            runbook_url: {{ $.Values.runbookBase }}/LabPreemptions.md
+        - alert: LabKedaAtMaxWithQueue
+          expr: |
+            (kube_horizontalpodautoscaler_status_desired_replicas{namespace="{{ .Values.namespace }}"} >= kube_horizontalpodautoscaler_spec_max_replicas{namespace="{{ .Values.namespace }}"})
+            and on (namespace) (sum by (namespace) (vllm:num_requests_waiting) > 0)
+          for: 5m
+          labels: { severity: warning, category: saturation, component: keda }
+          annotations:
+            summary: "KEDA au maximum avec une file non vide : capacité insuffisante"
+            runbook_url: {{ $.Values.runbookBase }}/LabKedaAtMaxWithQueue.md
+    - name: lab.gpu
+      rules:
+        - alert: LabGPUXidError
+          expr: DCGM_FI_DEV_XID_ERRORS > 0
+          for: 1m
+          labels: { severity: critical, category: gpu, component: dcgm }
+          annotations:
+            summary: "Erreur XID {{ "{{ $value }}" }} sur le GPU {{ "{{ $labels.gpu }}" }} ({{ "{{ $labels.Hostname }}" }})"
+            runbook_url: {{ $.Values.runbookBase }}/LabGPUXidError.md
+        - alert: LabGPUTemperatureHigh
+          expr: DCGM_FI_DEV_GPU_TEMP > {{ $t.gpuTempCelsius }}
+          for: 5m
+          labels: { severity: warning, category: gpu, component: dcgm }
+          annotations:
+            summary: "GPU à {{ "{{ $value }}" }} °C"
+            runbook_url: {{ $.Values.runbookBase }}/LabGPUTemperatureHigh.md
+        - alert: LabGPUThrottling
+          expr: (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS > 0) and (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS != 1) and (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS != 4)
+          for: 10m
+          labels: { severity: warning, category: gpu, component: dcgm }
+          annotations:
+            summary: "Throttling GPU (raisons {{ "{{ $value }}" }})"
+            runbook_url: {{ $.Values.runbookBase }}/LabGPUThrottling.md
+        - alert: LabGPUMemoryHigh
+          expr: DCGM_FI_DEV_FB_USED / (DCGM_FI_DEV_FB_USED + DCGM_FI_DEV_FB_FREE) > {{ $t.gpuMemoryRatio }}
+          for: 5m
+          labels: { severity: warning, category: gpu, component: dcgm }
+          annotations:
+            summary: "Mémoire GPU au-delà de {{ mulf $t.gpuMemoryRatio 100 }} %"
+            runbook_url: {{ $.Values.runbookBase }}/LabGPUMemoryHigh.md
+        - alert: LabGPUIdleCost
+          expr: avg_over_time(DCGM_FI_DEV_GPU_UTIL[{{ $t.gpuIdleMinutes }}m]) < 1
+          for: {{ $t.gpuIdleMinutes }}m
+          labels: { severity: warning, category: cost, component: dcgm }
+          annotations:
+            summary: "GPU inactif depuis plus de {{ $t.gpuIdleMinutes }} min sur un nœud allumé (coût)"
+            runbook_url: {{ $.Values.runbookBase }}/LabGPUIdleCost.md
+        - alert: LabGPULowUtilWithQueue
+          expr: (avg(DCGM_FI_DEV_GPU_UTIL) < {{ $t.gpuLowUtilWithQueue }}) and (sum(vllm:num_requests_waiting) > 0)
+          for: 10m
+          labels: { severity: warning, category: gpu, component: vllm }
+          annotations:
+            summary: "GPU peu utilisé alors que la file n'est pas vide : le goulot est ailleurs (CPU, tokenisation, réseau)"
+            runbook_url: {{ $.Values.runbookBase }}/LabGPULowUtilWithQueue.md
+    - name: lab.platform
+      rules:
+        - alert: LabVLLMRestarting
+          expr: increase(kube_pod_container_status_restarts_total{namespace="{{ .Values.namespace }}",container="main"}[15m]) > 0
+          labels: { severity: warning, category: platform, component: vllm }
+          annotations:
+            summary: "Pod vLLM {{ "{{ $labels.pod }}" }} redémarré"
+            runbook_url: {{ $.Values.runbookBase }}/LabVLLMRestarting.md
+        - alert: LabVLLMOOMKilled
+          expr: kube_pod_container_status_last_terminated_reason{namespace="{{ .Values.namespace }}",reason="OOMKilled"} == 1
+          labels: { severity: critical, category: platform, component: vllm }
+          annotations:
+            summary: "Pod {{ "{{ $labels.pod }}" }} tué par OOM"
+            runbook_url: {{ $.Values.runbookBase }}/LabVLLMOOMKilled.md
+        - alert: LabScrapeTargetMissing
+          expr: |
+            (absent(up{job=~".*vllm.*|.*qwen.*"}) or absent(up{job=~".*dcgm.*"}) or absent(up{job=~".*litellm.*"}))
+          for: 10m
+          labels: { severity: warning, category: platform, component: scrape }
+          annotations:
+            summary: "Cible de scrape absente (vLLM, DCGM ou LiteLLM)"
+            runbook_url: {{ $.Values.runbookBase }}/LabScrapeTargetMissing.md
+        - alert: LabLiteLLMDown
+          expr: kube_deployment_status_replicas_available{namespace="gateway",deployment="litellm"} < 1
+          for: 5m
+          labels: { severity: critical, category: platform, component: litellm }
+          annotations:
+            summary: "LiteLLM indisponible"
+            runbook_url: {{ $.Values.runbookBase }}/LabLiteLLMDown.md
+        - alert: LabLiteLLMBudgetNearlyExhausted
+          expr: (litellm_remaining_team_budget_metric / (litellm_remaining_team_budget_metric + litellm_spend_metric_total)) < 0.1
+          for: 5m
+          labels: { severity: warning, category: platform, component: litellm }
+          annotations:
+            summary: "Budget LiteLLM presque épuisé pour {{ "{{ $labels.team }}" }}"
+            runbook_url: {{ $.Values.runbookBase }}/LabLiteLLMBudgetNearlyExhausted.md
+        - alert: LabArgoAppUnhealthy
+          expr: argocd_app_info{health_status!~"Healthy|Progressing"} == 1 or argocd_app_info{sync_status!="Synced"} == 1
+          for: 15m
+          labels: { severity: warning, category: platform, component: argocd }
+          annotations:
+            summary: "Application Argo CD {{ "{{ $labels.name }}" }} dégradée ou désynchronisée"
+            runbook_url: {{ $.Values.runbookBase }}/LabArgoAppUnhealthy.md
+        - alert: LabCorruptedRequests
+          expr: increase(vllm:corrupted_requests_total[10m]) > 0
+          labels: { severity: critical, category: platform, component: vllm }
+          annotations:
+            summary: "Requêtes corrompues (NaN dans les logits) sur {{ "{{ $labels.model_name }}" }}"
+            runbook_url: {{ $.Values.runbookBase }}/LabCorruptedRequests.md
+        - alert: LabTestAlert
+          expr: vector(1) and on() (lab_test_alert_enabled == 1)
+          labels: { severity: info, category: test, component: lab }
+          annotations:
+            summary: "Alerte de test (active seulement si lab_test_alert_enabled == 1)"
+            runbook_url: {{ $.Values.runbookBase }}/LabTestAlert.md

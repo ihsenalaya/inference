@@ -1,5 +1,4 @@
-# Istio upstream en passerelle seulement : profil minimal, pas de sidecar.
-profile: minimal
+# Istio upstream en passerelle seulement (istiod seul, pas de passerelle Istio ni de sidecar : le Helm chart n'a pas de profil "minimal", c'est un profil istioctl).
 autoscaleEnabled: false
 replicaCount: 1
 resources:
