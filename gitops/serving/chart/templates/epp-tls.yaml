@@ -1,0 +1,16 @@
+{{- range .Values.models }}
+---
+# Le EPP llm-d sert ext_proc en TLS auto-signé sur le port 9002 ; la gateway Istio doit l'appeler en TLS
+# (sinon : "ext_proc_error_gRPC_error_14 ... connection termination" et HTTP 500). Voir guide Istio de la GIE.
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: {{ .resourceName }}-epp-tls
+  namespace: {{ $.Values.namespace }}
+spec:
+  host: {{ .resourceName }}-epp-service.{{ $.Values.namespace }}.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+      insecureSkipVerify: true
+{{- end }}
