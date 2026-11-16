@@ -131,10 +131,10 @@ d.ts("Charge par pod", "Répartition running + waiting entre réplicas : un éca
 d.ts("Taux de hit du cache de préfixes", "hits / queries. Levier : poids du scorer de préfixes de l'EPP, prompts avec préfixe commun.", [("lab:prefix_cache_hit_ratio", "{{model_name}}")], "percentunit", minv=0, maxv=1)
 d.ts("Écart de charge entre réplicas", "max - min de la charge par réplica.", [("lab:replica_load_gap", "{{model_name}}")])
 d.row("6. L'autoscaling suit-il ?")
-d.ts("Réplicas désirés / prêts", "HPA géré par KEDA : désiré vs prêt. L'écart = temps de chargement du modèle (cold start).",
-     [('kube_horizontalpodautoscaler_status_desired_replicas{namespace="inference"}', "désirés {{horizontalpodautoscaler}}"),
-      ('kube_horizontalpodautoscaler_status_current_replicas{namespace="inference"}', "courants {{horizontalpodautoscaler}}")])
-d.ts("Valeur du trigger KEDA", "Valeur de la requête Prometheus du ScaledObject.", [('keda_scaler_metrics_value', "{{scaledObject}}")])
+d.ts("Réplicas désirés / prêts", "Deployment du modèle : réplicas voulus (HPA/KEDA ou fixes) vs prêts. L'écart = temps de chargement du modèle (cold start).",
+     [('sum by (deployment) (kube_deployment_spec_replicas{namespace="inference", deployment=~".*kserve$"})', "désirés {{deployment}}"),
+      ('sum by (deployment) (kube_deployment_status_replicas_ready{namespace="inference", deployment=~".*kserve$"})', "prêts {{deployment}}")])
+d.ts("Valeur du trigger KEDA", "Valeur de la requête Prometheus du ScaledObject (0 quand le scénario n'utilise pas KEDA).", [('keda_scaler_metrics_value or on() vector(0)', "trigger")])
 d.ts("Événements de scaling", "Changements de réplicas.", [('changes(kube_deployment_status_replicas{namespace="inference"}[$__rate_interval])', "{{deployment}}")])
 d.save()
 

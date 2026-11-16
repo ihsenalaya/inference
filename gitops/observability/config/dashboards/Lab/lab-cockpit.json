@@ -1270,7 +1270,7 @@
    "id": 28,
    "type": "timeseries",
    "title": "Réplicas désirés / prêts",
-   "description": "HPA géré par KEDA : désiré vs prêt. L'écart = temps de chargement du modèle (cold start).",
+   "description": "Deployment du modèle : réplicas voulus (HPA/KEDA ou fixes) vs prêts. L'écart = temps de chargement du modèle (cold start).",
    "datasource": {
     "type": "prometheus",
     "uid": "prometheus"
@@ -1284,8 +1284,8 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "kube_horizontalpodautoscaler_status_desired_replicas{namespace=\"inference\"}",
-     "legendFormat": "désirés {{horizontalpodautoscaler}}",
+     "expr": "sum by (deployment) (kube_deployment_spec_replicas{namespace=\"inference\", deployment=~\".*kserve$\"})",
+     "legendFormat": "désirés {{deployment}}",
      "datasource": {
       "type": "prometheus",
       "uid": "prometheus"
@@ -1293,8 +1293,8 @@
     },
     {
      "refId": "B",
-     "expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace=\"inference\"}",
-     "legendFormat": "courants {{horizontalpodautoscaler}}",
+     "expr": "sum by (deployment) (kube_deployment_status_replicas_ready{namespace=\"inference\", deployment=~\".*kserve$\"})",
+     "legendFormat": "prêts {{deployment}}",
      "datasource": {
       "type": "prometheus",
       "uid": "prometheus"
@@ -1328,7 +1328,7 @@
    "id": 29,
    "type": "timeseries",
    "title": "Valeur du trigger KEDA",
-   "description": "Valeur de la requête Prometheus du ScaledObject.",
+   "description": "Valeur de la requête Prometheus du ScaledObject (0 quand le scénario n'utilise pas KEDA).",
    "datasource": {
     "type": "prometheus",
     "uid": "prometheus"
@@ -1342,8 +1342,8 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "keda_scaler_metrics_value",
-     "legendFormat": "{{scaledObject}}",
+     "expr": "keda_scaler_metrics_value or on() vector(0)",
+     "legendFormat": "trigger",
      "datasource": {
       "type": "prometheus",
       "uid": "prometheus"
