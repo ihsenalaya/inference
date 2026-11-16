@@ -111,7 +111,7 @@ class H(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     srv = ThreadingHTTPServer(("0.0.0.0", ARGS.port), H)
     crt, key = "/var/run/kserve/tls/tls.crt", "/var/run/kserve/tls/tls.key"
-    if os.path.exists(crt):  # KServe monte un certificat auto-signé quand le TLS interne est actif
+    if os.environ.get("MOCK_TLS") == "1" and os.path.exists(crt):  # le certificat est monté même si le TLS interne est inactif
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         ctx.load_cert_chain(crt, key)
         srv.socket = ctx.wrap_socket(srv.socket, server_side=True)

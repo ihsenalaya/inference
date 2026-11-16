@@ -53,6 +53,9 @@ spec:
     targetRevision: {{ $.Values.revision }}
     path: {{ .path }}
   {{- end }}
+  {{- with .ignoreDifferences }}
+  ignoreDifferences: {{ toYaml . | nindent 4 }}
+  {{- end }}
   syncPolicy:
     automated:
       prune: true

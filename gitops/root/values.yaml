@@ -16,7 +16,8 @@ components:
   - { name: cert-manager,     wave: 1, type: helm, chartKey: certManager,    namespace: cert-manager,  valuesDir: gitops/platform/cert-manager }
   - { name: kube-prometheus-stack, wave: 1, type: helm, chartKey: kubePrometheus, namespace: monitoring, valuesDir: gitops/observability/kube-prometheus-stack }
   - { name: istio-base,       wave: 2, type: helm, chartKey: istioBase,      namespace: istio-system,  valuesDir: gitops/platform/istio-base }
-  - { name: istiod,           wave: 3, type: helm, chartKey: istiod,         namespace: istio-system,  valuesDir: gitops/platform/istiod }
+  - { name: istiod,           wave: 3, type: helm, chartKey: istiod,         namespace: istio-system,  valuesDir: gitops/platform/istiod,
+      ignoreDifferences: [{ group: admissionregistration.k8s.io, kind: ValidatingWebhookConfiguration, jqPathExpressions: [".webhooks[]?.failurePolicy", ".webhooks[]?.clientConfig.caBundle"] }] }
   - { name: gpu-operator,     wave: 3, type: helm, chartKey: gpuOperator,    namespace: gpu-operator,  valuesDir: gitops/platform/gpu-operator, envs: [azure] }
   - { name: keda,             wave: 3, type: helm, chartKey: keda,           namespace: keda,          valuesDir: gitops/platform/keda }
   - { name: lws,              wave: 3, type: helm, chartKey: lws,            namespace: lws-system,    valuesDir: gitops/platform/lws }
