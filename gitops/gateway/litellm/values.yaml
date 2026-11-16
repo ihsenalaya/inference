@@ -5,7 +5,7 @@ gateway: { name: inference-gateway, namespace: inference }
 image: ghcr.io/berriai/litellm@sha256:11175975a3093e05e92faee2fe2fe3412a3ae2fcaa849eb0fe25d5f0d8bcb2e9   # v1.109.1
 bootstrapImage: alpine/k8s:1.35.0
 resources:
-  requests: { cpu: 100m, memory: 512Mi }
-  limits: { memory: 1280Mi }
+  requests: { cpu: 100m, memory: 768Mi }
+  limits: { memory: 2Gi }
 models: []
 fallbacks: []
