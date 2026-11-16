@@ -1,6 +1,6 @@
 {{- $v := .Files.Get "versions.yaml" | fromYaml }}
 {{- range .Values.components }}
-{{- if or (not .envs) (has $.Values.env .envs) }}
+{{- if and (or (not .envs) (has $.Values.env .envs)) (not (has .name (splitList "," (toString $.Values.disable)))) }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application

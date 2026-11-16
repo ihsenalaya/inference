@@ -4,3 +4,4 @@ env: azure          # azure | kind
 scenario: baseline-7b
 gpuHourlyPrice: "0.526"
 gpuNodes: "1"
+disable: ""

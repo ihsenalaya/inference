@@ -67,7 +67,8 @@ YAML
   helm upgrade --install argocd argo-cd --repo https://argoproj.github.io/argo-helm --version "$ARGOCD_CHART_VERSION" \
     -n argocd --create-namespace -f "$ROOT/gitops/bootstrap/argocd-values.yaml" --wait --timeout 10m
   helm upgrade --install root "$ROOT/gitops/bootstrap/root-app" -n argocd \
-    --set repoURL="$GIT_REPO_URL" --set revision="${GIT_REVISION}" --set env=kind --set scenario="${SCENARIO:-kind-mock}" --wait
+    --set repoURL="$GIT_REPO_URL" --set revision="${GIT_REVISION}" --set env=kind --set scenario="${SCENARIO:-kind-mock}" \
+    --set disable="${KIND_DISABLE:-}" --wait
   log INFO "application racine créée ; suivre : $0 status"
 }
 

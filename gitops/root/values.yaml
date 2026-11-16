@@ -4,6 +4,7 @@ env: azure              # azure | kind
 scenario: baseline-7b   # remplacé par kind-mock sur kind
 gpuHourlyPrice: "0.526"
 gpuNodes: "1"
+disable: ""            # composants à ne pas déployer (liste séparée par des virgules ; utile sur kind, mémoire limitée)
 
 # Une Application par composant. wave = ordre de synchronisation.
 # type helm : chart amont (versions.yaml) + valeurs dans <valuesDir>/values.yaml et values-<env>.yaml
