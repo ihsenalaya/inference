@@ -16,7 +16,7 @@ variable "prefix" {
 
 variable "kubernetes_version" {
   type        = string
-  default     = "1.35"
+  default     = "1.34"
   description = "Version mineure d'AKS (voir docs/DECISIONS.md)."
 }
 

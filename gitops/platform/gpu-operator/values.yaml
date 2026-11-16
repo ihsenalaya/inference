@@ -3,6 +3,7 @@
 # installé par l'opérateur. Voir docs/DECISIONS.md.
 driver:
   enabled: true
+  version: "580.95.05"     # branche production 580 : supporte le T4 (Turing) et CUDA 13.0 requis par l'image vLLM (>= 580)
 toolkit:
   enabled: true
 operator:
