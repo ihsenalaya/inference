@@ -234,9 +234,11 @@ chat_ok() { # port clé modèle température [stream]
     -d "{\"model\":\"$3\",\"temperature\":$4,\"max_tokens\":48,\"stream\":$stream,\"messages\":[{\"role\":\"user\",\"content\":\"Explique en deux phrases ce qu'est un GPU.\"}]}")" || return 1
   [[ "$stream" == true ]] && grep -q '\[DONE\]' <<<"$out" && return 0
   python3 - "$out" <<'PY'
-import json, sys
+import json, os, sys
 d = json.loads(sys.argv[1])
 t = d["choices"][0]["message"]["content"].strip()
+if os.environ.get("SMOKE_MOCK") == "1":
+    sys.exit(0 if t else 1)   # faux vLLM (kind) : la sortie est volontairement répétitive
 # sortie cohérente : non vide, pas dégénérée (un même mot répété plus de 60 % du temps)
 w = t.split()
 assert len(w) >= 3, "sortie trop courte"
@@ -247,6 +249,7 @@ PY
 cmd_smoke() {
   use_cluster; PASS=0; FAILN=0
   local alias
+  case "$(active_scenario)" in kind-*) export SMOKE_MOCK=1 ;; esac
   check "Argo CD : toutes les applications Synced/Healthy" bash -c "! kubectl -n argocd get applications.argoproj.io --no-headers | awk '\$2!=\"Synced\"||\$3!=\"Healthy\"' | grep -q ."
   check "Gateway programmée" bash -c "kubectl -n inference get gateway inference-gateway -o jsonpath='{.status.conditions[?(@.type==\"Programmed\")].status}' | grep -q True"
   check "LLMInferenceService prêts" bash -c "! kubectl -n inference get llminferenceservices --no-headers | awk '\$3!=\"True\"' | grep -q ."
@@ -322,7 +325,7 @@ cmd_bench() {
   log INFO "bench $profile sur $scen (cible $target, modèle $model)"
   grafana_annotation "bench $profile début | scénario $scen | git $sha | cible $target" '"bench","start"'
   helm template bench "$ROOT/gitops/bench" --set profile="$profile" --set name="$name" --set baseUrl="$base" --set apiPath="$apipath" \
-    --set apiKey="$key" --set model="$model" --set tokenizerModel="${hf_name:-$model}" "${extra[@]}" | kubectl apply -f - >/dev/null
+    --set apiKey="$key" --set model="$model" --set prometheusUrl="${BENCH_PROM_URL-http://kps-prometheus.monitoring.svc:9090}" --set tokenizerModel="${hf_name:-$model}" "${extra[@]}" | kubectl apply -f - >/dev/null
   local out; out="$ROOT/results/$(date +%Y-%m-%d)-${scen}-${profile}"; mkdir -p "$out"
   kubectl -n inference wait --for=condition=complete "job/$name" --timeout="${BENCH_TIMEOUT:-3600}s" >/dev/null 2>&1 || \
     kubectl -n inference wait --for=condition=failed "job/$name" --timeout=5s >/dev/null 2>&1 || true

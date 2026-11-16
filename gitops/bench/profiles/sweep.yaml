@@ -25,11 +25,13 @@ server:
   {{- end }}
 tokenizer:
   pretrained_model_name_or_path: {{ .Values.tokenizerModel }}
+{{- if .Values.prometheusUrl }}
 metrics:
   type: prometheus
   prometheus:
     url: {{ .Values.prometheusUrl }}
     scrape_interval: 15
+{{- end }}
 storage:
   local_storage:
     path: /results
@@ -38,9 +40,11 @@ report:
     summary: true
     per_stage: true
     per_request: false
+  {{- if .Values.prometheusUrl }}
   prometheus:
     summary: true
     per_stage: true
+  {{- end }}
 observability:
   metrics:
     port: 9464
