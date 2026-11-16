@@ -101,7 +101,8 @@ resource "azurerm_kubernetes_cluster_node_pool" "gpu" {
   node_labels           = { workload = "inference" }
   tags                  = local.tags
 
+  # Pas de surge possible (quota T4 de 2 nœuds) : on remplace un nœud à la fois.
   upgrade_settings {
-    max_surge = "0"
+    max_unavailable = "1"
   }
 }
