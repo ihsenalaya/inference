@@ -3,6 +3,7 @@ kserve:
     # Les CRDs GIE sont installées en vague 0 par l'application crds-gie (avant istiod).
     createGIECRDs: false
     controller:
+      metricsBindAddress: 0.0.0.0   # scrape Prometheus (https, jeton du ServiceAccount)
       resources:
         requests: { cpu: 50m, memory: 128Mi }
         limits: { cpu: 500m, memory: 512Mi }
