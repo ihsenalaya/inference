@@ -108,7 +108,7 @@ d.ts("Latence de bout en bout (p50 / p95 / p99)", "Durée totale d'une requête.
 d.ts("Taux d'erreur (LiteLLM)", "Part des requêtes en échec vu de la passerelle. Levier : timeouts, OOM, saturation, fallback LiteLLM.",
      [('sum(rate(litellm_proxy_failed_requests_metric_total[$__rate_interval])) / sum(rate(litellm_proxy_total_requests_metric_total[$__rate_interval]))', "erreurs")], "percentunit")
 d.ts("Requêtes par seconde", "Débit de requêtes terminées avec succès par modèle.", [(f'sum by (model_name) (rate(vllm:request_success_total{M}[$__rate_interval]))', "{{model_name}}")], "reqps")
-d.ts("Requêtes LiteLLM par équipe", "Trafic par équipe (lab-bench / lab-user) : quotas et budgets.", [('sum by (team) (rate(litellm_proxy_total_requests_metric_total[$__rate_interval]))', "{{team}}")], "reqps")
+d.ts("Requêtes LiteLLM par équipe", "Trafic par équipe (lab-bench / lab-user) : quotas et budgets.", [('sum by (team_alias) (rate(litellm_requests_metric_total[$__rate_interval]))', "{{team_alias}}")], "reqps")
 d.row("2. Le système sature-t-il ?")
 d.ts("Requêtes en cours / en attente", "Running = batch courant ; waiting = file. Une file qui monte = capacité insuffisante : max-num-seqs, réplicas, KEDA.",
      [(f'sum by (model_name) (vllm:num_requests_running{M})', "running {{model_name}}"), (f'sum by (model_name) (vllm:num_requests_waiting{M})', "waiting {{model_name}}")])

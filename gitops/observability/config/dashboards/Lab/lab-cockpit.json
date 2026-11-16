@@ -400,8 +400,8 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "sum by (team) (rate(litellm_proxy_total_requests_metric_total[$__rate_interval]))",
-     "legendFormat": "{{team}}",
+     "expr": "sum by (team_alias) (rate(litellm_requests_metric_total[$__rate_interval]))",
+     "legendFormat": "{{team_alias}}",
      "datasource": {
       "type": "prometheus",
       "uid": "prometheus"

@@ -98,11 +98,11 @@ spec:
             runbook_url: {{ $.Values.runbookBase }}/LabInterTokenLatencyHigh.md
         - alert: LabErrorRateHigh
           expr: |
-            (sum by (model) (rate(litellm_proxy_failed_requests_metric_total[5m])) / sum by (model) (rate(litellm_proxy_total_requests_metric_total[5m]))) > {{ $t.errorRatio }}
+            (sum(rate(litellm_proxy_failed_requests_metric_total[5m])) / sum(rate(litellm_proxy_total_requests_metric_total[5m]))) > {{ $t.errorRatio }}
           for: 5m
           labels: { severity: critical, category: slo, component: litellm }
           annotations:
-            summary: "Taux d'erreur élevé pour {{ "{{ $labels.model }}" }}"
+            summary: "Taux d'erreur LiteLLM élevé"
             runbook_url: {{ $.Values.runbookBase }}/LabErrorRateHigh.md
         - alert: LabQueueTimeHigh
           expr: lab:queue_seconds:p95 > {{ $t.queueP95Seconds }}
@@ -221,7 +221,7 @@ spec:
           for: 5m
           labels: { severity: warning, category: platform, component: litellm }
           annotations:
-            summary: "Budget LiteLLM presque épuisé pour {{ "{{ $labels.team }}" }}"
+            summary: "Budget LiteLLM presque épuisé pour {{ "{{ $labels.team_alias }}" }}"
             runbook_url: {{ $.Values.runbookBase }}/LabLiteLLMBudgetNearlyExhausted.md
         - alert: LabArgoAppUnhealthy
           expr: argocd_app_info{health_status!~"Healthy|Progressing"} == 1 or argocd_app_info{sync_status!="Synced"} == 1

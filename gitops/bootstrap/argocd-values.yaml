@@ -17,14 +17,17 @@ notifications:
 applicationSet:
   enabled: false
 server:
+  metrics: { enabled: true }
   resources:
     requests: { cpu: 50m, memory: 128Mi }
     limits: { memory: 256Mi }
 controller:
+  metrics: { enabled: true }
   resources:
     requests: { cpu: 200m, memory: 512Mi }
     limits: { memory: 1Gi }
 repoServer:
+  metrics: { enabled: true }
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits: { memory: 768Mi }
