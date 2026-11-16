@@ -83,6 +83,7 @@ YAML
     kind_cmd create cluster --name "$KIND_NAME" --config "$cfgw" --wait 180s
   fi
   kubeconfig_kind
+  kubectl label node --all workload=platform --overwrite >/dev/null   # comme le pool système AKS (le banc de charge s'y exécute)
   ensure_secrets_kind
   helm upgrade --install argocd argo-cd --repo https://argoproj.github.io/argo-helm --version "$(argocd_chart_version)" \
     -n argocd --create-namespace -f "$ROOT/gitops/bootstrap/argocd-values.yaml" --wait --timeout 10m

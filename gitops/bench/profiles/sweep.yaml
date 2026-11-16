@@ -13,7 +13,7 @@ data:
   input_distribution: { min: 128, max: 1024, mean: 512 }
   output_distribution: { min: 64, max: 256, mean: 128 }
 api:
-  type: chat
+  type: completion      # le générateur synthétique d'inference-perf v0.7.0 ne gère que /v1/completions
   streaming: true
 server:
   type: vllm
@@ -45,7 +45,3 @@ report:
     summary: true
     per_stage: true
   {{- end }}
-observability:
-  metrics:
-    port: 9464
-    linger_seconds: 30

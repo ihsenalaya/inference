@@ -46,7 +46,3 @@ report:
     summary: true
     per_stage: true
   {{- end }}
-observability:
-  metrics:
-    port: 9464
-    linger_seconds: 30

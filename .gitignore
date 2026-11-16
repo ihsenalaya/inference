@@ -10,3 +10,4 @@ kubeconfig*
 results/*/raw/
 *.log
 .scratch/
+results/*kind-mock*/

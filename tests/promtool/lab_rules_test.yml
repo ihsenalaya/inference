@@ -1,0 +1,69 @@
+# Tests unitaires des règles du lab (promtool test rules). Les fichiers de règles sont extraits du chart
+# par tests/static.sh (/tmp/lab-*.rules.yml).
+rule_files:
+  - /tmp/lab-recording.rules.yml
+  - /tmp/lab-alerts.rules.yml
+evaluation_interval: 30s
+tests:
+  - name: file d'attente -> alerte LabRequestsWaiting
+    interval: 30s
+    input_series:
+      - series: 'vllm:num_requests_waiting{model_name="m",pod="p1"}'
+        values: '10+0x30'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: LabRequestsWaiting
+        exp_alerts:
+          - exp_labels: { severity: warning, category: saturation, component: vllm, model_name: m }
+            exp_annotations:
+              summary: "Requêtes en attente depuis 5 min pour m"
+              runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/LabRequestsWaiting.md
+  - name: pas de file -> pas d'alerte
+    interval: 30s
+    input_series:
+      - series: 'vllm:num_requests_waiting{model_name="m",pod="p1"}'
+        values: '0+0x30'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: LabRequestsWaiting
+        exp_alerts: []
+  - name: taux de hit du cache de préfixes
+    interval: 30s
+    input_series:
+      - series: 'vllm:prefix_cache_hits_total{model_name="m"}'
+        values: '0+30x20'
+      - series: 'vllm:prefix_cache_queries_total{model_name="m"}'
+        values: '0+60x20'
+    promql_expr_test:
+      - expr: lab:prefix_cache_hit_ratio
+        eval_time: 8m
+        exp_samples:
+          - labels: 'lab:prefix_cache_hit_ratio{model_name="m"}'
+            value: 0.5
+  - name: coût par million de tokens
+    interval: 30s
+    input_series:
+      - series: 'DCGM_FI_DEV_GPU_UTIL{gpu="0"}'
+        values: '50+0x40'
+      - series: 'vllm:generation_tokens_total{model_name="m"}'
+        values: '0+300x40'   # 10 tokens/s
+    promql_expr_test:
+      - expr: lab:cost_per_million_tokens_usd
+        eval_time: 10m
+        exp_samples:
+          # 1 GPU x 0,526 $/h / (10 tok/s x 3600) x 1e6
+          - labels: 'lab:cost_per_million_tokens_usd'
+            value: 14.611111111111112
+  - name: GPU inactif -> coût
+    interval: 1m
+    input_series:
+      - series: 'DCGM_FI_DEV_GPU_UTIL{gpu="0",Hostname="n1"}'
+        values: '0+0x80'
+    alert_rule_test:
+      - eval_time: 70m
+        alertname: LabGPUIdleCost
+        exp_alerts:
+          - exp_labels: { severity: warning, category: cost, component: dcgm, gpu: "0", Hostname: n1 }
+            exp_annotations:
+              summary: "GPU inactif depuis plus de 30 min sur un nœud allumé (coût)"
+              runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/LabGPUIdleCost.md
