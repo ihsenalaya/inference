@@ -43,6 +43,20 @@ spec:
           namespace: {{ $.Values.gateway.namespace }}
     route: {}
     scheduler:
+      {{- if or (default dict $m.epp).loadOnly $.Values.epp.loadOnly }}
+      # Expérience de routage : sans filtre d'affinité de préfixes (charge seule), pour mesurer l'apport du cache de préfixes.
+      config:
+        inline:
+          apiVersion: llm-d.ai/v1alpha1
+          kind: EndpointPickerConfig
+          plugins:
+            - type: inflight-load-producer
+            - type: token-load-scorer
+          schedulingProfiles:
+            - name: default
+              plugins:
+                - pluginRef: token-load-scorer
+      {{- end }}
       template:
         containers:
           - name: main

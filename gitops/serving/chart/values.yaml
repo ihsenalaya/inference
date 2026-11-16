@@ -23,6 +23,8 @@ scheduler:                    # EPP llm-d : petit, il tourne sur le pool systèm
   resources:
     requests: { cpu: 100m, memory: 256Mi }
     limits: { memory: 1Gi }
+epp:
+  loadOnly: false             # true : EPP sans affinité de préfixes (expérience de routage, critère 10)
 startupFailureThreshold: 120  # x 10 s = 20 min : image de plusieurs Go + téléchargement + chargement du modèle
 mock:
   enabled: false
