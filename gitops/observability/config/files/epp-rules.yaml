@@ -1,0 +1,98 @@
+# Règles d'alerte EPP du dépôt llm-d v1.0.0 (guides/recipes/observability/alerts/epp-alerting-rules.yaml),
+# adaptées : labels category/component et runbook_url.
+groups:
+- name: epp.availability
+  rules:
+  - alert: EPPHighErrorRatio
+    expr: "sum(rate(llm_d_epp_request_error_total[5m]))\n  / sum(rate(llm_d_epp_request_total[5m]))\n\
+      \  > 0.05\n"
+    for: 10m
+    labels:
+      severity: warning
+      category: platform
+      component: epp
+    annotations:
+      summary: EPP error ratio above 5%
+      description: EPP request error ratio has been above 5% for 10m (current {{ $value
+        | humanizePercentage }}).
+      runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/EPPHighErrorRatio.md
+  - alert: EPPCriticalErrorRatio
+    expr: "sum(rate(llm_d_epp_request_error_total[5m]))\n  / sum(rate(llm_d_epp_request_total[5m]))\n\
+      \  > 0.20\n"
+    for: 5m
+    labels:
+      severity: critical
+      category: platform
+      component: epp
+    annotations:
+      summary: EPP error ratio above 20%
+      description: EPP request error ratio has been above 20% for 5m (current {{ $value
+        | humanizePercentage }}). The inference path is likely degraded.
+      runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/EPPCriticalErrorRatio.md
+  - alert: EPPNoReadyEndpoints
+    expr: llm_d_epp_ready_endpoints == 0
+    for: 2m
+    labels:
+      severity: critical
+      category: platform
+      component: epp
+    annotations:
+      summary: EPP pool {{ $labels.name }} has no ready endpoints
+      description: llm_d_epp_ready_endpoints has been 0 for pool {{ $labels.name }}
+        for 2m. The pool is unroutable.
+      runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/EPPNoReadyEndpoints.md
+  - alert: EPPMetricsAbsent
+    expr: absent(llm_d_epp_ready_endpoints)
+    for: 5m
+    labels:
+      severity: critical
+      category: platform
+      component: epp
+    annotations:
+      summary: No EPP metrics are being scraped (cluster-wide)
+      description: No llm_d_epp_ready_endpoints samples from any pool for 5m. All
+        EPP metric scraping has stopped - every EPP is down or the ServiceMonitor
+        is broken cluster-wide.
+      runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/EPPMetricsAbsent.md
+- name: epp.selfhealth
+  rules:
+  - alert: EPPDataLayerPollErrors
+    expr: sum by (source_type) (rate(llm_d_epp_datalayer_poll_errors_total[5m])) >
+      0
+    for: 10m
+    labels:
+      severity: warning
+      category: platform
+      component: epp
+    annotations:
+      summary: EPP data layer poll errors for source {{ $labels.source_type }}
+      description: llm_d_epp_datalayer_poll_errors_total is increasing for source
+        {{ $labels.source_type }}. Scheduling may be using stale data.
+      runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/EPPDataLayerPollErrors.md
+  - alert: EPPDataLayerExtractErrors
+    expr: sum by (source_type, extractor_type) (rate(llm_d_epp_datalayer_extract_errors_total[5m]))
+      > 0
+    for: 10m
+    labels:
+      severity: warning
+      category: platform
+      component: epp
+    annotations:
+      summary: EPP data layer extract errors ({{ $labels.source_type }}/{{ $labels.extractor_type
+        }})
+      description: llm_d_epp_datalayer_extract_errors_total is increasing for {{ $labels.source_type
+        }}/{{ $labels.extractor_type }}. Scheduling may be using stale data.
+      runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/EPPDataLayerExtractErrors.md
+  - alert: EPPExtProcStreamErrors
+    expr: sum by (code) (rate(llm_d_epp_extproc_streams_total{code!~"OK|Canceled"}[5m]))
+      > 0
+    for: 10m
+    labels:
+      severity: warning
+      category: platform
+      component: epp
+    annotations:
+      summary: EPP ext_proc streams terminating with {{ $labels.code }}
+      description: ext_proc gRPC streams are completing with status {{ $labels.code
+        }}. Envoy<->EPP request processing may be failing.
+      runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/EPPExtProcStreamErrors.md

@@ -69,6 +69,8 @@ spec:
     - name: lab.gateway
       interval: 30s
       rules:
+        - record: lab:epp_decision_seconds:p95
+          expr: histogram_quantile(0.95, sum by (le) (rate(inference_extension_scheduler_e2e_duration_seconds_bucket[5m])))
         - record: lab:litellm_overhead_seconds:p95
           expr: histogram_quantile(0.95, sum by (le) (rate(litellm_overhead_latency_metric_bucket[5m])))
 ---

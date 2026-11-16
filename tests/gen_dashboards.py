@@ -155,7 +155,7 @@ d.ts("Tokens de prompt par seconde", "Charge de prefill.", [("lab:prompt_tokens:
 d.ts("Tokens générés par seconde", "Charge de decode.", [("lab:generation_tokens:rate1m", "{{model_name}}")], w=12)
 d.ts("Taille moyenne des prompts / générations", "Tokens moyens par requête.", [(f'sum(rate(vllm:prompt_tokens_total{M}[$__rate_interval])) / sum(rate(vllm:request_success_total{M}[$__rate_interval]))', "prompt"),
      (f'sum(rate(vllm:generation_tokens_total{M}[$__rate_interval])) / sum(rate(vllm:request_success_total{M}[$__rate_interval]))', "génération")], w=12)
-d.ts("Décision de l'EPP", "Durée de décision du scheduler llm-d (nom de métrique à confirmer sur /metrics, voir docs/METRIQUES.md).", [('histogram_quantile(0.95, sum by (le) (rate({__name__=~"(llm_d_epp|inference)_.*scheduler.*duration.*_bucket"}[$__rate_interval])))', "EPP p95")], "s", w=12)
+d.ts("Décision de l'EPP", "Durée de décision du scheduler llm-d (inference_extension_scheduler_e2e_duration_seconds).", [("lab:epp_decision_seconds:p95", "EPP scheduler p95")], "s", w=12)
 d.save()
 
 # ---------------- 02 GPU en profondeur ----------------

@@ -551,7 +551,7 @@
    "id": 13,
    "type": "timeseries",
    "title": "Décision de l'EPP",
-   "description": "Durée de décision du scheduler llm-d (nom de métrique à confirmer sur /metrics, voir docs/METRIQUES.md).",
+   "description": "Durée de décision du scheduler llm-d (inference_extension_scheduler_e2e_duration_seconds).",
    "datasource": {
     "type": "prometheus",
     "uid": "prometheus"
@@ -565,8 +565,8 @@
    "targets": [
     {
      "refId": "A",
-     "expr": "histogram_quantile(0.95, sum by (le) (rate({__name__=~\"(llm_d_epp|inference)_.*scheduler.*duration.*_bucket\"}[$__rate_interval])))",
-     "legendFormat": "EPP p95",
+     "expr": "lab:epp_decision_seconds:p95",
+     "legendFormat": "EPP scheduler p95",
      "datasource": {
       "type": "prometheus",
       "uid": "prometheus"
