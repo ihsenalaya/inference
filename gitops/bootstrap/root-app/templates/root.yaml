@@ -12,11 +12,16 @@ spec:
     targetRevision: {{ .Values.revision }}
     path: gitops/root
     helm:
+      valueFiles:
+        - values.yaml
+        - ../active-{{ .Values.env }}.yaml     # scénario actif, versionné dans Git
       parameters:
         - { name: repoURL, value: {{ .Values.repoURL | quote }} }
         - { name: revision, value: {{ .Values.revision | quote }} }
         - { name: env, value: {{ .Values.env | quote }} }
+        {{- if .Values.scenario }}
         - { name: scenario, value: {{ .Values.scenario | quote }} }
+        {{- end }}
         - { name: gpuHourlyPrice, value: {{ .Values.gpuHourlyPrice | quote }} }
         - { name: gpuNodes, value: {{ .Values.gpuNodes | quote }} }
         - { name: disable, value: {{ .Values.disable | quote }} }

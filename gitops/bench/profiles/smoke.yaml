@@ -1,0 +1,42 @@
+# 10 requêtes : vérifie la chaîne de bout en bout.
+load:
+  type: constant
+  stages:
+    - { rate: 1, duration: 10 }
+data:
+  type: synthetic
+  input_distribution: { min: 32, max: 128, mean: 64 }
+  output_distribution: { min: 16, max: 48, mean: 32 }
+api:
+  type: chat
+  streaming: true
+server:
+  type: vllm
+  model_name: {{ .Values.model }}
+  base_url: {{ .Values.baseUrl }}{{ .Values.apiPath }}
+  ignore_eos: true
+  {{- if .Values.apiKey }}
+  api_key: {{ .Values.apiKey }}
+  {{- end }}
+tokenizer:
+  pretrained_model_name_or_path: {{ .Values.tokenizerModel }}
+metrics:
+  type: prometheus
+  prometheus:
+    url: {{ .Values.prometheusUrl }}
+    scrape_interval: 15
+storage:
+  local_storage:
+    path: /results
+report:
+  request_lifecycle:
+    summary: true
+    per_stage: true
+    per_request: false
+  prometheus:
+    summary: true
+    per_stage: true
+observability:
+  metrics:
+    port: 9464
+    linger_seconds: 30

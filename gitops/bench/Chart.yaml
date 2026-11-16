@@ -1,0 +1,4 @@
+apiVersion: v2
+name: bench
+description: Banc de charge (inference-perf) lancé à la demande par `lab.sh bench`.
+version: 0.1.0

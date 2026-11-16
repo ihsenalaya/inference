@@ -1,0 +1,13 @@
+profile: smoke
+namespace: inference
+name: bench                     # nom du Job (suffixé par lab.sh avec un horodatage)
+baseUrl: http://litellm.gateway.svc:4000        # --target litellm (défaut) ou la Gateway Istio
+apiPath: ""                                    # préfixe de chemin éventuel (Gateway : /<ns>/<modèle>)
+apiKey: ""
+model: Qwen/Qwen2.5-7B-Instruct-AWQ            # nom exposé par le backend (LiteLLM : alias)
+tokenizerModel: Qwen/Qwen2.5-7B-Instruct-AWQ
+rate: 2
+duration: 600
+prometheusUrl: http://kps-prometheus.monitoring.svc:9090
+# inference-perf v0.7.0 par digest (index multi-arch)
+image: quay.io/inference-perf/inference-perf@sha256:d247e6ad725dc5bb56df71d115abc8ca455bba9f0ccd4110e14bbb56504250ec

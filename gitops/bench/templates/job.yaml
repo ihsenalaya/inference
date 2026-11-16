@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.name }}-config
+  namespace: {{ .Values.namespace }}
+data:
+  config.yml: |
+{{ tpl (.Files.Get (printf "profiles/%s.yaml" .Values.profile)) . | indent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    lab/bench: "true"
+    lab/profile: {{ .Values.profile }}
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        lab/bench: "true"
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        workload: platform           # le banc tourne sur le pool système, jamais sur le GPU
+      containers:
+        - name: inference-perf
+          image: {{ .Values.image }}
+          workingDir: /workspace
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -u
+              inference-perf --config_file /cfg/config.yml
+              rc=$?
+              echo "===LAB-RESULTS-BEGIN==="
+              find /results -name '*.json' -o -name '*.yaml' | sort | while read -r f; do echo "=== FILE ${f#/results/}"; cat "$f"; echo; done
+              echo "===LAB-RESULTS-END==="
+              exit $rc
+          env:
+            - { name: HF_HOME, value: /tmp/hf }
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits: { memory: 3Gi }
+          volumeMounts:
+            - { name: cfg, mountPath: /cfg }
+            - { name: results, mountPath: /results }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: cfg
+          configMap: { name: {{ .Values.name }}-config }
+        - name: results
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

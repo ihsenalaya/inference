@@ -112,7 +112,6 @@ resource "helm_release" "root" {
     { name = "repoURL", value = var.git_repo_url },
     { name = "revision", value = var.git_revision },
     { name = "env", value = "azure" },
-    { name = "scenario", value = var.scenario },
     { name = "gpuHourlyPrice", value = tostring(var.gpu_hourly_price) },
     { name = "gpuNodes", value = tostring(var.gpu_node_count) },
   ]

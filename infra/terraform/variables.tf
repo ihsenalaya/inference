@@ -74,12 +74,6 @@ variable "git_revision" {
   default = "main"
 }
 
-variable "scenario" {
-  type        = string
-  default     = "baseline-7b"
-  description = "Scénario de serving actif (gitops/serving/scenarios/<nom>)."
-}
-
 variable "argocd_chart_version" {
   type    = string
   default = "10.18.0"

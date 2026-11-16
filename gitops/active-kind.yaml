@@ -1,0 +1,2 @@
+# Scénario actif (kind). Modifié par `lab.sh scenario`, appliqué par Argo CD.
+scenario: kind-mock

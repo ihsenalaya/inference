@@ -4,4 +4,3 @@ prefix          = "inflab"
 gpu_node_count  = 1
 git_repo_url    = "https://github.com/ihsenalaya/inference.git"
 git_revision    = "main"
-scenario        = "baseline-7b"
