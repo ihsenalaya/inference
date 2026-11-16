@@ -1,0 +1,16 @@
+# kind, sans GPU, avec KEDA : faux vLLM (voir serving/chart/files/mock_vllm.py). Valide toute la chaîne sauf le moteur.
+scenario: kind-mock-keda
+mock:
+  enabled: true
+  image: python:3.12-alpine
+models:
+  - alias: qwen-1.5b-keda
+    name: Qwen/Qwen2.5-1.5B-Instruct-keda
+    resourceName: qwen-1-5b-keda
+    uri: hf://hf-internal-testing/tiny-random-gpt2
+    replicas: 1
+    scaling:
+      minReplicas: 1
+      maxReplicas: 2
+      threshold: "2"
+      query: sum(vllm:num_requests_waiting{namespace="inference",pod=~"qwen-1-5b-keda-kserve.*"}) / count(vllm:num_requests_waiting{namespace="inference",pod=~"qwen-1-5b-keda-kserve.*"})
