@@ -30,6 +30,12 @@ spec:
   {{- else }}
   replicas: {{ if eq $.Values.env "azure" }}{{ min (int $m.replicas) (int $.Values.gpuNodes) }}{{ else }}{{ $m.replicas }}{{ end }}
   {{- end }}
+  {{- if not $.Values.mock.enabled }}
+  # Un T4 par pod et quota de 2 GPU : pas de surge possible, on remplace le pod sur place (sinon le rolling update se bloque en Pending).
+  rolloutStrategy:
+    maxSurge: 0
+    maxUnavailable: 1
+  {{- end }}
   router:
     gateway:
       refs:
