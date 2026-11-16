@@ -34,6 +34,7 @@ spec:
     - port: metrics
       path: /metrics
       interval: 15s
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
       relabelings:
         - { sourceLabels: [__meta_kubernetes_service_label_app_kubernetes_io_name], targetLabel: llmisvc }
 ---
@@ -83,18 +84,16 @@ spec:
       interval: 15s
 ---
 apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
+kind: PodMonitor
 metadata:
   name: lab-argocd
   namespace: monitoring
 spec:
   namespaceSelector: { matchNames: [argocd] }
   selector:
-    matchExpressions:
-      - { key: app.kubernetes.io/name, operator: In, values: [argocd-metrics, argocd-server-metrics, argocd-repo-server-metrics, argocd-applicationset-controller-metrics] }
-  endpoints:
-    - port: http-metrics
-      interval: 30s
+    matchLabels:
+      app.kubernetes.io/part-of: argocd
+  podMetricsEndpoints:
     - port: metrics
       interval: 30s
 ---
@@ -123,7 +122,7 @@ spec:
     matchLabels:
       app.kubernetes.io/name: llmisvc-controller-manager
   endpoints:
-    - port: metrics
+    - port: https
       scheme: https
       tlsConfig: { insecureSkipVerify: true }
       bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
