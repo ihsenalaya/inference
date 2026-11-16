@@ -1,4 +1,9 @@
 kserve:
+  storage:
+    # L'init container storage-initializer est tué par OOM (limite 1 Gio) en téléchargeant un modèle 7B : on relève la limite.
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: "2", memory: 6Gi }
   llmisvc:
     # Les CRDs GIE sont installées en vague 0 par l'application crds-gie (avant istiod).
     createGIECRDs: false
