@@ -17,11 +17,16 @@ components:
       ignoreDifferences: [{ group: admissionregistration.k8s.io, kind: ValidatingWebhookConfiguration, jqPathExpressions: [".webhooks[]?.clientConfig.caBundle", ".webhooks[]?.failurePolicy"] }] }
   - { name: kube-prometheus-stack, wave: 1, type: helm, chartKey: kubePrometheus, namespace: monitoring, valuesDir: gitops/observability/kube-prometheus-stack }
   - { name: istio-base,       wave: 2, type: helm, chartKey: istioBase,      namespace: istio-system,  valuesDir: gitops/platform/istio-base }
-  - { name: istiod,           wave: 3, type: helm, chartKey: istiod,         namespace: istio-system,  valuesDir: gitops/platform/istiod,
-      ignoreDifferences:
-        - { group: admissionregistration.k8s.io, kind: ValidatingWebhookConfiguration, jqPathExpressions: [".webhooks[]?.failurePolicy", ".webhooks[]?.clientConfig.caBundle"] }
-        - { group: admissionregistration.k8s.io, kind: MutatingWebhookConfiguration, jqPathExpressions: [".webhooks[]?.failurePolicy", ".webhooks[]?.clientConfig.caBundle"] } }
-  { name: gpu-operator,     wave: 3, type: helm, chartKey: gpuOperator,    namespace: gpu-operator,  valuesDir: gitops/platform/gpu-operator, envs: [azure] }
+  - name: istiod
+    wave: 3
+    type: helm
+    chartKey: istiod
+    namespace: istio-system
+    valuesDir: gitops/platform/istiod
+    ignoreDifferences:
+      - { group: admissionregistration.k8s.io, kind: ValidatingWebhookConfiguration, jqPathExpressions: [".webhooks[]?.failurePolicy", ".webhooks[]?.clientConfig.caBundle"] }
+      - { group: admissionregistration.k8s.io, kind: MutatingWebhookConfiguration, jqPathExpressions: [".webhooks[]?.failurePolicy", ".webhooks[]?.clientConfig.caBundle"] }
+  - { name: gpu-operator,     wave: 3, type: helm, chartKey: gpuOperator,    namespace: gpu-operator,  valuesDir: gitops/platform/gpu-operator, envs: [azure] }
   - { name: keda,             wave: 3, type: helm, chartKey: keda,           namespace: keda,          valuesDir: gitops/platform/keda,
       ignoreDifferences: [{ group: admissionregistration.k8s.io, kind: ValidatingWebhookConfiguration, jqPathExpressions: [".webhooks[]?.clientConfig.caBundle", ".webhooks[]?.failurePolicy"] }] }
   - { name: lws,              wave: 3, type: helm, chartKey: lws,            namespace: lws-system,    valuesDir: gitops/platform/lws }
