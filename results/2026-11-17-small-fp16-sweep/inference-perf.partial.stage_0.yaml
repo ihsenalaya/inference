@@ -1,0 +1,16 @@
+version: 0.2.1
+run:
+  uid: inference-perf-stage-0-8a378b37
+  eid: inference-perf-experiment-06ba2ffd
+  time:
+    start: '2026-11-17T00:09:11.147131Z'
+    end: '2026-11-17T00:10:12.209086Z'
+    duration: PT61.062S
+results:
+  request_performance:
+    aggregate:
+      requests:
+        total: 120
+        failures: 120
+      latency: {}
+

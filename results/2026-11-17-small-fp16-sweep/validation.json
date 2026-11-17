@@ -1,0 +1,145 @@
+{
+  "global": {
+    "warnings": [],
+    "errors": []
+  },
+  "reports": {
+    "summary_lifecycle_metrics.json": {
+      "warnings": [
+        {
+          "check": "summary.distributions",
+          "severity": "warning",
+          "message": "load_summary.schedule_delay: negative minimum -0.0011672218943203916",
+          "report": "summary_lifecycle_metrics.json"
+        },
+        {
+          "check": "summary.token_mismatches",
+          "severity": "warning",
+          "message": "44 request(s) where the client-side token count disagrees with the server-reported completion_tokens",
+          "report": "summary_lifecycle_metrics.json"
+        }
+      ],
+      "errors": []
+    },
+    "stage_0_lifecycle_metrics.json": {
+      "warnings": [
+        {
+          "check": "per_stage.distributions",
+          "severity": "warning",
+          "message": "load_summary.schedule_delay: negative minimum -0.0011672218943203916",
+          "report": "stage_0_lifecycle_metrics.json"
+        }
+      ],
+      "errors": []
+    },
+    "stage_1_lifecycle_metrics.json": {
+      "warnings": [
+        {
+          "check": "per_stage.distributions",
+          "severity": "warning",
+          "message": "load_summary.schedule_delay: negative minimum -0.0010890898702200502",
+          "report": "stage_1_lifecycle_metrics.json"
+        },
+        {
+          "check": "per_stage.token_mismatches",
+          "severity": "warning",
+          "message": "4 request(s) where the client-side token count disagrees with the server-reported completion_tokens",
+          "report": "stage_1_lifecycle_metrics.json"
+        }
+      ],
+      "errors": []
+    },
+    "stage_2_lifecycle_metrics.json": {
+      "warnings": [
+        {
+          "check": "per_stage.distributions",
+          "severity": "warning",
+          "message": "load_summary.schedule_delay: negative minimum -0.0011194170710950857",
+          "report": "stage_2_lifecycle_metrics.json"
+        },
+        {
+          "check": "per_stage.token_mismatches",
+          "severity": "warning",
+          "message": "9 request(s) where the client-side token count disagrees with the server-reported completion_tokens",
+          "report": "stage_2_lifecycle_metrics.json"
+        }
+      ],
+      "errors": []
+    },
+    "stage_3_lifecycle_metrics.json": {
+      "warnings": [
+        {
+          "check": "per_stage.distributions",
+          "severity": "warning",
+          "message": "load_summary.schedule_delay: negative minimum -0.0010380597468611086",
+          "report": "stage_3_lifecycle_metrics.json"
+        },
+        {
+          "check": "per_stage.token_mismatches",
+          "severity": "warning",
+          "message": "9 request(s) where the client-side token count disagrees with the server-reported completion_tokens",
+          "report": "stage_3_lifecycle_metrics.json"
+        }
+      ],
+      "errors": []
+    },
+    "stage_4_lifecycle_metrics.json": {
+      "warnings": [
+        {
+          "check": "per_stage.distributions",
+          "severity": "warning",
+          "message": "load_summary.schedule_delay: negative minimum -0.0011115494125988334",
+          "report": "stage_4_lifecycle_metrics.json"
+        },
+        {
+          "check": "per_stage.token_mismatches",
+          "severity": "warning",
+          "message": "10 request(s) where the client-side token count disagrees with the server-reported completion_tokens",
+          "report": "stage_4_lifecycle_metrics.json"
+        }
+      ],
+      "errors": []
+    },
+    "stage_5_lifecycle_metrics.json": {
+      "warnings": [
+        {
+          "check": "per_stage.distributions",
+          "severity": "warning",
+          "message": "load_summary.schedule_delay: negative minimum -0.0009531358564345283",
+          "report": "stage_5_lifecycle_metrics.json"
+        },
+        {
+          "check": "per_stage.token_mismatches",
+          "severity": "warning",
+          "message": "12 request(s) where the client-side token count disagrees with the server-reported completion_tokens",
+          "report": "stage_5_lifecycle_metrics.json"
+        }
+      ],
+      "errors": []
+    },
+    "inference-perf.partial.stage_0.yaml": {
+      "warnings": [],
+      "errors": []
+    },
+    "inference-perf.partial.stage_1.yaml": {
+      "warnings": [],
+      "errors": []
+    },
+    "inference-perf.partial.stage_2.yaml": {
+      "warnings": [],
+      "errors": []
+    },
+    "inference-perf.partial.stage_3.yaml": {
+      "warnings": [],
+      "errors": []
+    },
+    "inference-perf.partial.stage_4.yaml": {
+      "warnings": [],
+      "errors": []
+    },
+    "inference-perf.partial.stage_5.yaml": {
+      "warnings": [],
+      "errors": []
+    }
+  }
+}
