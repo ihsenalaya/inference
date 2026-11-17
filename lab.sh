@@ -459,7 +459,17 @@ cmd_down() {
     read -r -p "Détruire TOUT le lab ($RG, AKS, nœuds GPU) ? taper 'oui' : " a; [[ "$a" == oui ]] || die "annulé"
   fi
   tf_vars
-  tf destroy -input=false -auto-approve "${TF_VARS[@]}"
+  # Le cluster disparaît avec le groupe de ressources : inutile (et lent, voire bloquant : finalisateurs Argo CD) de désinstaller
+  # un à un les objets Helm/Kubernetes. On les retire de l'état puis on détruit l'infrastructure Azure.
+  local r
+  for r in $(tf state list 2>/dev/null | grep -E '^(helm_release|kubernetes_)'); do tf state rm "$r" >/dev/null; done
+  # Un échec transitoire (ResourceGroupDeletionBlocked : mise à jour de plateforme du VMSS en cours) se résout en réessayant.
+  local attempt
+  for attempt in 1 2 3 4; do
+    tf destroy -input=false -auto-approve "${TF_VARS[@]}" && break
+    [[ $attempt -lt 4 ]] || die "terraform destroy a échoué 4 fois"
+    log WARN "destroy échoué (tentative $attempt), nouvelle tentative dans 120 s"; sleep 120
+  done
   if az group exists -n "$RG" | grep -q true; then
     log WARN "le groupe $RG existe encore, suppression"
     az group delete -n "$RG" --yes
