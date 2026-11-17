@@ -4,7 +4,7 @@ Usage : tests/check_panels.py [url Prometheus] [fenêtre en minutes]"""
 import glob, json, re, sys, time, urllib.parse, urllib.request
 URL = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:19090"
 WIN = int(sys.argv[2]) if len(sys.argv) > 2 else 60
-SUB = {"$__rate_interval": "5m", "$model": ".*", "$pod": ".*", "$namespace": ".*", "${model}": ".*", "$__interval": "1m"}
+SUB = {"$__rate_interval": "5m", "$model": ".*", "$pod": ".*", "$namespace": ".*", "${model}": ".*", "$__interval": "1m", "$__range": "1h"}
 empty, ok, skipped = [], 0, 0
 for f in sorted(glob.glob("gitops/observability/config/dashboards/Lab/*.json")):
     d = json.load(open(f))

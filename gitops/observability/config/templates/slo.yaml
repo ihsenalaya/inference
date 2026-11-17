@@ -25,7 +25,7 @@ spec:
         - record: slo:error_ratio:rate{{ $w }}
           labels: { class: {{ $class }}, sli: availability }
           expr: |
-            sum(rate(litellm_proxy_failed_requests_metric_total{api_key_alias="{{ $c.keyAlias }}",exception_status=~"5..|408"}[{{ $w }}]))
+            (sum(rate(litellm_proxy_failed_requests_metric_total{api_key_alias="{{ $c.keyAlias }}",exception_status=~"5..|408"}[{{ $w }}])) or vector(0))
             / sum(rate(litellm_proxy_total_requests_metric_total{api_key_alias="{{ $c.keyAlias }}",status_code!~"4.."}[{{ $w }}]))
         {{- if $c.ttft }}
         - record: slo:error_ratio:rate{{ $w }}
