@@ -117,7 +117,7 @@ d.ts("Usage du cache KV", "Proche de 100 % = préemptions et latence. Levier : m
      [(f'max by (model_name, pod) (vllm:kv_cache_usage_perc{M})', "{{model_name}} {{pod}}")], "percentunit", minv=0, maxv=1)
 d.ts("Préemptions par seconde", "Requêtes évincées faute de place dans le cache KV : signe de sous-dimensionnement mémoire.", [(f'sum by (model_name) (rate(vllm:num_preemptions_total{M}[$__rate_interval]))', "{{model_name}}")], "ops")
 d.row("3. Le GPU travaille-t-il ?")
-d.ts("Utilisation GPU", "DCGM_FI_DEV_GPU_UTIL : fraction du temps avec un noyau actif (pas la saturation). Voir aussi l'activité moteur dans le dashboard GPU.", [("DCGM_FI_DEV_GPU_UTIL", "GPU {{gpu}} {{Hostname}}")], "percent", minv=0, maxv=100)
+d.ts("Utilisation GPU", "DCGM_FI_DEV_GPU_UTIL : fraction du temps avec un noyau actif (pas la saturation). Voir aussi l'activité moteur dans le dashboard GPU.", [("DCGM_FI_DEV_GPU_UTIL", "GPU {{gpu}} {{hostname}}")], "percent", minv=0, maxv=100)
 d.ts("Mémoire GPU utilisée", "Poids + cache KV. Levier : gpu-memory-utilization, max-model-len, quantization.", [("DCGM_FI_DEV_FB_USED * 1024 * 1024", "utilisée {{gpu}}"), ("DCGM_FI_DEV_FB_FREE * 1024 * 1024", "libre {{gpu}}")], "bytes", stack=True)
 d.ts("Puissance (W) et température", "Un T4 est limité à 70 W : un GPU au plafond de puissance est limité par son enveloppe énergétique.", [("DCGM_FI_DEV_POWER_USAGE", "W {{gpu}}"), ("DCGM_FI_DEV_GPU_TEMP", "°C {{gpu}}")])
 d.row("4. Est-ce efficace ?")
@@ -259,16 +259,16 @@ d.stat("Marge thermique (°C)", "Limite de fonctionnement (réglage gpuLimits, �
        thresholds=[{"color": "red", "value": None}, {"color": "orange", "value": 3}, {"color": "green", "value": 8}])
 d.row("Thermique et puissance")
 d.ts("Température et limite", "Température du GPU face à la limite de fonctionnement. Un T4 est refroidi passivement par le châssis du fournisseur : on ne peut pas agir sur le refroidissement.",
-     [("DCGM_FI_DEV_GPU_TEMP", "température {{gpu}} {{Hostname}}"), ("vector(" + "85" + ")", "limite de fonctionnement (à confirmer)")], "celsius", w=8)
+     [("DCGM_FI_DEV_GPU_TEMP", "température {{gpu}} {{hostname}}"), ("vector(" + "85" + ")", "limite de fonctionnement (à confirmer)")], "celsius", w=8)
 d.ts("Puissance et limite", "Puissance mesurée face au plafond du T4 (70 W). Près du plafond, le GPU baisse ses horloges pour rester dans l'enveloppe.",
-     [("DCGM_FI_DEV_POWER_USAGE", "puissance {{gpu}} {{Hostname}}"), ("vector(70)", "limite (fiche NVIDIA)")], "watt", w=8)
+     [("DCGM_FI_DEV_POWER_USAGE", "puissance {{gpu}} {{hostname}}"), ("vector(70)", "limite (fiche NVIDIA)")], "watt", w=8)
 d.ts("Marge de puissance et marge thermique", "Combien il reste avant le plafond de puissance (W) et avant la limite thermique (°C). Deux unités : à lire séparément.",
      [("lab:gpu_power_headroom_watts", "marge puissance (W) {{gpu}}"), ("lab:gpu_thermal_headroom_celsius", "marge thermique (°C) {{gpu}}")], "short", w=8)
 d.row("Horloges et bridage")
 d.ts("Horloge des unités de calcul (SM) et de la mémoire", "L'horloge monte en charge et redescend au repos. Au repos : environ 585 MHz (observé). Maximum : 1590 MHz pour les SM, 5001 MHz pour la mémoire (relevé du forum NVIDIA, à confirmer).",
-     [("DCGM_FI_DEV_SM_CLOCK", "SM {{gpu}} {{Hostname}}"), ("DCGM_FI_DEV_MEM_CLOCK", "mémoire {{gpu}} {{Hostname}}")], "short", w=8)
+     [("DCGM_FI_DEV_SM_CLOCK", "SM {{gpu}} {{hostname}}"), ("DCGM_FI_DEV_MEM_CLOCK", "mémoire {{gpu}} {{hostname}}")], "short", w=8)
 d.ts("Horloge SM rapportée au maximum", "1 = horloge maximale. Une charge forte avec un rapport bas et une puissance proche de 70 W indique un GPU limité par sa puissance (docs/gpu/01-signaux-du-gpu.md).",
-     [("lab:gpu_clock_ratio", "{{gpu}} {{Hostname}}")], "percentunit", w=8, minv=0, maxv=1)
+     [("lab:gpu_clock_ratio", "{{gpu}} {{hostname}}")], "percentunit", w=8, minv=0, maxv=1)
 d.ts("Bridage décodé (0 ou 1)", "Le masque DCGM_FI_DEV_CLOCK_THROTTLE_REASONS décodé : plafond de puissance logiciel (0x4, normal sous forte charge) et ralentissement matériel ou thermique (0x8, 0x20, 0x40, 0x80, anormal).",
      [("lab:gpu_throttle_sw_power_cap", "plafond de puissance logiciel (normal) {{gpu}}"), ("lab:gpu_throttle_hw_slowdown", "ralentissement matériel ou thermique (anormal) {{gpu}}")], "short", w=8, minv=0, maxv=1)
 d.ts("Temps de bridage (compteurs de durée)", "Vitesse d'augmentation des compteurs de durée de bridage par puissance et par température. L'unité (ns ou µs) reste à vérifier sur le cluster : lire la forme de la courbe, pas la valeur.",
@@ -320,7 +320,7 @@ d.ts("Coût par million de tokens et coût d'inactivité", "Coût du GPU rapport
 d.ts("GPU alloués, utilisés, inactifs", "Alloué sans être utilisé = argent dépensé sans service (alerte LabGPUIdleCost).", [("lab:gpu_allocated", "alloués"), ("lab:gpu_used", "utilisés"), ("lab:gpu_allocated_idle", "alloués et inactifs")], "short", w=12)
 d.row("Comparer les GPU entre eux (2 nœuds)")
 d.ts("Température, puissance et horloge par GPU", "Deux GPU sous la même charge doivent se ressembler. Un GPU nettement plus chaud ou plus lent que l'autre est un candidat au remplacement.",
-     [("DCGM_FI_DEV_GPU_TEMP", "température (°C) {{gpu}} {{Hostname}}"), ("DCGM_FI_DEV_POWER_USAGE", "puissance (W) {{gpu}} {{Hostname}}")], "short", w=8)
+     [("DCGM_FI_DEV_GPU_TEMP", "température (°C) {{gpu}} {{hostname}}"), ("DCGM_FI_DEV_POWER_USAGE", "puissance (W) {{gpu}} {{hostname}}")], "short", w=8)
 d.ts("Écart de température entre GPU", "Température maximale moins minimale. Un écart durable de plus de quelques degrés sous charge égale est suspect.", [("lab:gpu_temp_spread_celsius", "écart")], "celsius", w=8)
 d.ts("Énergie par token et par pod", "Watts du GPU divisés par les tokens générés par le pod qui l'utilise (jointure DCGM / vLLM par le label pod). Deux réplicas identiques doivent avoir des valeurs proches.",
      [('max by (pod) (DCGM_FI_DEV_POWER_USAGE{pod!=""}) / sum by (pod) (rate(vllm:generation_tokens_total[$__rate_interval]))', "joules par token {{pod}}")], "short", w=8)

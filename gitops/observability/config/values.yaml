@@ -21,8 +21,8 @@ alertThresholds:
   gpuThermalHeadroomCelsius: 5      # alerte quand la marge avant la température maximale de fonctionnement tombe sous ce seuil
 
 # Limites matérielles du T4 utilisées par les KPI de santé et d'efficacité du GPU (docs/gpu/01-signaux-du-gpu.md, docs/gpu/SOURCES.md).
-# 70 W, 65 TFLOPS : fiche NVIDIA du T4 (mars 2019). Bande passante : 320 Go/s (la fiche indique 300). 85 °C et 1590 MHz : relevés nvidia-smi
-# publiés sur le forum NVIDIA, NON officiels : à relire avec `nvidia-smi -q` sur notre GPU (séance GPU). 0,8 : maximum pratique de DRAM_ACTIVE (doc DCGM).
+# CONFIRMÉES le 17/11 par `nvidia-smi -q` sur notre GPU (séance GPU, S0) : limite de fonctionnement 85 °C (ralentissement 93, arrêt 96), puissance 70 W
+# (réglable de 60 à 70 W), horloge SM maximale 1590 MHz. 65 TFLOPS : fiche NVIDIA. Bande passante : 320 Go/s (la fiche de 2019 indique 300). 0,8 : maximum pratique de DRAM_ACTIVE (doc DCGM).
 gpuLimits:
   powerWatts: 70
   maxOperatingTempCelsius: 85

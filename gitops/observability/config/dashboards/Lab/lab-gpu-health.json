@@ -377,7 +377,7 @@
     {
      "refId": "A",
      "expr": "DCGM_FI_DEV_GPU_TEMP",
-     "legendFormat": "température {{gpu}} {{Hostname}}",
+     "legendFormat": "température {{gpu}} {{hostname}}",
      "datasource": {
       "type": "prometheus",
       "uid": "prometheus"
@@ -435,7 +435,7 @@
     {
      "refId": "A",
      "expr": "DCGM_FI_DEV_POWER_USAGE",
-     "legendFormat": "puissance {{gpu}} {{Hostname}}",
+     "legendFormat": "puissance {{gpu}} {{hostname}}",
      "datasource": {
       "type": "prometheus",
       "uid": "prometheus"
@@ -564,7 +564,7 @@
     {
      "refId": "A",
      "expr": "DCGM_FI_DEV_SM_CLOCK",
-     "legendFormat": "SM {{gpu}} {{Hostname}}",
+     "legendFormat": "SM {{gpu}} {{hostname}}",
      "datasource": {
       "type": "prometheus",
       "uid": "prometheus"
@@ -573,7 +573,7 @@
     {
      "refId": "B",
      "expr": "DCGM_FI_DEV_MEM_CLOCK",
-     "legendFormat": "mémoire {{gpu}} {{Hostname}}",
+     "legendFormat": "mémoire {{gpu}} {{hostname}}",
      "datasource": {
       "type": "prometheus",
       "uid": "prometheus"
@@ -622,7 +622,7 @@
     {
      "refId": "A",
      "expr": "lab:gpu_clock_ratio",
-     "legendFormat": "{{gpu}} {{Hostname}}",
+     "legendFormat": "{{gpu}} {{hostname}}",
      "datasource": {
       "type": "prometheus",
       "uid": "prometheus"

@@ -683,7 +683,7 @@
     {
      "refId": "A",
      "expr": "DCGM_FI_DEV_GPU_UTIL",
-     "legendFormat": "GPU {{gpu}} {{Hostname}}",
+     "legendFormat": "GPU {{gpu}} {{hostname}}",
      "datasource": {
       "type": "prometheus",
       "uid": "prometheus"

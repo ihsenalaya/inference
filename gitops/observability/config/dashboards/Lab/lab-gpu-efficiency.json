@@ -570,8 +570,8 @@
   {
    "id": 14,
    "type": "timeseries",
-   "title": "Débit de tokens et puissance",
-   "description": "Deux grandeurs d'unités différentes sur deux axes séparés par deux graphiques : ici le débit ; la puissance est dans le graphique suivant.",
+   "title": "Débit de tokens",
+   "description": "Tokens de sortie générés par seconde. À lire avec la puissance du graphique voisin (unités différentes, donc deux graphiques).",
    "datasource": {
     "type": "prometheus",
     "uid": "prometheus"
@@ -929,7 +929,7 @@
     {
      "refId": "A",
      "expr": "DCGM_FI_DEV_GPU_TEMP",
-     "legendFormat": "température (°C) {{gpu}} {{Hostname}}",
+     "legendFormat": "température (°C) {{gpu}} {{hostname}}",
      "datasource": {
       "type": "prometheus",
       "uid": "prometheus"
@@ -938,7 +938,7 @@
     {
      "refId": "B",
      "expr": "DCGM_FI_DEV_POWER_USAGE",
-     "legendFormat": "puissance (W) {{gpu}} {{Hostname}}",
+     "legendFormat": "puissance (W) {{gpu}} {{hostname}}",
      "datasource": {
       "type": "prometheus",
       "uid": "prometheus"

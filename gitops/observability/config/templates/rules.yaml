@@ -85,23 +85,23 @@ spec:
       rules:
         # --- marges (docs/gpu/02-kpi.md). Les limites viennent de gpuLimits (values.yaml) : à confirmer avec nvidia-smi -q sur notre GPU.
         - record: lab:gpu_thermal_headroom_celsius
-          expr: {{ .Values.gpuLimits.maxOperatingTempCelsius }} - max by (gpu, Hostname) (DCGM_FI_DEV_GPU_TEMP)
+          expr: {{ .Values.gpuLimits.maxOperatingTempCelsius }} - max by (gpu, hostname) (DCGM_FI_DEV_GPU_TEMP)
         - record: lab:gpu_power_headroom_watts
-          expr: {{ .Values.gpuLimits.powerWatts }} - max by (gpu, Hostname) (DCGM_FI_DEV_POWER_USAGE)
+          expr: {{ .Values.gpuLimits.powerWatts }} - max by (gpu, hostname) (DCGM_FI_DEV_POWER_USAGE)
         - record: lab:gpu_clock_ratio
-          expr: max by (gpu, Hostname) (DCGM_FI_DEV_SM_CLOCK) / {{ .Values.gpuLimits.smClockMaxMHz }}
+          expr: max by (gpu, hostname) (DCGM_FI_DEV_SM_CLOCK) / {{ .Values.gpuLimits.smClockMaxMHz }}
         - record: lab:gpu_dram_active_vs_practical_max
-          expr: max by (gpu, Hostname) (DCGM_FI_PROF_DRAM_ACTIVE) / {{ .Values.gpuLimits.dramActivePracticalMax }}
+          expr: max by (gpu, hostname) (DCGM_FI_PROF_DRAM_ACTIVE) / {{ .Values.gpuLimits.dramActivePracticalMax }}
         # --- bridage : décodage du masque de bits NVML (0x4 plafond de puissance logiciel ; 0x8 / 0x20 / 0x40 / 0x80 = ralentissements matériel ou thermique)
         - record: lab:gpu_throttle_sw_power_cap
-          expr: floor(max by (gpu, Hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 4) % 2
+          expr: floor(max by (gpu, hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 4) % 2
         - record: lab:gpu_throttle_hw_slowdown
           expr: |
             clamp_max(
-                (floor(max by (gpu, Hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 8) % 2)
-              + (floor(max by (gpu, Hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 32) % 2)
-              + (floor(max by (gpu, Hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 64) % 2)
-              + (floor(max by (gpu, Hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 128) % 2), 1)
+                (floor(max by (gpu, hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 8) % 2)
+              + (floor(max by (gpu, hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 32) % 2)
+              + (floor(max by (gpu, hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 64) % 2)
+              + (floor(max by (gpu, hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 128) % 2), 1)
         # --- présence et allocation
         - record: lab:gpu_visible
           expr: count(DCGM_FI_DEV_GPU_TEMP) or vector(0)
@@ -193,7 +193,7 @@ spec:
           for: 1m
           labels: { severity: critical, category: gpu, component: dcgm }
           annotations:
-            summary: "Erreur XID {{ "{{ $value }}" }} sur le GPU {{ "{{ $labels.gpu }}" }} ({{ "{{ $labels.Hostname }}" }})"
+            summary: "Erreur XID {{ "{{ $value }}" }} sur le GPU {{ "{{ $labels.gpu }}" }} ({{ "{{ $labels.hostname }}" }})"
             runbook_url: {{ $.Values.runbookBase }}/LabGPUXidError.md
         - alert: LabGPUTemperatureHigh
           expr: DCGM_FI_DEV_GPU_TEMP > {{ $t.gpuTempCelsius }}
@@ -208,7 +208,7 @@ spec:
           for: 5m
           labels: { severity: warning, category: gpu, component: dcgm }
           annotations:
-            summary: "Ralentissement matériel ou thermique du GPU {{ "{{ $labels.gpu }}" }} ({{ "{{ $labels.Hostname }}" }})"
+            summary: "Ralentissement matériel ou thermique du GPU {{ "{{ $labels.gpu }}" }} ({{ "{{ $labels.hostname }}" }})"
             runbook_url: {{ $.Values.runbookBase }}/LabGPUThrottling.md
         - alert: LabGPUThermalMarginLow
           expr: lab:gpu_thermal_headroom_celsius < {{ $t.gpuThermalHeadroomCelsius }}
@@ -218,13 +218,13 @@ spec:
             summary: "Marge thermique faible : {{ "{{ $value }}" }} °C avant la limite sur le GPU {{ "{{ $labels.gpu }}" }}"
             runbook_url: {{ $.Values.runbookBase }}/LabGPUThermalMarginLow.md
         - alert: LabGPUEccUncorrectable
-          expr: max by (gpu, Hostname) (DCGM_FI_DEV_ECC_DBE_VOL_TOTAL) > 0
+          expr: max by (gpu, hostname) (DCGM_FI_DEV_ECC_DBE_VOL_TOTAL) > 0
           labels: { severity: critical, category: gpu, component: dcgm }
           annotations:
-            summary: "Erreur ECC double (non corrigeable) sur le GPU {{ "{{ $labels.gpu }}" }} ({{ "{{ $labels.Hostname }}" }})"
+            summary: "Erreur ECC double (non corrigeable) sur le GPU {{ "{{ $labels.gpu }}" }} ({{ "{{ $labels.hostname }}" }})"
             runbook_url: {{ $.Values.runbookBase }}/LabGPUEccUncorrectable.md
         - alert: LabGPUPageRetirementPending
-          expr: max by (gpu, Hostname) (DCGM_FI_DEV_RETIRED_PENDING) == 1
+          expr: max by (gpu, hostname) (DCGM_FI_DEV_RETIRED_PENDING) == 1
           for: 5m
           labels: { severity: warning, category: gpu, component: dcgm }
           annotations:
