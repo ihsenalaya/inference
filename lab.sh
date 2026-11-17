@@ -177,6 +177,7 @@ cmd_up() {
   log INFO "terraform apply : $(( $(date +%s) - t0 )) s"
   kubeconfig_aks
   wait_argocd
+  wait_workloads
   cmd_smoke
 }
 
@@ -196,6 +197,28 @@ wait_argocd() {
     sleep 30
   done
   die "Argo CD n'a pas convergé dans le délai : $bad"
+}
+
+# Les statuts Argo CD / KServe sont périmés juste après un `az aks start` : on vérifie l'état réel des pods.
+workloads_ready() {
+  kubectl get nodes --no-headers 2>/dev/null | awk '$2!="Ready"{bad=1} END{exit bad}' || return 1
+  local g; g="$(kubectl get nodes -l workload=inference -o jsonpath='{range .items[*]}{.status.allocatable.nvidia\.com/gpu}{"\n"}{end}' 2>/dev/null | grep -c '^1$')" || true
+  [[ "$g" -ge "${GPU_NODES:-1}" ]] || return 1
+  local ns
+  for ns in inference gateway monitoring; do
+    kubectl -n "$ns" get pods --no-headers 2>/dev/null | awk '$3!="Completed" { split($2, a, "/"); if (a[1] != a[2] || $3 != "Running") bad=1 } END{exit bad}' || return 1
+  done
+  [[ "$(kubectl -n inference get pods -l kserve.io/component=workload --no-headers 2>/dev/null | grep -c ' 1/1 ')" -ge 1 ]]
+}
+
+wait_workloads() {
+  log INFO "attente des pods (nœuds, GPU, vLLM, LiteLLM...) max ${TIMEOUT_SYNC}s"
+  local end=$(( $(date +%s) + TIMEOUT_SYNC ))
+  while [[ $(date +%s) -lt $end ]]; do
+    if workloads_ready; then log OK "tous les pods sont prêts"; return 0; fi
+    sleep 20
+  done
+  die "les pods ne sont pas tous prêts dans le délai"
 }
 
 cmd_status() {
@@ -225,8 +248,8 @@ litellm_key() { kubectl -n gateway get secret litellm-keys -o jsonpath="{.data.$
 with_pf() { # port-forward temporaire : with_pf ns svc local remote -- commande...
   local ns="$1" svc="$2" lp="$3" rp="$4"; shift 5
   kubectl -n "$ns" port-forward "svc/$svc" "$lp:$rp" >/dev/null 2>&1 &
-  local pid=$!
-  sleep 3
+  local pid=$! i
+  for i in $(seq 1 20); do (echo >"/dev/tcp/127.0.0.1/$lp") 2>/dev/null && break; sleep 1; done   # attend le port (évite la course au démarrage)
   local rc=0; "$@" || rc=$?
   kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
   return $rc
@@ -425,6 +448,7 @@ cmd_start() {
   fi
   kubeconfig_aks
   wait_argocd
+  wait_workloads
   cmd_smoke
 }
 
