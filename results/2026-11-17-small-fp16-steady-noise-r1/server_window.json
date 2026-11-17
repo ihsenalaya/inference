@@ -1,0 +1,18 @@
+{
+ "run": "2026-11-17-small-fp16-steady-noise-r1",
+ "window_s": 270,
+ "gpu_util": 100.0,
+ "gr_engine": 0.9975,
+ "sm_active": 0.9042,
+ "sm_occupancy": 0.1801,
+ "tensor": 0.1216,
+ "fp16": 0.0032,
+ "dram": 0.5288,
+ "power_w": 68.1481,
+ "sm_clock_mhz": 1203.3333,
+ "temp_c": 65.6667,
+ "running": 7.0556,
+ "waiting": 0.0,
+ "kv_usage": 0.0229,
+ "vllm_cpu_cores": 0.3501
+}

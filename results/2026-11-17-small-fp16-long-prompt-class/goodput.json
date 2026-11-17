@@ -1,0 +1,27 @@
+{
+ "run": "2026-11-17-small-fp16-long-prompt-class",
+ "class": "rag",
+ "window_s": 300,
+ "requests": 150,
+ "errors": 0,
+ "good": 137,
+ "good_ratio": 0.9133,
+ "bad_ttft": 5,
+ "bad_e2e": 8,
+ "goodput_req_s": 0.457,
+ "goodput_tok_s": 18.0,
+ "raw_tok_s": 19.9,
+ "ttft_p50": 3.1283982530003414,
+ "ttft_p95": 8.81270789500195,
+ "tpot_p50": 0.20269516933331033,
+ "tpot_p95": 1.0492864552667016,
+ "e2e_p50": 11.66357613999935,
+ "e2e_p95": 30.03670853999938,
+ "slo": {
+  "ttft_le": 10.0,
+  "e2e_le": 30.0,
+  "ttft_objective": 0.95,
+  "e2e_objective": 0.95,
+  "availability": 0.99
+ }
+}

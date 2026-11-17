@@ -1,0 +1,21 @@
+{
+ "run": "2026-11-17-small-fp16-multi-turn-class",
+ "window_s": 270,
+ "gpu_util": 22.2222,
+ "gr_engine": 0.2222,
+ "sm_active": 0.2153,
+ "sm_occupancy": 0.055,
+ "tensor": 0.0106,
+ "fp16": 0.0013,
+ "dram": 0.0158,
+ "power_w": 38.6543,
+ "sm_clock_mhz": 790.0,
+ "temp_c": 52.3333,
+ "running": 2.6667,
+ "waiting": 0.0,
+ "kv_usage": 0.1605,
+ "vllm_cpu_cores": 0.2104,
+ "vllm_ttft_p50": 1.3553,
+ "vllm_ttft_p95": 2.3855,
+ "vllm_e2e_p95": 19.25
+}

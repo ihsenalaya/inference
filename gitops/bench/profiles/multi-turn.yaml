@@ -1,7 +1,10 @@
-# Conversations à contexte croissant : le contexte de chaque session est ajouté à chaque requête.
+# Classe MULTI-TOUR (SLO) : conversations à contexte croissant : le contexte de chaque session est ajouté à chaque requête.
 load:
   type: constant
   stages:
+    {{- if .Values.warmup }}
+    - { rate: {{ .Values.rate }}, duration: {{ .Values.warmup }} }   # échauffement : stage_0, exclu de la mesure
+    {{- end }}
     - { rate: {{ .Values.rate }}, duration: {{ .Values.duration }} }
 data:
   type: shared_prefix
@@ -11,7 +14,6 @@ data:
     system_prompt_len: 256
     question_len: 64
     output_len: 128
-    max_model_len: 4096
     enable_multi_turn_chat: true
 api:
   type: chat

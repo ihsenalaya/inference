@@ -1,0 +1,27 @@
+{
+ "run": "2026-11-17-small-fp16-steady-noise-r2",
+ "class": "interactive",
+ "window_s": 300,
+ "requests": 600,
+ "errors": 0,
+ "good": 600,
+ "good_ratio": 1.0,
+ "bad_ttft": 0,
+ "bad_e2e": 0,
+ "goodput_req_s": 2.0,
+ "goodput_tok_s": 286.7,
+ "raw_tok_s": 286.7,
+ "ttft_p50": 0.19653923199803103,
+ "ttft_p95": 0.3745684719979181,
+ "tpot_p50": 0.025442378584791467,
+ "tpot_p95": 0.035868896206329014,
+ "e2e_p50": 3.290936495999631,
+ "e2e_p95": 7.730117989001883,
+ "slo": {
+  "ttft_le": 5.0,
+  "e2e_le": 30.0,
+  "ttft_objective": 0.95,
+  "e2e_objective": 0.95,
+  "availability": 0.99
+ }
+}

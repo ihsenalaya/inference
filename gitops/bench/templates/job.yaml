@@ -36,8 +36,24 @@ spec:
               set -u
               inference-perf --config_file /cfg/config.yml
               rc=$?
+              # Mode par requête : on garde un CSV compact (sans prompts ni réponses) au lieu du JSON de plusieurs dizaines de Mo
+              for f in $(find /results -name 'per_request_lifecycle_metrics.json'); do
+                python3 - "$f" "$(dirname "$f")/requests.csv" <<'PY' && rm -f "$f"
+              import csv, json, sys
+              rows = json.load(open(sys.argv[1]))
+              with open(sys.argv[2], "w", newline="") as o:
+                  w = csv.writer(o); w.writerow(["start", "end", "input_tokens", "output_tokens", "ttft", "tpot", "error"])
+                  for r in rows:
+                      m = (r.get("info") or {}).get("response_metrics") or {}
+                      ts = m.get("output_token_times") or []
+                      n = m.get("output_tokens") or len(ts)
+                      ttft = (ts[0] - r["start_time"]) if ts else ""
+                      tpot = ((ts[-1] - ts[0]) / (len(ts) - 1)) if len(ts) > 1 else ""
+                      w.writerow([r["start_time"], r["end_time"], (r.get("info") or {}).get("input_tokens", ""), n, ttft, tpot, 1 if r.get("error") else 0])
+              PY
+              done
               echo "===LAB-RESULTS-BEGIN==="
-              find /results -name '*.json' -o -name '*.yaml' | sort | while read -r f; do echo "=== FILE ${f#/results/}"; cat "$f"; echo; done
+              find /results \( -name '*.json' -o -name '*.yaml' -o -name '*.csv' \) | sort | while read -r f; do echo "=== FILE ${f#/results/}"; cat "$f"; echo; done
               echo "===LAB-RESULTS-END==="
               exit $rc
           env:

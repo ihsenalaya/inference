@@ -1,9 +1,12 @@
-# Prompts de 2 000 à 3 500 tokens : stress du prefill (piège B2, backend d'attention sur T4).
+# Classe RAG (SLO) : prompts de 2 000 à 3 500 tokens, réponse courte. Stress du prefill (piège B2, backend d'attention sur T4). Débit : ragRate (0,5 req/s par défaut).
 # max-model-len = 4096 : sortie courte pour rester sous la limite.
 load:
   type: constant
   stages:
-    - { rate: 0.5, duration: {{ .Values.duration }} }
+    {{- if .Values.warmup }}
+    - { rate: {{ .Values.ragRate }}, duration: {{ .Values.warmup }} }   # échauffement : stage_0, exclu de la mesure
+    {{- end }}
+    - { rate: {{ .Values.ragRate }}, duration: {{ .Values.duration }} }
 data:
   type: synthetic
   input_distribution: { min: 2000, max: 3500, mean: 2750 }

@@ -1,0 +1,27 @@
+{
+ "run": "2026-11-17-small-fp16-batch-class",
+ "class": "batch",
+ "window_s": 300,
+ "requests": 1112,
+ "errors": 0,
+ "good": 1112,
+ "good_ratio": 1.0,
+ "bad_ttft": 0,
+ "bad_e2e": 0,
+ "goodput_req_s": 3.707,
+ "goodput_tok_s": 933.4,
+ "raw_tok_s": 933.4,
+ "ttft_p50": 39.22120794700095,
+ "ttft_p95": 42.9419177819982,
+ "tpot_p50": 0.2731806702755908,
+ "tpot_p95": 0.286827276478726,
+ "e2e_p50": 96.406689954998,
+ "e2e_p95": 146.430200660001,
+ "slo": {
+  "ttft_le": null,
+  "e2e_le": 300.0,
+  "ttft_objective": null,
+  "e2e_objective": 0.95,
+  "availability": 0.99
+ }
+}

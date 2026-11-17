@@ -1,0 +1,27 @@
+{
+ "run": "2026-11-17-small-fp16-multi-turn-class",
+ "class": "multiturn",
+ "window_s": 300,
+ "requests": 600,
+ "errors": 456,
+ "good": 144,
+ "good_ratio": 0.24,
+ "bad_ttft": 0,
+ "bad_e2e": 0,
+ "goodput_req_s": 0.48,
+ "goodput_tok_s": 61.4,
+ "raw_tok_s": 61.4,
+ "ttft_p50": 0.5899951469982625,
+ "ttft_p95": 2.069122746001085,
+ "tpot_p50": 0.07198056626772072,
+ "tpot_p95": 0.11304792191338951,
+ "e2e_p50": 10.210314685999037,
+ "e2e_p95": 15.31980721400032,
+ "slo": {
+  "ttft_le": 5.0,
+  "e2e_le": 30.0,
+  "ttft_objective": 0.95,
+  "e2e_objective": 0.95,
+  "availability": 0.99
+ }
+}

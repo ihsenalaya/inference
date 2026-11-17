@@ -352,26 +352,36 @@ cmd_bench() {
   [[ -n "${SWEEP_RATES:-}" ]] && extra+=(--set "sweepRates={${SWEEP_RATES}}")
   [[ -n "${WARMUP:-}" ]] && extra+=(--set "warmup=$WARMUP")
   [[ -n "${PER_REQUEST:-}" ]] && extra+=(--set "perRequest=$PER_REQUEST")
+  [[ -n "${RAG_RATE:-}" ]] && extra+=(--set "ragRate=$RAG_RATE")
   [[ -n "${STAGE_DURATION:-}" ]] && extra+=(--set "stageDuration=$STAGE_DURATION")
   log INFO "bench $profile sur $scen (cible $target, modèle $model)"
   grafana_annotation "bench $profile début | scénario $scen | git $sha | cible $target" '"bench","start"'
   helm template bench "$ROOT/gitops/bench" --set profile="$profile" --set name="$name" --set baseUrl="$base" --set apiPath="$apipath" \
     --set apiKey="$key" --set model="$model" --set prometheusUrl="${BENCH_PROM_URL-http://kps-prometheus.monitoring.svc:9090}" --set tokenizerModel="${hf_name:-$model}" "${extra[@]}" | kubectl apply -f - >/dev/null
   local out; out="$ROOT/results/$(date +%Y-%m-%d)-${scen}-${profile}"; [[ "$target" == litellm ]] || out="${out}-${target}"; [[ -z "${RESULT_TAG:-}" ]] || out="${out}-${RESULT_TAG}"; mkdir -p "$out"
-  kubectl -n inference wait --for=condition=complete "job/$name" --timeout="${BENCH_TIMEOUT:-3600}s" >/dev/null 2>&1 || \
-    kubectl -n inference wait --for=condition=failed "job/$name" --timeout=5s >/dev/null 2>&1 || true
+  # attend la fin OU l'échec du job (un job en échec ne doit pas faire attendre tout le délai)
+  local bend=$(( $(date +%s) + ${BENCH_TIMEOUT:-3600} )) bst
+  while [[ $(date +%s) -lt $bend ]]; do
+    bst="$(kubectl -n inference get "job/$name" -o jsonpath='{range .status.conditions[*]}{.type}={.status} {end}' 2>/dev/null || true)"
+    case "$bst" in *Complete=True*) break ;; *Failed=True*) log ERR "le job de bench a échoué"; break ;; esac
+    sleep 10
+  done
   kubectl -n inference logs "job/$name" >"$out/run.log" 2>&1 || true
   python3 - "$out" <<'PY'
 import pathlib, re, sys
 out = pathlib.Path(sys.argv[1]); log = (out / "run.log").read_text()
 m = re.search(r"===LAB-RESULTS-BEGIN===\n(.*)===LAB-RESULTS-END===", log, re.S)
 if m:
-    cur = None
+    files, cur = {}, None
     for line in m.group(1).splitlines(keepends=True):
         if line.startswith("=== FILE "):
-            cur = out / line[9:].strip(); cur.parent.mkdir(parents=True, exist_ok=True); cur.write_text("")
+            cur = line[9:].strip(); files[cur] = []
         elif cur is not None:
-            with cur.open("a") as f: f.write(line)
+            files[cur].append(line)
+    for name, lines in files.items():   # une seule écriture par fichier (sous WSL, ouvrir un fichier par ligne prend des dizaines de minutes)
+        f = out / name; f.parent.mkdir(parents=True, exist_ok=True); f.write_text("".join(lines))
+    if len(log) > 2_000_000:   # les fichiers sont extraits : le journal n'a plus besoin de les contenir
+        (out / "run.log").write_text(log[:m.start()] + "[résultats extraits dans ce dossier]\n")
 PY
   # la clé virtuelle ne doit jamais atterrir dans Git : masquage dans tous les fichiers du run
   [[ -z "$key" ]] || grep -rlF -- "$key" "$out" 2>/dev/null | xargs -r sed -i "s/${key//\//\\/}/REDACTED/g"
