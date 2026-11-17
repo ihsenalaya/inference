@@ -1,2 +1,2 @@
 # Scénario actif (azure). Modifié par `lab.sh scenario`, appliqué par Argo CD.
-scenario: baseline-7b
+scenario: small-fp16
