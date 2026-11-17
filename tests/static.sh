@@ -59,7 +59,7 @@ docs = [d for d in yaml.safe_load_all(open("/tmp/static-observability-config-azu
 for d in docs:
     open(f"/tmp/{d['metadata']['name']}.rules.yml", "w").write(yaml.dump({"groups": d["spec"]["groups"]}))
 PY
-promtool check rules /tmp/lab-recording.rules.yml /tmp/lab-alerts.rules.yml >/tmp/pt.txt 2>&1 && ok "promtool check rules" || { ko "promtool"; cat /tmp/pt.txt; }
+promtool check rules /tmp/lab-recording.rules.yml /tmp/lab-alerts.rules.yml /tmp/lab-slo.rules.yml >/tmp/pt.txt 2>&1 && ok "promtool check rules" || { ko "promtool"; cat /tmp/pt.txt; }
 if ls tests/promtool/*.yml >/dev/null 2>&1; then
   promtool test rules tests/promtool/*.yml >/tmp/ptt.txt 2>&1 && ok "promtool test rules" || { ko "promtool test"; cat /tmp/ptt.txt; }
 fi

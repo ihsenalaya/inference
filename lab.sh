@@ -341,7 +341,7 @@ cmd_bench() {
   hf_name="$(kubectl -n inference get llminferenceservices -o jsonpath='{range .items[*]}{.metadata.labels.lab/alias}{" "}{.spec.model.name}{" "}{.metadata.name}{"\n"}{end}' | awk -v a="$alias_name" '$1==a{print $2}')"
   res_name="$(kubectl -n inference get llminferenceservices -o jsonpath='{range .items[*]}{.metadata.labels.lab/alias}{" "}{.spec.model.name}{" "}{.metadata.name}{"\n"}{end}' | awk -v a="$alias_name" '$1==a{print $3}')"
   if [[ "$target" == litellm ]]; then
-    key="$(litellm_key lab-bench)"; base="http://litellm.gateway.svc:4000"; apipath=""
+    key="$(litellm_key "${BENCH_KEY:-lab-bench}")"; base="http://litellm.gateway.svc:4000"; apipath=""
     model="$alias_name"
   else
     key=""; base="http://inference-gateway-istio.inference.svc.cluster.local"; apipath="/inference/${res_name}"; model="$hf_name"
@@ -351,6 +351,7 @@ cmd_bench() {
   [[ -n "${DURATION:-}" ]] && extra+=(--set "duration=$DURATION")
   [[ -n "${SWEEP_RATES:-}" ]] && extra+=(--set "sweepRates={${SWEEP_RATES}}")
   [[ -n "${WARMUP:-}" ]] && extra+=(--set "warmup=$WARMUP")
+  [[ -n "${PER_REQUEST:-}" ]] && extra+=(--set "perRequest=$PER_REQUEST")
   [[ -n "${STAGE_DURATION:-}" ]] && extra+=(--set "stageDuration=$STAGE_DURATION")
   log INFO "bench $profile sur $scen (cible $target, modèle $model)"
   grafana_annotation "bench $profile début | scénario $scen | git $sha | cible $target" '"bench","start"'

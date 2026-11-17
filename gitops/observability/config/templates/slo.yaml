@@ -1,0 +1,90 @@
+{{- /* SLO par classe de charge : règles d'enregistrement (part de requêtes « mauvaises » par fenêtre) et alertes de burn rate
+       à fenêtres multiples. Voir docs/sre/SLO.md. Les seuils de burn rate sont calculés depuis slo.windowDays. */ -}}
+{{- $s := .Values.slo }}
+{{- $hours := mulf (float64 $s.windowDays) 24.0 }}
+{{- define "dur2h" -}}
+{{- if hasSuffix "h" . -}}{{ trimSuffix "h" . | float64 }}{{- else -}}{{ divf (trimSuffix "m" . | float64) 60.0 }}{{- end -}}
+{{- end }}
+{{- $fastBurn := printf "%.4g" (divf (mulf $s.fast.budgetShare $hours) (include "dur2h" $s.fast.window | float64)) }}
+{{- $slowBurn := printf "%.4g" (divf (mulf $s.slow.budgetShare $hours) (include "dur2h" $s.slow.window | float64)) }}
+{{- $wins := list "5m" "30m" "1h" "6h" }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: lab-slo
+  namespace: monitoring
+  labels: { lab/part: observability }
+spec:
+  groups:
+    - name: lab.slo.sli
+      interval: 30s
+      rules:
+        {{- range $class, $c := $s.classes }}
+        {{- range $w := $wins }}
+        # --- {{ $class }} / fenêtre {{ $w }}
+        - record: slo:error_ratio:rate{{ $w }}
+          labels: { class: {{ $class }}, sli: availability }
+          expr: |
+            sum(rate(litellm_proxy_failed_requests_metric_total{api_key_alias="{{ $c.keyAlias }}",exception_status=~"5..|408"}[{{ $w }}]))
+            / sum(rate(litellm_proxy_total_requests_metric_total{api_key_alias="{{ $c.keyAlias }}",status_code!~"4.."}[{{ $w }}]))
+        {{- if $c.ttft }}
+        - record: slo:error_ratio:rate{{ $w }}
+          labels: { class: {{ $class }}, sli: ttft }
+          expr: |
+            1 - sum(rate(litellm_llm_api_time_to_first_token_metric_bucket{api_key_alias="{{ $c.keyAlias }}",le="{{ $c.ttft.le }}"}[{{ $w }}]))
+            / sum(rate(litellm_llm_api_time_to_first_token_metric_count{api_key_alias="{{ $c.keyAlias }}"}[{{ $w }}]))
+        {{- end }}
+        {{- if $c.e2e }}
+        - record: slo:error_ratio:rate{{ $w }}
+          labels: { class: {{ $class }}, sli: e2e }
+          expr: |
+            1 - sum(rate(litellm_request_total_latency_metric_bucket{api_key_alias="{{ $c.keyAlias }}",le="{{ $c.e2e.le }}"}[{{ $w }}]))
+            / sum(rate(litellm_request_total_latency_metric_count{api_key_alias="{{ $c.keyAlias }}"}[{{ $w }}]))
+        {{- end }}
+        {{- end }}
+        {{- end }}
+    - name: lab.slo.budget
+      interval: 30s
+      rules:
+        {{- range $class, $c := $s.classes }}
+        - record: slo:error_budget
+          labels: { class: {{ $class }}, sli: availability }
+          expr: vector({{ printf "%.4g" (subf 1.0 $c.availability) }})
+        {{- if $c.ttft }}
+        - record: slo:error_budget
+          labels: { class: {{ $class }}, sli: ttft }
+          expr: vector({{ printf "%.4g" (subf 1.0 $c.ttft.objective) }})
+        {{- end }}
+        {{- if $c.e2e }}
+        - record: slo:error_budget
+          labels: { class: {{ $class }}, sli: e2e }
+          expr: vector({{ printf "%.4g" (subf 1.0 $c.e2e.objective) }})
+        {{- end }}
+        {{- end }}
+        # Taux de consommation du budget (burn rate) = part de requêtes mauvaises / budget d'erreur ; 1 = on consomme le budget exactement au rythme de la fenêtre SLO
+        - record: slo:burn_rate:1h
+          expr: slo:error_ratio:rate1h / on (class, sli) slo:error_budget
+        - record: slo:burn_rate:6h
+          expr: slo:error_ratio:rate6h / on (class, sli) slo:error_budget
+        - record: slo:burn_rate:5m
+          expr: slo:error_ratio:rate5m / on (class, sli) slo:error_budget
+        - record: slo:burn_rate:30m
+          expr: slo:error_ratio:rate30m / on (class, sli) slo:error_budget
+    - name: lab.slo.alerts
+      rules:
+        - alert: LabSLOBurnFast
+          expr: |
+            (slo:burn_rate:{{ $s.fast.window }} > {{ $fastBurn }}) and (slo:burn_rate:{{ $s.fast.confirm }} > {{ $fastBurn }})
+          labels: { severity: critical, category: slo, component: litellm }
+          annotations:
+            summary: "Burn rate rapide ({{ $fastBurn }}x sur {{ $s.fast.window }}, confirmé sur {{ $s.fast.confirm }}) : classe {{ "{{ $labels.class }}" }}, SLI {{ "{{ $labels.sli }}" }}"
+            description: "{{ mulf $s.fast.budgetShare 100 }} % du budget d'erreur de {{ $s.windowDays }} jours est consommé en {{ $s.fast.window }}."
+            runbook_url: {{ $.Values.runbookBase }}/LabSLOBurnFast.md
+        - alert: LabSLOBurnSlow
+          expr: |
+            (slo:burn_rate:{{ $s.slow.window }} > {{ $slowBurn }}) and (slo:burn_rate:{{ $s.slow.confirm }} > {{ $slowBurn }})
+          labels: { severity: warning, category: slo, component: litellm }
+          annotations:
+            summary: "Burn rate lent ({{ $slowBurn }}x sur {{ $s.slow.window }}, confirmé sur {{ $s.slow.confirm }}) : classe {{ "{{ $labels.class }}" }}, SLI {{ "{{ $labels.sli }}" }}"
+            description: "{{ mulf $s.slow.budgetShare 100 }} % du budget d'erreur de {{ $s.windowDays }} jours est consommé en {{ $s.slow.window }}."
+            runbook_url: {{ $.Values.runbookBase }}/LabSLOBurnSlow.md

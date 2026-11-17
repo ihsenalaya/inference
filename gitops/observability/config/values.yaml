@@ -18,3 +18,36 @@ alertThresholds:
   gpuMemoryRatio: 0.95
   gpuIdleMinutes: 30
   gpuLowUtilWithQueue: 20
+
+# ---------------------------------------------------------------------------------------------------------------
+# SLO par classe de charge (docs/sre/SLO.md). La classe est identifiée par l'alias de la clé virtuelle LiteLLM
+# (api_key_alias) : un client = une classe = une clé. Les seuils sont PROPOSÉS à partir de docs/BASELINE.md et de la séance 2.
+# Les seuils `le` doivent être des bornes de seaux des histogrammes LiteLLM (0.5, 1, 2, 5, 10, 30, 60, 120, 300, 420, 600).
+# Un SLI « bon / mauvais » par requête ; objectif = part minimale de requêtes bonnes sur la fenêtre.
+# Taux de consommation (burn rate) : seuil = part du budget consommée dans la fenêtre d'alerte x fenêtre SLO / fenêtre d'alerte
+# (SRE Workbook : 2 % en 1 h -> 14,4 ; 5 % en 6 h -> 6 pour 30 jours). Changer windowDays recalcule les seuils.
+# ---------------------------------------------------------------------------------------------------------------
+slo:
+  windowDays: 30
+  fast: { budgetShare: 0.02, window: 1h, confirm: 5m }    # page : le budget fond très vite
+  slow: { budgetShare: 0.05, window: 6h, confirm: 30m }   # ticket : fuite lente mais réelle
+  classes:
+    interactive:
+      keyAlias: lab-interactive
+      availability: 0.99
+      ttft:  { le: "5.0", objective: 0.95 }    # 95 % des premiers tokens en <= 5 s (seaux LiteLLM : ...1, 2, 5, 10, 30, 60...)
+      e2e:   { le: "30.0", objective: 0.95 }    # 95 % des requêtes terminées en <= 30 s
+    rag:
+      keyAlias: lab-rag
+      availability: 0.99
+      ttft:  { le: "10.0", objective: 0.95 }    # prompts longs : le prefill domine
+      e2e:   { le: "30.0", objective: 0.95 }
+    multiturn:
+      keyAlias: lab-multiturn
+      availability: 0.99
+      ttft:  { le: "5.0", objective: 0.95 }
+      e2e:   { le: "30.0", objective: 0.95 }
+    batch:
+      keyAlias: lab-batch
+      availability: 0.99
+      e2e:   { le: "300.0", objective: 0.95 }   # 95 % des requêtes en <= 5 min (pas d'utilisateur en attente)

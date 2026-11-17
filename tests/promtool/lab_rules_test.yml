@@ -3,6 +3,7 @@
 rule_files:
   - /tmp/lab-recording.rules.yml
   - /tmp/lab-alerts.rules.yml
+  - /tmp/lab-slo.rules.yml
 evaluation_interval: 30s
 tests:
   - name: file d'attente -> alerte LabRequestsWaiting
@@ -67,3 +68,79 @@ tests:
             exp_annotations:
               summary: "GPU inactif depuis plus de 30 min sur un nœud allumé (coût)"
               runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/LabGPUIdleCost.md
+  # ------------------------------------------------------------------ SLO : burn rate (classe interactive, SLI ttft)
+  # Budget d'erreur ttft = 1 - 0,95 = 0,05. Seuil rapide = 14,4 x 0,05 = 0,72 de requêtes lentes (fenêtres 1 h ET 5 min).
+  - name: burn rate rapide - 80 % de requêtes trop lentes pendant 1 h 10 -> page
+    interval: 30s
+    input_series:
+      - series: 'litellm_llm_api_time_to_first_token_metric_count{api_key_alias="lab-interactive"}'
+        values: '0+10x200'
+      - series: 'litellm_llm_api_time_to_first_token_metric_bucket{api_key_alias="lab-interactive",le="5.0"}'
+        values: '0+2x200'
+    alert_rule_test:
+      - eval_time: 80m
+        alertname: LabSLOBurnFast
+        exp_alerts:
+          - exp_labels: { severity: critical, category: slo, component: litellm, class: interactive, sli: ttft }
+            exp_annotations:
+              summary: "Burn rate rapide (14.4x sur 1h, confirmé sur 5m) : classe interactive, SLI ttft"
+              description: "2 % du budget d'erreur de 30 jours est consommé en 1h."
+              runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/LabSLOBurnFast.md
+  - name: burn rate rapide - 50 % de requêtes lentes (10x le budget) -> pas de page
+    interval: 30s
+    input_series:
+      - series: 'litellm_llm_api_time_to_first_token_metric_count{api_key_alias="lab-interactive"}'
+        values: '0+10x200'
+      - series: 'litellm_llm_api_time_to_first_token_metric_bucket{api_key_alias="lab-interactive",le="5.0"}'
+        values: '0+5x200'
+    alert_rule_test:
+      - eval_time: 80m
+        alertname: LabSLOBurnFast
+        exp_alerts: []
+  - name: burn rate rapide - pic court (5 min) sur une heure saine -> pas de page (fenêtre de confirmation)
+    interval: 30s
+    input_series:
+      # 60 min sains (tout est rapide), puis 5 min tout lent : la fenêtre 1 h reste sous 14,4 x
+      - series: 'litellm_llm_api_time_to_first_token_metric_count{api_key_alias="lab-interactive"}'
+        values: '0+10x120 1200+10x10'
+      - series: 'litellm_llm_api_time_to_first_token_metric_bucket{api_key_alias="lab-interactive",le="5.0"}'
+        values: '0+10x120 1200+0x10'
+    alert_rule_test:
+      - eval_time: 65m
+        alertname: LabSLOBurnFast
+        exp_alerts: []
+  - name: "burn rate - disponibilité (classe batch), 30 % d'échecs pendant 1 h 10 -> page"
+    interval: 30s
+    input_series:
+      - series: 'litellm_proxy_total_requests_metric_total{api_key_alias="lab-batch",status_code="200"}'
+        values: '0+10x200'
+      - series: 'litellm_proxy_failed_requests_metric_total{api_key_alias="lab-batch",exception_status="500"}'
+        values: '0+3x200'
+    alert_rule_test:
+      - eval_time: 80m
+        alertname: LabSLOBurnFast
+        exp_alerts:
+          - exp_labels: { severity: critical, category: slo, component: litellm, class: batch, sli: availability }
+            exp_annotations:
+              summary: "Burn rate rapide (14.4x sur 1h, confirmé sur 5m) : classe batch, SLI availability"
+              description: "2 % du budget d'erreur de 30 jours est consommé en 1h."
+              runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/LabSLOBurnFast.md
+  - name: "burn rate lent - 10 % d échecs (10x le budget de 1 %) pendant 7 h -> ticket, pas de page"
+    interval: 60s
+    input_series:
+      - series: 'litellm_proxy_total_requests_metric_total{api_key_alias="lab-rag",status_code="200"}'
+        values: '0+10x500'
+      - series: 'litellm_proxy_failed_requests_metric_total{api_key_alias="lab-rag",exception_status="500"}'
+        values: '0+1x500'
+    alert_rule_test:
+      - eval_time: 7h
+        alertname: LabSLOBurnSlow
+        exp_alerts:
+          - exp_labels: { severity: warning, category: slo, component: litellm, class: rag, sli: availability }
+            exp_annotations:
+              summary: "Burn rate lent (6x sur 6h, confirmé sur 30m) : classe rag, SLI availability"
+              description: "5 % du budget d'erreur de 30 jours est consommé en 6h."
+              runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/LabSLOBurnSlow.md
+      - eval_time: 7h
+        alertname: LabSLOBurnFast
+        exp_alerts: []

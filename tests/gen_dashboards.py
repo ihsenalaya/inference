@@ -220,4 +220,30 @@ d.logs("Access logs de la gateway Istio", "JSON Envoy : code, durée, upstream."
 d.ts("Débit de logs d'erreur", "Erreurs par minute, alignées sur les métriques.", [('sum by (pod) (count_over_time({namespace="inference"} |~ "(?i)error" [1m]))', "{{pod}}")], ds=LOKI, w=24)
 d.save(vars_model=False)
 
+# ---------------- 06 SLO par classe ----------------
+d = D("lab-slo", "06 - SLO par classe de charge", "Lab", "Budget d'erreur, burn rate et goodput par classe (interactive, rag, multiturn, batch). SLO : docs/sre/SLO.md. La classe = alias de la clé virtuelle LiteLLM.")
+d.row("Burn rate (1 = on consomme le budget exactement au rythme de la fenêtre SLO ; page à 14,4, ticket à 6)")
+d.ts("Burn rate sur 1 h", "Part de requêtes mauvaises / budget d'erreur, fenêtre 1 h. Au-dessus de 14,4 (et 5 min confirmé) : page.",
+     [("slo:burn_rate:1h", "{{class}} / {{sli}}")], "short", w=12)
+d.ts("Burn rate sur 5 min (confirmation)", "Fenêtre courte : évite d'alerter sur un incident déjà terminé.",
+     [("slo:burn_rate:5m", "{{class}} / {{sli}}")], "short", w=12)
+d.ts("Burn rate sur 6 h", "Fuite lente : au-dessus de 6 (et 30 min confirmé) : ticket.", [("slo:burn_rate:6h", "{{class}} / {{sli}}")], "short", w=12)
+d.ts("Part de requêtes mauvaises (5 min)", "Le SLI brut : requêtes qui violent l'objectif (échec, TTFT ou durée trop longs).",
+     [("slo:error_ratio:rate5m", "{{class}} / {{sli}}")], "percentunit", w=12)
+d.row("Budget d'erreur consommé sur la période affichée")
+for c in ("interactive", "rag", "multiturn", "batch"):
+    d.stat(f"{c} : budget consommé (disponibilité)", "Moyenne des parts de requêtes en échec sur la période affichée / budget d'erreur (approximation : moyenne de ratios 5 min, non pondérée par le trafic). 100 % = budget épuisé.",
+           f'avg_over_time(slo:error_ratio:rate5m{{class="{c}",sli="availability"}}[$__range]) / scalar(slo:error_budget{{class="{c}",sli="availability"}})', "percentunit", w=6,
+           thresholds=[{"color": "green", "value": None}, {"color": "orange", "value": 0.5}, {"color": "red", "value": 1}])
+d.row("Goodput : requêtes par seconde qui respectent l'objectif de latence, face au trafic total")
+d.ts("Requêtes totales par classe", "Trafic vu par LiteLLM, par alias de clé.", [("sum by (api_key_alias) (rate(litellm_proxy_total_requests_metric_total[$__rate_interval]))", "{{api_key_alias}}")], "reqps", w=12)
+d.ts("Requêtes sous l'objectif de TTFT", "Débit des requêtes dont le premier token arrive dans le seuil (interactive 5 s, multiturn 5 s, rag 10 s).",
+     [('sum by (api_key_alias) (rate(litellm_llm_api_time_to_first_token_metric_bucket{api_key_alias=~"lab-interactive|lab-multiturn",le="5.0"}[$__rate_interval]))', "{{api_key_alias}} <= 5 s"),
+      ('sum by (api_key_alias) (rate(litellm_llm_api_time_to_first_token_metric_bucket{api_key_alias="lab-rag",le="10.0"}[$__rate_interval]))', "{{api_key_alias}} <= 10 s")], "reqps", w=12)
+d.ts("Latence de bout en bout par classe (p95)", "p95 vu par LiteLLM, par alias de clé.",
+     [("histogram_quantile(0.95, sum by (le, api_key_alias) (rate(litellm_request_total_latency_metric_bucket[$__rate_interval])))", "{{api_key_alias}}")], "s", w=12)
+d.ts("TTFT par classe (p95)", "p95 du premier token vu par LiteLLM (streaming), par alias de clé.",
+     [("histogram_quantile(0.95, sum by (le, api_key_alias) (rate(litellm_llm_api_time_to_first_token_metric_bucket[$__rate_interval])))", "{{api_key_alias}}")], "s", w=12)
+d.save(vars_model=False)
+
 print("ok", sorted(str(p.relative_to(OUT)) for p in OUT.rglob("*.json")))
