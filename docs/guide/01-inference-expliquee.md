@@ -76,7 +76,7 @@ Les poids ne sont lus qu'une fois pour tout le batch. Le batch change à chaque 
 - `vllm:num_requests_running` = taille du batch courant ; `vllm:num_requests_waiting` = file d'attente (requêtes qui n'ont pas pu entrer).
 - Les réglages qui bornent le batch sont `--max-num-seqs` (nombre de requêtes) et `--max-num-batched-tokens` (nombre de tokens par étape). **Nous ne les avons pas modifiés** (valeurs par défaut de vLLM v0.32.0) : ce sont des leviers de la campagne d'optimisation.
 
-Borne théorique du decode à batch 1 **(calcul)** : lire 5,29 Gio (5,68 x 10^9 octets) à la bande passante d'un T4 (320 Go/s, fiche NVIDIA)
+Borne théorique du decode à batch 1 **(calcul)** : lire 5,29 Gio (5,68 x 10^9 octets) à la bande passante d'un T4 (320 Go/s ; la fiche NVIDIA de 2019 indique 300 Go/s, ce qui donnerait 18,9 ms au lieu de 17,7)
 => 17,7 ms par token. Mesuré à faible charge : TPOT p50 = 21,5 ms (smoke, via LiteLLM) **(observé)**. L'ordre de grandeur colle : au repos, le decode est limité par la mémoire.
 
 ## 4. Saturation : ce que montre le sweep

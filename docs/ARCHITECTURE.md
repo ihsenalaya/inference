@@ -57,4 +57,4 @@ Les applications convergent par réessais (backoff) : l'ordre est une aide, pas 
 ## Observabilité
 
 Prometheus (rétention 7 j), règles d'enregistrement `lab:*`, alertes avec `runbook_url` (docs/runbooks), Grafana provisionné
-(7 dashboards maison dont « 06 - SLO par classe de charge », 5 dashboards llm-d, DCGM), alertes de burn rate par classe de charge, Loki (logs pods + événements), Alertmanager (inhibition, webhook ou récepteur local).
+(9 dashboards maison dont « 06 - SLO par classe de charge », « 07 - Santé du GPU » et « 08 - Efficacité et goulot du GPU », 5 dashboards llm-d, DCGM), alertes de burn rate par classe de charge, Loki (logs pods + événements), Alertmanager (inhibition, webhook ou récepteur local).

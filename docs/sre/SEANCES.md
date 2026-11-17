@@ -64,6 +64,12 @@ Format imposé par le prompt : ce qui a été fait, ce qui a été appris, ce qu
 **Heures GPU et coût (séances 1 et 2, second cluster)** : cluster actif de 08:38 à environ 12:30 (3 h 50 environ), dont ~3 h 45 de T4 ; coût estimé **≈ 2,7 $** (calcul : 3,8 h x 0,708 $/h). Estimation, pas une facture.
 Cluster détruit en fin de séance ; les snapshots Azure n'ont pas été touchés.
 
+## Séance GPU « santé et mesures » (préparée, non exécutée)
+
+**Préparé le 17/11, sans cluster (aucun coût)** : recherche documentaire (NVIDIA, DCGM, vLLM, AKS, littérature), dossier [docs/gpu/](../gpu/README.md) (8 documents, 4 figures tirées des mesures réelles), 9 champs DCGM de santé, 14 règles KPI, 5 nouvelles alertes et le bridage décodé, dashboards 07 et 08, profils `prefill-only` et `decode-only`, scénarios `gpu-health` et `gpu-health-diag`, script `tests/gpu_snapshot.sh`.
+**Validé statiquement seulement** (18 tests promtool, 158 requêtes de dashboards, noms de champs DCGM). **À exécuter** : parcours court ≈ 3 h (≈ 2,1 $) ou complet ≈ 5,5 h (≈ 4,4 $) : [docs/gpu/05-simulations.md](../gpu/05-simulations.md).
+**Appris** : AKS ne surveille pas la santé GPU de notre pool ; NVSentinel est inadapté ici ; des valeurs attribuées à « la fiche NVIDIA » venaient d'un forum (corrigées).
+
 ## Séances suivantes (non commencées)
 
 Séance 3 (goulot, lecture du GPU, CPU), 4 (attention, mémoire KV, concurrence, batching), 5 (quantization, taille, contexte, qualité), 6 (routage, passerelles), 7 (autoscaling, démarrage), 8 (opérations GPU), 9 (game days), 10 (capacité, coût, rapport final).

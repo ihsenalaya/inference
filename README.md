@@ -43,7 +43,7 @@ flowchart LR
   T --> A
 ```
 
-Détails : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). **Documentation technique complète (inférence, architecture, sécurité, observabilité, GPU, une fiche par service) : [docs/guide/](docs/guide/README.md) et [docs/services/](docs/services/00-index.md).** **Formation avec les vrais chiffres du cluster (mesure, classes de charge, SLO, burn rate, lire un GPU, démarrage à froid) : [docs/formation/](docs/formation/README.md) ; campagne SRE : [docs/sre/](docs/sre/SEANCES.md).** Décisions et écarts avec le prompt d'origine : [docs/DECISIONS.md](docs/DECISIONS.md).
+Détails : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). **Documentation technique complète (inférence, architecture, sécurité, observabilité, GPU, une fiche par service) : [docs/guide/](docs/guide/README.md) et [docs/services/](docs/services/00-index.md).** **Santé et efficacité du GPU (signaux, KPI, dashboards, arbres de décision, séance de mesures) : [docs/gpu/](docs/gpu/README.md).** **Formation avec les vrais chiffres du cluster (mesure, classes de charge, SLO, burn rate, lire un GPU, démarrage à froid) : [docs/formation/](docs/formation/README.md) ; campagne SRE : [docs/sre/](docs/sre/SEANCES.md).** Décisions et écarts avec le prompt d'origine : [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Démarrage en cinq commandes
 

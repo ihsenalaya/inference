@@ -144,3 +144,118 @@ tests:
       - eval_time: 7h
         alertname: LabSLOBurnFast
         exp_alerts: []
+  # ------------------------------------------------------------------ SANTÉ DU GPU : bridage décodé, erreurs, marges, présence, KPI
+  - name: "bridage - frein de puissance matériel (0x80) avec plafond logiciel (0x4) -> alerte"
+    interval: 30s
+    input_series:
+      - series: 'DCGM_FI_DEV_CLOCK_THROTTLE_REASONS{gpu="0",Hostname="n1"}'
+        values: '132+0x40'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: LabGPUThrottling
+        exp_alerts:
+          - exp_labels: { severity: warning, category: gpu, component: dcgm, gpu: "0", Hostname: n1 }
+            exp_annotations:
+              summary: "Ralentissement matériel ou thermique du GPU 0 (n1)"
+              runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/LabGPUThrottling.md
+  - name: "bridage - plafond de puissance logiciel seul (0x4) ou repos (0x1) -> normal, pas d'alerte"
+    interval: 30s
+    input_series:
+      - series: 'DCGM_FI_DEV_CLOCK_THROTTLE_REASONS{gpu="0",Hostname="n1"}'
+        values: '5+0x40'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: LabGPUThrottling
+        exp_alerts: []
+  - name: "bridage - décodage du masque (5 = repos + plafond logiciel)"
+    interval: 30s
+    input_series:
+      - series: 'DCGM_FI_DEV_CLOCK_THROTTLE_REASONS{gpu="0",Hostname="n1"}'
+        values: '5+0x10'
+    promql_expr_test:
+      - expr: lab:gpu_throttle_sw_power_cap
+        eval_time: 5m
+        exp_samples:
+          - labels: '{__name__="lab:gpu_throttle_sw_power_cap",gpu="0",Hostname="n1"}'
+            value: 1
+      - expr: lab:gpu_throttle_hw_slowdown
+        eval_time: 5m
+        exp_samples:
+          - labels: '{__name__="lab:gpu_throttle_hw_slowdown",gpu="0",Hostname="n1"}'
+            value: 0
+  - name: "ECC double non corrigeable -> alerte critique immédiate"
+    interval: 30s
+    input_series:
+      - series: 'DCGM_FI_DEV_ECC_DBE_VOL_TOTAL{gpu="0",Hostname="n1"}'
+        values: '0 0 1 1 1 1'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: LabGPUEccUncorrectable
+        exp_alerts:
+          - exp_labels: { severity: critical, category: gpu, component: dcgm, gpu: "0", Hostname: n1 }
+            exp_annotations:
+              summary: "Erreur ECC double (non corrigeable) sur le GPU 0 (n1)"
+              runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/LabGPUEccUncorrectable.md
+  - name: "erreur XID 79 (GPU tombé du bus) -> alerte critique"
+    interval: 30s
+    input_series:
+      - series: 'DCGM_FI_DEV_XID_ERRORS{gpu="0",Hostname="n1"}'
+        values: '79+0x10'
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: LabGPUXidError
+        exp_alerts:
+          - exp_labels: { severity: critical, category: gpu, component: dcgm, gpu: "0", Hostname: n1 }
+            exp_annotations:
+              summary: "Erreur XID 79 sur le GPU 0 (n1)"
+              runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/LabGPUXidError.md
+  - name: "marge thermique - 82 degrés (marge 3 sous le seuil de 5) pendant 5 min -> alerte ; 70 degrés -> rien"
+    interval: 30s
+    input_series:
+      - series: 'DCGM_FI_DEV_GPU_TEMP{gpu="0",Hostname="chaud"}'
+        values: '82+0x30'
+      - series: 'DCGM_FI_DEV_GPU_TEMP{gpu="0",Hostname="frais"}'
+        values: '70+0x30'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: LabGPUThermalMarginLow
+        exp_alerts:
+          - exp_labels: { severity: warning, category: gpu, component: dcgm, gpu: "0", Hostname: chaud }
+            exp_annotations:
+              summary: "Marge thermique faible : 3 °C avant la limite sur le GPU 0"
+              runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/LabGPUThermalMarginLow.md
+  - name: "GPU manquant - Kubernetes annonce 1 GPU, DCGM n'en voit aucun depuis 10 min -> alerte"
+    interval: 30s
+    input_series:
+      - series: 'kube_node_status_allocatable{resource="nvidia_com_gpu",node="n1"}'
+        values: '1+0x60'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: LabGPUMissing
+        exp_alerts:
+          - exp_labels: { severity: warning, category: gpu, component: dcgm }
+            exp_annotations:
+              summary: "Kubernetes annonce 1 GPU de plus ou de moins que DCGM n'en voit (GPU manquant, plugin ou exporteur en panne)"
+              runbook_url: https://github.com/ihsenalaya/inference/blob/main/docs/runbooks/LabGPUMissing.md
+  - name: "KPI - MBU = 0,5 quand vLLM lit 160 Go/s sur un T4 de 320 Go/s ; MFU = 0,5 à 32,5 TFLOPS sur 65 TFLOPS"
+    interval: 30s
+    input_series:
+      - series: 'DCGM_FI_DEV_GPU_TEMP{gpu="0",Hostname="n1"}'
+        values: '60+0x40'
+      - series: 'vllm:estimated_read_bytes_per_gpu_total{pod="p"}'
+        values: '0+4.8e12x40'
+      - series: 'vllm:estimated_write_bytes_per_gpu_total{pod="p"}'
+        values: '0+0x40'
+      - series: 'vllm:estimated_flops_per_gpu_total{pod="p"}'
+        values: '0+9.75e14x40'
+    promql_expr_test:
+      - expr: lab:gpu_mbu
+        eval_time: 15m
+        exp_samples:
+          - labels: '{__name__="lab:gpu_mbu"}'
+            value: 0.5
+      - expr: lab:gpu_mfu
+        eval_time: 15m
+        exp_samples:
+          - labels: '{__name__="lab:gpu_mfu"}'
+            value: 0.5

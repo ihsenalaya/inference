@@ -1,5 +1,7 @@
 # Module 5 - Lire un GPU en inférence : ce que disent (et ne disent pas) les compteurs du T4
 
+Suite et approfondissement : [dossier docs/gpu](../gpu/README.md) (santé, KPI, dashboards, roofline, séance de mesures).
+
 **En une phrase.** Un compteur « GPU utilisé à 100 % » ne dit presque rien : ce module apprend à lire les bons compteurs du T4, avec leurs valeurs réelles dans cinq situations.
 
 <!-- mots: gpu_util, sm_active, sm, noyau gpu, nvidia t4, tensor core, dcgm, throttling, vram -->
@@ -86,7 +88,7 @@ pendant le prefill long** (0,07), ce qui est **cohérent** avec un noyau d'atten
 moyennes sur 5 minutes de charges mixtes, pas une mesure isolée du prefill. Le test propre (V1) reste à faire avec une charge de prefill pur.
 
 ### d. Le T4 est limité par sa puissance, pas par sa température
-À vide : 30,6 W et 585 MHz (horloge de repos). En charge interactive : **68 W sur 70 W** et **1 142 MHz** (le T4 monte à 1 590 MHz au maximum selon la fiche NVIDIA, **doc** : 72 %).
+À vide : 30,6 W et 585 MHz (horloge de repos). En charge interactive : **68 W sur 70 W** et **1 142 MHz** (le T4 monte à 1 590 MHz au maximum d'après un relevé publié sur le forum NVIDIA, **forum**, à confirmer sur notre GPU : 72 %).
 Pendant le RAG (58 W), l'horloge reste plus haute (1 383 MHz). Température en charge : 52 à 68 degrés Celsius, loin des 85 de l'alerte. **Le plafond de puissance de 70 W
 borne le débit** : c'est un autre rappel que le T4 n'est pas un GPU de performance.
 

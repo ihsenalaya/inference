@@ -24,7 +24,7 @@ Grafana les réunit dans des tableaux de bord. Ce chapitre dit où chaque chiffr
 | **Logs** | Loki (3.7.10) alimenté par Alloy | logs de tous les pods, **événements Kubernetes**, access logs JSON de la Gateway | 7 jours, disque 5 Gio |
 | **Alertes** | Alertmanager (v0.35.0) | alertes de Prometheus, regroupées, inhibées, envoyées à un webhook (`alert-sink` par défaut) | - |
 
-Grafana (13.3.1) est le point d'entrée : datasources `Prometheus`, `Loki` et `Alertmanager`, 13 dashboards provisionnés depuis Git (7 « Lab » + 6 importés) (`lab.sh ui` -> http://localhost:3000).
+Grafana (13.3.1) est le point d'entrée : datasources `Prometheus`, `Loki` et `Alertmanager`, 15 dashboards provisionnés depuis Git (9 « Lab » + 6 importés) (`lab.sh ui` -> http://localhost:3000).
 Il n'y a **pas de traces** (OpenTelemetry/Tempo non déployés).
 
 **Persistance :** les disques survivent à `lab.sh stop`, **pas** à `lab.sh down` (les mesures sont perdues). Avant une destruction : `./lab.sh snapshot-metrics` (non testé sur cluster) exporte l'historique des règles `lab:*` dans `results/`.
@@ -76,6 +76,8 @@ Des requêtes lourdes précalculées (`gitops/observability/config/templates/rul
 | **03 - Capacité et coût** | on parle d'argent | débit max, coût horaire, $ / million de tokens, cold start |
 | **04 - Comparaison de runs** | avant/après un changement | les **annotations** de bench (début/fin, profil, scénario, SHA Git) délimitent chaque run |
 | **05 - Logs** | une erreur apparaît | Loki : erreurs vLLM, événements Kubernetes, access logs Envoy |
+| **07 - Santé du GPU** | on veut savoir si le GPU est malade | coup d'œil vert/rouge, thermique, puissance, horloges, bridage décodé, erreurs ECC/XID/PCIe ([docs/gpu/03](../gpu/03-dashboards.md)) |
+| **08 - Efficacité et goulot du GPU** | on veut savoir s'il est saturé, par quoi, et à quel coût | méthode USE, MFU/MBU, énergie par token, coût d'inactivité, comparaison des GPU |
 | **06 - SLO par classe de charge** | on veut savoir si l'objectif est tenu | burn rate (1 h, 5 min, 6 h), part de requêtes mauvaises, budget consommé, goodput et latences par classe (interactive, rag, multiturn, batch) |
 | llm-d (5 dashboards importés) | routage, saturation, cache KV | vue du scheduler llm-d v1.0.0 |
 | NVIDIA DCGM Exporter (12239) | santé du GPU | référence NVIDIA |
@@ -141,7 +143,7 @@ Labels utiles (observé) : `pod`, `namespace`, `container`, `modelName`, `gpu`, 
 
 ## 7. Les alertes
 
-92 règles d'enregistrement (33 dans `rules.yaml` + 59 pour les SLO dans `slo.yaml`) et 28 alertes (19 `lab-alerts`, 2 `LabSLOBurn*` dans `lab-slo`, 7 `lab-epp-alerts` importées de llm-d dans `files/epp-rules.yaml`). Chaque alerte porte `severity`, `category` (`slo`, `saturation`, `gpu`, `cost`, `platform`), `component` et une `runbook_url` vers `docs/runbooks/<Alerte>.md` (symptôme, vérifications, leviers).
+106 règles d'enregistrement (47 dans `rules.yaml`, dont 14 de santé et d'efficacité du GPU, + 59 pour les SLO dans `slo.yaml`) et 33 alertes (24 `lab-alerts`, 2 `LabSLOBurn*` dans `lab-slo`, 7 `lab-epp-alerts` importées de llm-d dans `files/epp-rules.yaml`). Les alertes de santé GPU sont décrites dans [docs/gpu/02-kpi.md](../gpu/02-kpi.md). Chaque alerte porte `severity`, `category` (`slo`, `saturation`, `gpu`, `cost`, `platform`), `component` et une `runbook_url` vers `docs/runbooks/<Alerte>.md` (symptôme, vérifications, leviers).
 Les seuils sont **larges par défaut** et à resserrer après mesure (`alertThresholds` dans les scénarios). Inhibition : une cible de scrape absente (`LabScrapeTargetMissing`) masque les alertes SLO du même `component`.
 Des alertes sont réellement arrivées au récepteur pendant les tests Azure : `LabRequestsWaiting`, `LabGPUIdleCost`, `EPPNoReadyEndpoints` (au démarrage, avant que le modèle soit prêt : normal), et le 17/11 `LabSLOBurnSlow` (classe `rag`). Les anciennes alertes à seuil fixe `LabTTFTHigh`, `LabInterTokenLatencyHigh` et `LabErrorRateHigh` (arrivées au récepteur le 16/11) ont été **remplacées** par les alertes de burn rate par classe.
 

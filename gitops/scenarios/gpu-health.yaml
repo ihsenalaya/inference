@@ -1,0 +1,15 @@
+# Séance « santé et mesures du GPU » (docs/gpu/05-simulations.md) : 7B AWQ, un réplica par T4 (2 T4 pour comparer les GPU).
+# --enable-mfu-metrics : vLLM exporte les estimations de FLOPs et d'octets lus/écrits qui servent aux KPI MFU et MBU (lab:gpu_mfu, lab:gpu_mbu).
+# Le drapeau existe dans vLLM v0.32.0 (vérifié dans arg_utils.py du tag v0.32.0) ; son coût en débit n'est PAS mesuré : comparer à baseline-7b avant de le garder.
+# alertThresholds : l'alerte « GPU alloué mais inactif » passe de 30 à 5 minutes pour pouvoir la tester en séance.
+scenario: gpu-health
+models:
+  - alias: qwen-7b-awq
+    name: Qwen/Qwen2.5-7B-Instruct-AWQ
+    resourceName: qwen-7b-awq
+    uri: hf://Qwen/Qwen2.5-7B-Instruct-AWQ
+    replicas: 2
+    vllm:
+      extraArgs: ["--enable-mfu-metrics"]
+alertThresholds:
+  gpuIdleMinutes: 5

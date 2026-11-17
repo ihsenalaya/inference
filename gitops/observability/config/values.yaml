@@ -18,6 +18,18 @@ alertThresholds:
   gpuMemoryRatio: 0.95
   gpuIdleMinutes: 30
   gpuLowUtilWithQueue: 20
+  gpuThermalHeadroomCelsius: 5      # alerte quand la marge avant la température maximale de fonctionnement tombe sous ce seuil
+
+# Limites matérielles du T4 utilisées par les KPI de santé et d'efficacité du GPU (docs/gpu/01-signaux-du-gpu.md, docs/gpu/SOURCES.md).
+# 70 W, 65 TFLOPS : fiche NVIDIA du T4 (mars 2019). Bande passante : 320 Go/s (la fiche indique 300). 85 °C et 1590 MHz : relevés nvidia-smi
+# publiés sur le forum NVIDIA, NON officiels : à relire avec `nvidia-smi -q` sur notre GPU (séance GPU). 0,8 : maximum pratique de DRAM_ACTIVE (doc DCGM).
+gpuLimits:
+  powerWatts: 70
+  maxOperatingTempCelsius: 85
+  smClockMaxMHz: 1590
+  memoryBandwidthGBs: 320
+  fp16TensorTFLOPS: 65
+  dramActivePracticalMax: 0.8
 
 # ---------------------------------------------------------------------------------------------------------------
 # SLO par classe de charge (docs/sre/SLO.md). La classe est identifiée par l'alias de la clé virtuelle LiteLLM

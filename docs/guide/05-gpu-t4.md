@@ -1,5 +1,7 @@
 # 05 - Le GPU T4 : ce qu'il permet, ce qu'il interdit, comment le lire
 
+Pour aller plus loin (santé du GPU, KPI, dashboards, arbres de décision, séance de mesures) : le [dossier docs/gpu](../gpu/README.md).
+
 Le GPU est la pièce chère du lab (0,526 $/h) et celle qui borne tout : sa **mémoire** décide quel modèle tient, sa **puissance de calcul** décide combien de requêtes par seconde passent.
 Ce chapitre présente la carte, ce qu'elle ne sait pas faire, et comment lire ses compteurs sans se tromper.
 
@@ -22,7 +24,7 @@ Ce chapitre présente la carte, ce qu'elle ne sait pas faire, et comment lire se
 |---|---|---|
 | GPU | NVIDIA Tesla T4, architecture **Turing**, compute capability **7.5** | (observé) `nvidia-smi` : `Tesla T4`, `modelName` DCGM |
 | VRAM | 16 384 MiB (15,56 GiB utilisables vus par vLLM) | (observé) |
-| Bande passante mémoire | 320 Go/s | fiche produit NVIDIA (doc) |
+| Bande passante mémoire | **320 Go/s** (la fiche NVIDIA de mars 2019 indique **300 Go/s**) | documents NVIDIA (doc) ; écart détaillé dans [docs/gpu/SOURCES.md](../gpu/SOURCES.md) |
 | Puissance maximale | 70 W | (observé) `nvidia-smi` : `70W` ; la consommation en charge atteint 58 à 68 W selon la charge (observé le 17/11) |
 | Tensor cores FP16 | jusqu'à 65 TFLOP/s | fiche produit NVIDIA (doc) |
 | VM Azure | `Standard_NC4as_T4_v3` : 4 vCPU (4 **cœurs**, 1 thread/cœur, AMD EPYC 7V12), 28 Gio, disque temporaire de 180 Go | (observé) `lscpu` |
@@ -93,5 +95,5 @@ Mesuré : CPU de vLLM <= 1,1 cœur pendant les sweeps et **0,16 à 0,36 cœur en
 - **bfloat16 et FP8** : modèles plus gros en moins de mémoire, noyaux de calcul plus rapides.
 - **FlashAttention / FlashInfer** : le prefill sur prompts longs retrouverait les tensor cores : le problème du `long-prompt` disparaîtrait.
 - **MIG** (A100/H100 et autres) : partage avec isolation matérielle.
-- **Plus de bande passante** : decode plus rapide (le T4 a 320 Go/s ; les générations suivantes ont plusieurs fois plus).
+- **Plus de bande passante** : decode plus rapide (le T4 a 300 à 320 Go/s selon les documents NVIDIA ; les générations suivantes ont plusieurs fois plus).
 Ces points sont des conséquences connues des spécifications, pas des mesures de ce lab.

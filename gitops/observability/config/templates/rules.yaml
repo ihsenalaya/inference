@@ -80,6 +80,48 @@ spec:
           expr: sum(kube_pod_container_resource_requests{resource="nvidia_com_gpu"} and on (namespace, pod) (kube_pod_status_phase{phase="Running"} == 1)) or vector(0)
         - record: lab:gpu_used
           expr: count(DCGM_FI_DEV_GPU_UTIL > 5) or vector(0)
+    - name: lab.gpu_health
+      interval: 30s
+      rules:
+        # --- marges (docs/gpu/02-kpi.md). Les limites viennent de gpuLimits (values.yaml) : à confirmer avec nvidia-smi -q sur notre GPU.
+        - record: lab:gpu_thermal_headroom_celsius
+          expr: {{ .Values.gpuLimits.maxOperatingTempCelsius }} - max by (gpu, Hostname) (DCGM_FI_DEV_GPU_TEMP)
+        - record: lab:gpu_power_headroom_watts
+          expr: {{ .Values.gpuLimits.powerWatts }} - max by (gpu, Hostname) (DCGM_FI_DEV_POWER_USAGE)
+        - record: lab:gpu_clock_ratio
+          expr: max by (gpu, Hostname) (DCGM_FI_DEV_SM_CLOCK) / {{ .Values.gpuLimits.smClockMaxMHz }}
+        - record: lab:gpu_dram_active_vs_practical_max
+          expr: max by (gpu, Hostname) (DCGM_FI_PROF_DRAM_ACTIVE) / {{ .Values.gpuLimits.dramActivePracticalMax }}
+        # --- bridage : décodage du masque de bits NVML (0x4 plafond de puissance logiciel ; 0x8 / 0x20 / 0x40 / 0x80 = ralentissements matériel ou thermique)
+        - record: lab:gpu_throttle_sw_power_cap
+          expr: floor(max by (gpu, Hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 4) % 2
+        - record: lab:gpu_throttle_hw_slowdown
+          expr: |
+            clamp_max(
+                (floor(max by (gpu, Hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 8) % 2)
+              + (floor(max by (gpu, Hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 32) % 2)
+              + (floor(max by (gpu, Hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 64) % 2)
+              + (floor(max by (gpu, Hostname) (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS) / 128) % 2), 1)
+        # --- présence et allocation
+        - record: lab:gpu_visible
+          expr: count(DCGM_FI_DEV_GPU_TEMP) or vector(0)
+        - record: lab:gpu_allocated_idle
+          expr: clamp_min(lab:gpu_allocated - lab:gpu_used, 0)
+        - record: lab:gpu_idle_cost_usd_per_hour
+          expr: lab:gpu_allocated_idle * lab:gpu_hourly_price_usd
+        # --- énergie
+        - record: lab:gpu_energy_per_request_joules
+          expr: sum(DCGM_FI_DEV_POWER_USAGE) / (sum(rate(vllm:request_success_total[5m])) > 0)
+        - record: lab:gpu_kwh_per_million_tokens
+          expr: (1e6 / lab:tokens_per_joule) / 3.6e6
+        # --- comparaison de plusieurs GPU
+        - record: lab:gpu_temp_spread_celsius
+          expr: max(DCGM_FI_DEV_GPU_TEMP) - min(DCGM_FI_DEV_GPU_TEMP)
+        # --- MFU et MBU estimés par vLLM : exigent --enable-mfu-metrics (scénario gpu-health). Pointes : gpuLimits.
+        - record: lab:gpu_mfu
+          expr: sum(rate(vllm:estimated_flops_per_gpu_total[5m])) / (count(DCGM_FI_DEV_GPU_TEMP) * {{ .Values.gpuLimits.fp16TensorTFLOPS }} * 1e12)
+        - record: lab:gpu_mbu
+          expr: (sum(rate(vllm:estimated_read_bytes_per_gpu_total[5m])) + sum(rate(vllm:estimated_write_bytes_per_gpu_total[5m]))) / (count(DCGM_FI_DEV_GPU_TEMP) * {{ .Values.gpuLimits.memoryBandwidthGBs }} * 1e9)
     - name: lab.routing
       interval: 30s
       rules:
@@ -161,12 +203,46 @@ spec:
             summary: "GPU à {{ "{{ $value }}" }} °C"
             runbook_url: {{ $.Values.runbookBase }}/LabGPUTemperatureHigh.md
         - alert: LabGPUThrottling
-          expr: (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS > 0) and (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS != 1) and (DCGM_FI_DEV_CLOCK_THROTTLE_REASONS != 4)
+          # Ralentissement matériel ou thermique (bits 0x8, 0x20, 0x40, 0x80). Le plafond de puissance logiciel (0x4) et le repos (0x1) sont normaux : comme les contrôles de santé GPU d'AKS.
+          expr: lab:gpu_throttle_hw_slowdown == 1
+          for: 5m
+          labels: { severity: warning, category: gpu, component: dcgm }
+          annotations:
+            summary: "Ralentissement matériel ou thermique du GPU {{ "{{ $labels.gpu }}" }} ({{ "{{ $labels.Hostname }}" }})"
+            runbook_url: {{ $.Values.runbookBase }}/LabGPUThrottling.md
+        - alert: LabGPUThermalMarginLow
+          expr: lab:gpu_thermal_headroom_celsius < {{ $t.gpuThermalHeadroomCelsius }}
+          for: 5m
+          labels: { severity: warning, category: gpu, component: dcgm }
+          annotations:
+            summary: "Marge thermique faible : {{ "{{ $value }}" }} °C avant la limite sur le GPU {{ "{{ $labels.gpu }}" }}"
+            runbook_url: {{ $.Values.runbookBase }}/LabGPUThermalMarginLow.md
+        - alert: LabGPUEccUncorrectable
+          expr: max by (gpu, Hostname) (DCGM_FI_DEV_ECC_DBE_VOL_TOTAL) > 0
+          labels: { severity: critical, category: gpu, component: dcgm }
+          annotations:
+            summary: "Erreur ECC double (non corrigeable) sur le GPU {{ "{{ $labels.gpu }}" }} ({{ "{{ $labels.Hostname }}" }})"
+            runbook_url: {{ $.Values.runbookBase }}/LabGPUEccUncorrectable.md
+        - alert: LabGPUPageRetirementPending
+          expr: max by (gpu, Hostname) (DCGM_FI_DEV_RETIRED_PENDING) == 1
+          for: 5m
+          labels: { severity: warning, category: gpu, component: dcgm }
+          annotations:
+            summary: "Pages mémoire en attente de retrait sur le GPU {{ "{{ $labels.gpu }}" }} : redémarrage du nœud à prévoir"
+            runbook_url: {{ $.Values.runbookBase }}/LabGPUPageRetirementPending.md
+        - alert: LabGPUPcieReplays
+          expr: increase(DCGM_FI_DEV_PCIE_REPLAY_COUNTER[10m]) > 0
+          labels: { severity: warning, category: gpu, component: dcgm }
+          annotations:
+            summary: "Rejeux PCIe sur le GPU {{ "{{ $labels.gpu }}" }} : lien instable"
+            runbook_url: {{ $.Values.runbookBase }}/LabGPUPcieReplays.md
+        - alert: LabGPUMissing
+          expr: sum(kube_node_status_allocatable{resource="nvidia_com_gpu"}) != lab:gpu_visible
           for: 10m
           labels: { severity: warning, category: gpu, component: dcgm }
           annotations:
-            summary: "Throttling GPU (raisons {{ "{{ $value }}" }})"
-            runbook_url: {{ $.Values.runbookBase }}/LabGPUThrottling.md
+            summary: "Kubernetes annonce {{ "{{ $value }}" }} GPU de plus ou de moins que DCGM n'en voit (GPU manquant, plugin ou exporteur en panne)"
+            runbook_url: {{ $.Values.runbookBase }}/LabGPUMissing.md
         - alert: LabGPUMemoryHigh
           expr: DCGM_FI_DEV_FB_USED / (DCGM_FI_DEV_FB_USED + DCGM_FI_DEV_FB_FREE) > {{ $t.gpuMemoryRatio }}
           for: 5m

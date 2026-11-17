@@ -77,6 +77,14 @@ Retour : [README du dépôt](../../README.md) · [guide](../guide/README.md) · 
 | **SM_ACTIVE / TENSOR / DRAM_ACTIVE** | Compteurs plus fins : unités de calcul actives / tensor cores actifs / mémoire du GPU active. |
 | **Throttling / limite de puissance** | Le GPU baisse sa fréquence quand il atteint sa limite (70 W sur T4). |
 | **XID** | Code d'erreur NVIDIA signalant un problème GPU (ex. 79 : GPU tombé du bus). |
+| **ECC / SBE / DBE** | Code qui détecte et corrige les erreurs de la mémoire du GPU. SBE = erreur simple, corrigée ; DBE = erreur double, non corrigeable (grave). |
+| **Retrait de pages (page retirement)** | Sur les GPU avant l'A100 (dont le T4), une zone mémoire défaillante est mise de côté définitivement ; le retrait prend effet au redémarrage. |
+| **Horloge (clock)** | Fréquence de travail du GPU, en MHz (≈ 585 au repos sur le T4, 1 590 au maximum d'après un relevé publié sur le forum NVIDIA). Elle baisse quand le GPU est bridé. |
+| **Raisons de bridage (clock event reasons)** | Les causes qui font baisser l'horloge : repos, plafond de puissance, ralentissement thermique ou matériel... Un masque de bits (`DCGM_FI_DEV_CLOCK_THROTTLE_REASONS`) à décoder. |
+| **nvidia-smi** | Commande NVIDIA qui affiche l'état du GPU : température, puissance, horloges, mémoire, erreurs. |
+| **Roofline** | Graphique qui dit si un calcul est limité par la mémoire ou par le calcul, selon le nombre d'opérations faites par octet lu. |
+| **MFU / MBU** | Part du calcul (MFU) ou de la bande passante mémoire (MBU) réellement utilisée par rapport au maximum du GPU. Le MBU est le bon indicateur du décodage. |
+| **DCGM hostengine** | Le processus DCGM qui collecte les mesures du GPU ; l'exporteur peut l'embarquer ou se connecter à un hostengine séparé (doc DCGM). |
 | **MIG / MPS / time-slicing** | Trois façons de partager un GPU entre plusieurs programmes (MIG est absent sur T4). |
 | **Driver / device plugin** | Pilote du GPU installé sur le nœud / composant qui déclare `nvidia.com/gpu` à Kubernetes. |
 
@@ -90,6 +98,8 @@ Retour : [README du dépôt](../../README.md) · [guide](../guide/README.md) · 
 | **Disponibilité** | Part des requêtes qui réussissent (pas d'erreur du côté serveur). |
 | **4xx / 5xx** | Codes de réponse HTTP : 4xx = erreur du côté client (requête invalide, contexte trop long) ; 5xx = erreur du côté serveur ; 408 = délai dépassé. |
 | **Burn rate** | Vitesse de consommation du budget : 1 = on l'épuise juste à la fin de la fenêtre ; 14,4 = en ~50 h pour une fenêtre de 30 jours. |
+| **Méthode USE** | Pour chaque ressource, on regarde l'Utilisation (est-elle occupée ?), la Saturation (y a-t-il de la file ?) et les Erreurs. |
+| **Marge (headroom)** | Ce qu'il reste avant une limite : degrés avant la limite thermique, watts avant le plafond de puissance. |
 | **Classe de charge** | Un type d'usage avec son propre SLO : interactive, RAG, multi-tour, lot (embeddings non couverte). |
 | **RAG** | Question accompagnée de longs documents retrouvés par ailleurs : prompt très long, réponse courte. |
 | **Alerte / runbook** | Notification d'un problème / fiche qui dit quoi vérifier et quoi faire (`docs/runbooks/`). |

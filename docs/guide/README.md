@@ -33,7 +33,7 @@ Chaque affirmation est rattachée à une source, pour que vous sachiez quoi croi
 6. [06 - Cycle de vie et coûts](06-cycle-de-vie-et-couts.md) : démarrage à froid, arrêt, destruction, coût.
 7. Les fiches par service : [docs/services/](../services/00-index.md).
 
-Documents complémentaires : [formation avec les vrais chiffres](../formation/README.md), [SLO par classe de charge](../sre/SLO.md), [compte rendu des séances](../sre/SEANCES.md), [BASELINE](../BASELINE.md) (mesures),
+Documents complémentaires : [santé et efficacité du GPU](../gpu/README.md), [formation avec les vrais chiffres](../formation/README.md), [SLO par classe de charge](../sre/SLO.md), [compte rendu des séances](../sre/SEANCES.md), [BASELINE](../BASELINE.md) (mesures),
 [DECISIONS](../DECISIONS.md) (pourquoi ces choix), [METRIQUES](../METRIQUES.md) (183 métriques réelles), [RUNBOOK](../RUNBOOK.md) (exploitation), [runbooks d'alertes](../runbooks/).
 
 ## Le lab en une phrase

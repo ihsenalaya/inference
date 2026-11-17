@@ -21,7 +21,7 @@ Un pod à trois conteneurs : `grafana` + deux **sidecars** `k8s-sidecar` (2.14.3
 
 ## Configuration retenue (config)
 - Identifiants : secret `grafana-admin` (créé par Terraform) via `admin.existingSecret`.
-- **Dashboards = code** : `gitops/observability/config/dashboards/**.json` -> chart -> une ConfigMap par dashboard (`grafana_dashboard: "1"`, annotation `grafana_folder`) -> le sidecar les charge. 7 dashboards « Lab » (générés par `tests/gen_dashboards.py`, dont « 06 - SLO par classe de charge »), 5 de llm-d, 1 DCGM (voir [guide §4](../guide/04-observabilite.md)).
+- **Dashboards = code** : `gitops/observability/config/dashboards/**.json` -> chart -> une ConfigMap par dashboard (`grafana_dashboard: "1"`, annotation `grafana_folder`) -> le sidecar les charge. 9 dashboards « Lab » (générés par `tests/gen_dashboards.py`, dont « 06 - SLO par classe de charge », « 07 - Santé du GPU » et « 08 - Efficacité et goulot du GPU »), 5 de llm-d, 1 DCGM (voir [guide §4](../guide/04-observabilite.md)).
 - Datasources : `Prometheus` (uid `prometheus`), `Loki` (uid `loki`, `http://loki.monitoring.svc:3100`), `Alertmanager`.
 - Pas de persistance (`persistence.enabled: false`) : tout est reconstruit depuis Git. Modifier un dashboard dans l'UI **ne survit pas** : éditer le générateur ou le JSON.
 - Fuseau `Europe/Paris`.

@@ -36,7 +36,7 @@ Il **scrape** toutes les cibles listées dans le [guide observabilité §2](../g
 - Rétention **7 jours**, `scrapeInterval` et `evaluationInterval` 30 s (15 s pour vLLM/EPP/LiteLLM/Envoy/DCGM via leurs monitors). PVC **8 Gio** `managed-csi` sur Azure.
 - Ressources : requests 200 m / 768 Mi, limite mémoire 1,5 Gio.
 - Plan de contrôle managé : scrapes `kube-scheduler`, `kube-controller-manager`, `etcd`, `kube-proxy` **désactivés** (inaccessibles sur AKS, fausses alertes).
-- Règles : `lab-recording` (33 enregistrements), `lab-slo` (59 enregistrements + 2 alertes de burn rate), `lab-alerts` (19 alertes), `lab-epp-alerts` (7) + les règles par défaut du chart. Les 4 groupes `lab.slo*` ont été évalués sans erreur sur le cluster du 17/11.
+- Règles : `lab-recording` (47 enregistrements, dont 14 de santé et d'efficacité du GPU), `lab-slo` (59 enregistrements + 2 alertes de burn rate), `lab-alerts` (24 alertes), `lab-epp-alerts` (7) + les règles par défaut du chart. Les 4 groupes `lab.slo*` ont été évalués sans erreur sur le cluster du 17/11.
 
 ## Authentification
 Scrapes anonymes en HTTP, sauf EPP et KServe (jeton `bearerTokenFile` du ServiceAccount). Prometheus lui-même n'a pas d'authentification (accès par port-forward).

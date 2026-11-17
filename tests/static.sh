@@ -67,6 +67,8 @@ fi
 echo "== documentation"
 python3 tests/gen_doc_boxes.py --check >/tmp/docbox.txt 2>&1 && ok "boîtes « Mots à connaître » à jour (glossaire)" || { ko "boîtes de mots"; cat /tmp/docbox.txt; }
 python3 tests/check_links.py >/tmp/links.txt 2>&1 && ok "liens relatifs des docs" || { ko "liens cassés"; cat /tmp/links.txt; }
+python3 tests/check_dcgm_fields.py >/tmp/dcgmf.txt 2>&1 && ok "champs DCGM valides pour dcgm-exporter 4.8.4" || { ko "champs DCGM"; cat /tmp/dcgmf.txt; }
+python3 tests/check_dashboard_promql.py >/tmp/dashq.txt 2>&1 && ok "syntaxe PromQL des dashboards" || { ko "PromQL des dashboards"; cat /tmp/dashq.txt; }
 
 echo "== terraform"
 (cd infra/terraform && terraform fmt -check -recursive >/dev/null && terraform validate >/dev/null) && ok "terraform fmt + validate" || ko "terraform"

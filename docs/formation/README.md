@@ -1,6 +1,6 @@
 # Formation : opérer l'inférence LLM sur ce cluster, avec les vrais chiffres
 
-Six modules courts, pensés pour un **débutant** : aucun prérequis en inférence ni en GPU. Chaque module commence par « En une phrase » et une petite boîte « Mots à connaître » (le [glossaire complet](../sre/GLOSSAIRE.md) réunit tous les mots).
+Sept modules courts, pensés pour un **débutant** : aucun prérequis en inférence ni en GPU. Chaque module commence par « En une phrase » et une petite boîte « Mots à connaître » (le [glossaire complet](../sre/GLOSSAIRE.md) réunit tous les mots).
 Chaque module donne ensuite : le concept en quelques lignes, la configuration réelle du dépôt, **les chiffres mesurés sur ce cluster** (AKS, 1 x T4), une lecture guidée, trois points à retenir et **un exercice à faire vous-même**
 (objectif et vérification, pas la solution).
 
@@ -20,6 +20,7 @@ Marques de fiabilité utilisées partout : **(observé)** vu sur le cluster · *
 | [4](04-burn-rate-et-alertes.md) | Burn rate et alertes | Calculer et tester des alertes qui réagissent à la vitesse de consommation de la marge d'erreur |
 | [5](05-lire-un-gpu.md) | Lire un GPU | Ne plus confondre « 100 % utilisé » et « saturé » (compteurs réels du T4) |
 | [6](06-demarrage-a-froid.md) | Démarrage à froid | Décomposer un démarrage de cluster et comparer honnêtement deux mesures |
+| [7](07-sante-et-efficacite-du-gpu.md) | Santé et efficacité du GPU | Juger un GPU sur trois axes (santé, saturation, efficacité) ; détail dans le [dossier docs/gpu](../gpu/README.md) |
 
 Compléments : [SLO par classe](../sre/SLO.md) · [état des lieux de la séance 1](../sre/ETAT-DES-LIEUX.md) · [compte rendu des séances](../sre/SEANCES.md) · [guide technique](../guide/README.md) · [fiches par service](../services/00-index.md).
 

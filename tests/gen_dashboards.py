@@ -246,4 +246,84 @@ d.ts("TTFT par classe (p95)", "p95 du premier token vu par LiteLLM (streaming), 
      [("histogram_quantile(0.95, sum by (le, api_key_alias) (rate(litellm_llm_api_time_to_first_token_metric_bucket[$__rate_interval])))", "{{api_key_alias}}")], "s", w=12)
 d.save(vars_model=False)
 
+# ---------------- 07 Santé du GPU ----------------
+d = D("lab-gpu-health", "07 - Santé du GPU", "Lab", "Le GPU est-il en bonne santé ? Température, puissance, horloges, bridage décodé, erreurs mémoire et XID, services GPU. Mode d'emploi : docs/gpu/03-dashboards.md.")
+d.row("Santé en un coup d'œil (tout doit être vert)")
+d.stat("GPU vus par DCGM", "Nombre de GPU mesurés par DCGM. Doit égaler le nombre de GPU annoncés par Kubernetes (panneau suivant).", "lab:gpu_visible", "short", w=4)
+d.stat("GPU annoncés par Kubernetes", "nvidia.com/gpu allouable : ce que le plugin du GPU Operator déclare. Un écart avec le panneau précédent déclenche LabGPUMissing.", "lab:gpu_allocatable", "short", w=4)
+red1 = [{"color": "green", "value": None}, {"color": "red", "value": 1}]
+d.stat("Dernier code XID", "0 = aucune erreur XID. Un code non nul : voir le runbook LabGPUXidError et docs/gpu/04-diagnostic-et-optimisation.md.", "max(DCGM_FI_DEV_XID_ERRORS) or vector(0)", "short", w=4, thresholds=red1)
+d.stat("Erreurs ECC doubles", "Erreur mémoire non corrigeable depuis le dernier chargement du pilote. Doit rester à 0 (alerte critique LabGPUEccUncorrectable).", "max(DCGM_FI_DEV_ECC_DBE_VOL_TOTAL) or vector(0)", "short", w=4, thresholds=red1)
+d.stat("Bridage matériel / thermique", "1 si le GPU ralentit pour une cause matérielle ou thermique (bits 0x8, 0x20, 0x40, 0x80 du masque). Le plafond de puissance logiciel (0x4) est normal et n'est pas compté ici.", "max(lab:gpu_throttle_hw_slowdown) or vector(0)", "short", w=4, thresholds=red1)
+d.stat("Marge thermique (°C)", "Limite de fonctionnement (réglage gpuLimits, à confirmer avec nvidia-smi -q) moins la température. Orange sous 8 degrés, rouge sous 3.", "min(lab:gpu_thermal_headroom_celsius)", "celsius", w=4,
+       thresholds=[{"color": "red", "value": None}, {"color": "orange", "value": 3}, {"color": "green", "value": 8}])
+d.row("Thermique et puissance")
+d.ts("Température et limite", "Température du GPU face à la limite de fonctionnement. Un T4 est refroidi passivement par le châssis du fournisseur : on ne peut pas agir sur le refroidissement.",
+     [("DCGM_FI_DEV_GPU_TEMP", "température {{gpu}} {{Hostname}}"), ("vector(" + "85" + ")", "limite de fonctionnement (à confirmer)")], "celsius", w=8)
+d.ts("Puissance et limite", "Puissance mesurée face au plafond du T4 (70 W). Près du plafond, le GPU baisse ses horloges pour rester dans l'enveloppe.",
+     [("DCGM_FI_DEV_POWER_USAGE", "puissance {{gpu}} {{Hostname}}"), ("vector(70)", "limite (fiche NVIDIA)")], "watt", w=8)
+d.ts("Marge de puissance et marge thermique", "Combien il reste avant le plafond de puissance (W) et avant la limite thermique (°C). Deux unités : à lire séparément.",
+     [("lab:gpu_power_headroom_watts", "marge puissance (W) {{gpu}}"), ("lab:gpu_thermal_headroom_celsius", "marge thermique (°C) {{gpu}}")], "short", w=8)
+d.row("Horloges et bridage")
+d.ts("Horloge des unités de calcul (SM) et de la mémoire", "L'horloge monte en charge et redescend au repos. Au repos : environ 585 MHz (observé). Maximum : 1590 MHz pour les SM, 5001 MHz pour la mémoire (relevé du forum NVIDIA, à confirmer).",
+     [("DCGM_FI_DEV_SM_CLOCK", "SM {{gpu}} {{Hostname}}"), ("DCGM_FI_DEV_MEM_CLOCK", "mémoire {{gpu}} {{Hostname}}")], "short", w=8)
+d.ts("Horloge SM rapportée au maximum", "1 = horloge maximale. Une charge forte avec un rapport bas et une puissance proche de 70 W indique un GPU limité par sa puissance (docs/gpu/01-signaux-du-gpu.md).",
+     [("lab:gpu_clock_ratio", "{{gpu}} {{Hostname}}")], "percentunit", w=8, minv=0, maxv=1)
+d.ts("Bridage décodé (0 ou 1)", "Le masque DCGM_FI_DEV_CLOCK_THROTTLE_REASONS décodé : plafond de puissance logiciel (0x4, normal sous forte charge) et ralentissement matériel ou thermique (0x8, 0x20, 0x40, 0x80, anormal).",
+     [("lab:gpu_throttle_sw_power_cap", "plafond de puissance logiciel (normal) {{gpu}}"), ("lab:gpu_throttle_hw_slowdown", "ralentissement matériel ou thermique (anormal) {{gpu}}")], "short", w=8, minv=0, maxv=1)
+d.ts("Temps de bridage (compteurs de durée)", "Vitesse d'augmentation des compteurs de durée de bridage par puissance et par température. L'unité (ns ou µs) reste à vérifier sur le cluster : lire la forme de la courbe, pas la valeur.",
+     [("rate(DCGM_FI_DEV_POWER_VIOLATION[$__rate_interval])", "puissance {{gpu}}"), ("rate(DCGM_FI_DEV_THERMAL_VIOLATION[$__rate_interval])", "thermique {{gpu}}")], "short", w=8)
+d.row("Erreurs mémoire, XID et PCIe (tout doit rester à zéro)")
+d.ts("Erreurs ECC", "SBE = erreur simple, corrigée (peu grave si rare) ; DBE = erreur double, non corrigeable (grave). VOL = depuis le chargement du pilote ; AGG = cumul à vie.",
+     [("DCGM_FI_DEV_ECC_SBE_VOL_TOTAL", "SBE (volatile) {{gpu}}"), ("DCGM_FI_DEV_ECC_DBE_VOL_TOTAL", "DBE (volatile) {{gpu}}"), ("DCGM_FI_DEV_ECC_SBE_AGG_TOTAL", "SBE (à vie) {{gpu}}"), ("DCGM_FI_DEV_ECC_DBE_AGG_TOTAL", "DBE (à vie) {{gpu}}")], "short", w=8)
+d.ts("Pages mémoire retirées", "Sur T4 (avant l'A100) une page défaillante est retirée définitivement ; « en attente » = retrait au prochain redémarrage (alerte LabGPUPageRetirementPending).",
+     [("DCGM_FI_DEV_RETIRED_SBE", "retirées (erreurs simples) {{gpu}}"), ("DCGM_FI_DEV_RETIRED_DBE", "retirées (erreurs doubles) {{gpu}}"), ("DCGM_FI_DEV_RETIRED_PENDING", "en attente {{gpu}}")], "short", w=8)
+d.ts("XID et rejeux PCIe", "XID = code d'erreur NVIDIA (dernier code vu). Rejeux PCIe = transferts à refaire : lien instable.",
+     [("DCGM_FI_DEV_XID_ERRORS", "XID {{gpu}}"), ("increase(DCGM_FI_DEV_PCIE_REPLAY_COUNTER[$__rate_interval])", "rejeux PCIe {{gpu}}")], "short", w=8)
+d.row("Services GPU dans Kubernetes")
+d.ts("DaemonSets du GPU Operator : prêts / souhaités", "Le plugin qui annonce le GPU, l'exporteur de mesures et le pilote doivent être prêts sur chaque nœud GPU.",
+     [('kube_daemonset_status_number_ready{namespace="gpu-operator",daemonset=~"nvidia-device-plugin-daemonset|nvidia-dcgm-exporter|nvidia-driver-daemonset"}', "prêts {{daemonset}}"),
+      ('kube_daemonset_status_desired_number_scheduled{namespace="gpu-operator",daemonset=~"nvidia-device-plugin-daemonset|nvidia-dcgm-exporter|nvidia-driver-daemonset"}', "souhaités {{daemonset}}")], "short", w=12)
+d.ts("Mesures GPU présentes (cible Prometheus)", "1 = l'exporteur DCGM répond. 0 ou absent : plus de mesures GPU (alerte LabScrapeTargetMissing).",
+     [('up{job=~".*dcgm.*"}', "{{job}} {{instance}}")], "short", w=12, minv=0, maxv=1)
+d.save(vars_model=False)
+
+# ---------------- 08 Efficacité et goulot du GPU ----------------
+d = D("lab-gpu-efficiency", "08 - Efficacité et goulot du GPU", "Lab", "Le GPU est-il bien utilisé, saturé, efficace en énergie ? Méthode USE (utilisation, saturation, erreurs), MFU et MBU, énergie par token, coût d'inactivité, comparaison des GPU. Mode d'emploi : docs/gpu/03-dashboards.md.")
+d.row("Utilisation : quelles ressources du GPU travaillent ?")
+d.ts("Calcul : unités actives et tensor cores", "SM_ACTIVE : part du temps où des unités de calcul travaillent (0,8 et plus est nécessaire mais pas suffisant, doc DCGM). TENSOR : tensor cores. GR_ENGINE : moteur graphique. Ne pas confondre avec GPU_UTIL.",
+     [("DCGM_FI_PROF_SM_ACTIVE", "SM_ACTIVE {{gpu}}"), ("DCGM_FI_PROF_PIPE_TENSOR_ACTIVE", "TENSOR {{gpu}}"), ("DCGM_FI_PROF_GR_ENGINE_ACTIVE", "GR_ENGINE {{gpu}}")], "percentunit", w=8, minv=0, maxv=1)
+d.ts("Mémoire : bande passante utilisée / maximum pratique", "DRAM_ACTIVE rapportée à 0,8, le maximum atteignable d'après la doc DCGM. Proche de 1 = le décodage est au bout de la bande passante du T4.",
+     [("lab:gpu_dram_active_vs_practical_max", "{{gpu}}")], "percentunit", w=8, minv=0, maxv=1.2)
+d.ts("Mémoire : VRAM utilisée", "Poids du modèle + cache KV + activations. vLLM préalloue la quasi-totalité avec gpu-memory-utilization 0,90 : une VRAM pleine ne signifie rien en soi.",
+     [("DCGM_FI_DEV_FB_USED / (DCGM_FI_DEV_FB_USED + DCGM_FI_DEV_FB_FREE)", "{{gpu}}")], "percentunit", w=8, minv=0, maxv=1)
+d.row("Saturation : y a-t-il de la file ?")
+d.ts("File d'attente et batch", "waiting > 0 de façon durable = la capacité est dépassée. running = taille du batch (plus il est grand, plus on passe de « limité par la mémoire » à « limité par le calcul »).",
+     [("lab:requests_waiting", "en attente {{model_name}}"), ("lab:requests_running", "en cours {{model_name}}")], "short", w=8)
+d.ts("Cache KV et préemptions", "KV proche de 100 % puis préemptions = mémoire de contexte insuffisante : le GPU est saturé en mémoire, pas en calcul.",
+     [("lab:kv_cache_usage:max", "KV {{model_name}}"), ("lab:preemptions:rate5m", "préemptions/s {{model_name}}")], "short", w=8)
+d.ts("Part du temps de requête passée en prefill", "Part du temps total des requêtes (prefill + decode) passée à lire le prompt. Haut = charge de type RAG (calcul) ; bas = charge de type chat (mémoire).",
+     [("sum(rate(vllm:request_prefill_time_seconds_sum[$__rate_interval])) / (sum(rate(vllm:request_prefill_time_seconds_sum[$__rate_interval])) + sum(rate(vllm:request_decode_time_seconds_sum[$__rate_interval])))", "part prefill")],
+     "percentunit", w=8, minv=0, maxv=1)
+d.row("MFU et MBU (estimations de vLLM, scénario gpu-health : --enable-mfu-metrics)")
+d.ts("MFU : part du calcul maximal utilisée", "Opérations estimées par vLLM / 65 TFLOPS du T4. Faible en décodage (limité par la mémoire) : c'est normal.", [("lab:gpu_mfu", "MFU")], "percentunit", w=8, minv=0)
+d.ts("MBU : part de la bande passante utilisée", "Octets lus et écrits estimés par vLLM / 320 Go/s. C'est le bon indicateur d'efficacité du décodage (mesuré à ≈ 83 % à 1 requête, docs/gpu/01-signaux-du-gpu.md).", [("lab:gpu_mbu", "MBU")], "percentunit", w=8, minv=0)
+d.ts("Comparer MBU estimé et DRAM_ACTIVE", "Deux mesures indépendantes de la mémoire : l'estimation de vLLM et le compteur matériel. Elles doivent évoluer ensemble ; un écart durable signale une estimation à corriger.",
+     [("lab:gpu_mbu", "MBU (vLLM)"), ("lab:gpu_dram_active_vs_practical_max", "DRAM_ACTIVE / 0,8 (DCGM)")], "percentunit", w=8, minv=0)
+d.row("Énergie et coût")
+d.ts("Débit de tokens", "Tokens de sortie générés par seconde. À lire avec la puissance du graphique voisin (unités différentes, donc deux graphiques).", [("lab:generation_tokens:rate1m", "tokens/s {{model_name}}")], "short", w=6)
+d.ts("Puissance du GPU", "Watts mesurés (plafond 70 W).", [("DCGM_FI_DEV_POWER_USAGE", "{{gpu}}")], "watt", w=6)
+d.ts("Tokens par joule et kWh par million de tokens", "Efficacité énergétique : plus de tokens par joule = moins d'énergie par token. Observé : le 1,5B passe de 4,2 à 15,6 tokens/J entre une charge interactive et une charge saturée.",
+     [("lab:tokens_per_joule", "tokens/joule"), ("lab:gpu_kwh_per_million_tokens", "kWh par million de tokens")], "short", w=6)
+d.ts("Énergie par requête (J)", "Watts moyens divisés par les requêtes servies par seconde.", [("lab:gpu_energy_per_request_joules", "joules par requête")], "short", w=6)
+d.ts("Coût par million de tokens et coût d'inactivité", "Coût du GPU rapporté aux tokens, et coût par heure des GPU alloués mais inutilisés.", [("lab:cost_per_million_tokens_usd", "$ par million de tokens"), ("lab:gpu_idle_cost_usd_per_hour", "$/h de GPU inactif")], "currencyUSD", w=12)
+d.ts("GPU alloués, utilisés, inactifs", "Alloué sans être utilisé = argent dépensé sans service (alerte LabGPUIdleCost).", [("lab:gpu_allocated", "alloués"), ("lab:gpu_used", "utilisés"), ("lab:gpu_allocated_idle", "alloués et inactifs")], "short", w=12)
+d.row("Comparer les GPU entre eux (2 nœuds)")
+d.ts("Température, puissance et horloge par GPU", "Deux GPU sous la même charge doivent se ressembler. Un GPU nettement plus chaud ou plus lent que l'autre est un candidat au remplacement.",
+     [("DCGM_FI_DEV_GPU_TEMP", "température (°C) {{gpu}} {{Hostname}}"), ("DCGM_FI_DEV_POWER_USAGE", "puissance (W) {{gpu}} {{Hostname}}")], "short", w=8)
+d.ts("Écart de température entre GPU", "Température maximale moins minimale. Un écart durable de plus de quelques degrés sous charge égale est suspect.", [("lab:gpu_temp_spread_celsius", "écart")], "celsius", w=8)
+d.ts("Énergie par token et par pod", "Watts du GPU divisés par les tokens générés par le pod qui l'utilise (jointure DCGM / vLLM par le label pod). Deux réplicas identiques doivent avoir des valeurs proches.",
+     [('max by (pod) (DCGM_FI_DEV_POWER_USAGE{pod!=""}) / sum by (pod) (rate(vllm:generation_tokens_total[$__rate_interval]))', "joules par token {{pod}}")], "short", w=8)
+d.save(vars_model=False)
+
 print("ok", sorted(str(p.relative_to(OUT)) for p in OUT.rglob("*.json")))

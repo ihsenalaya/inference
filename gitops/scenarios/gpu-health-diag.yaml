@@ -1,0 +1,10 @@
+# Séance GPU, étape « santé DCGM » (docs/gpu/05-simulations.md, S8) : même modèle que gpu-health mais AUCUN réplica,
+# pour que le GPU soit libre pendant `dcgmi diag -r 2` et `-r 3` (le test de déploiement échoue si un autre processus utilise le GPU).
+# On ne peut pas simplement mettre le déploiement à 0 avec kubectl : Argo CD annule la modification en quelques secondes (self-heal).
+scenario: gpu-health-diag
+models:
+  - alias: qwen-7b-awq
+    name: Qwen/Qwen2.5-7B-Instruct-AWQ
+    resourceName: qwen-7b-awq
+    uri: hf://Qwen/Qwen2.5-7B-Instruct-AWQ
+    replicas: 0
