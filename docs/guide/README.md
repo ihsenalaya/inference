@@ -6,6 +6,8 @@ chaque chapitre commence par une petite boîte « Mots à connaître », et [le 
 
 ## Par où commencer si vous débutez
 
+Le [parcours de lecture](../PARCOURS.md) ordonne tous les documents (guide, formation, dossier GPU) en étapes avec leur durée.
+
 1. Lisez les **12 premiers mots** du [glossaire](../sre/GLOSSAIRE.md) (5 minutes).
 2. Lisez [le lab en une phrase](#le-lab-en-une-phrase) ci-dessous, puis [01 - L'inférence expliquée](01-inference-expliquee.md).
 3. Passez à [02 - Architecture](02-architecture.md) pour suivre le trajet d'une requête.

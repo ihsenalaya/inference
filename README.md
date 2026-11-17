@@ -7,7 +7,7 @@ Ce n'est pas une production.
 
 **En une phrase.** Un petit cluster Azure (1 GPU T4) sur lequel on fait tourner un modèle de langage, qu'on crée et détruit par des commandes, et dont on mesure tout (vitesse, mémoire, coût) pour apprendre à l'optimiser.
 
-**Si vous débutez**, lisez dans cet ordre : le [glossaire](docs/sre/GLOSSAIRE.md) (les 12 premiers mots), le [guide](docs/guide/README.md), puis la [formation](docs/formation/README.md).
+**Si vous débutez**, suivez le **[parcours de lecture](docs/PARCOURS.md)** (≈ 8 heures en 6 étapes : comprendre, mesurer, optimiser, raconter). En résumé : le [glossaire](docs/sre/GLOSSAIRE.md) (les 12 premiers mots), le [guide](docs/guide/README.md), puis la [formation](docs/formation/README.md).
 
 <!-- mots: inférence, llm, token, vram, vllm, gitops -->
 > **Mots à connaître**

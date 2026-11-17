@@ -9,6 +9,8 @@ Marques de fiabilité utilisées partout : **(observé)** vu sur le cluster · *
 
 ## Par où commencer
 
+Première visite ? Le [parcours de lecture](../PARCOURS.md) donne l'ordre de tous les documents et le temps à prévoir.
+
 1. Si vous n'avez jamais touché à un LLM : lisez d'abord le [guide 01 - L'inférence expliquée](../guide/01-inference-expliquee.md), puis revenez ici.
 2. Suivez les modules **dans l'ordre** : chacun s'appuie sur le précédent.
 
