@@ -82,8 +82,8 @@ Lecture :
 
 | Modèle | Mémoire GPU utilisée | Détail |
 |---|---|---|
-| `Qwen2.5-7B-Instruct-AWQ` (4 bits, Marlin) | **14,4 Gio** / 16 | poids 5,29 Gio, cache KV 6,97 Gio (130 512 tokens, 31,9x à 4096), graphes CUDA 0,35 Gio ; `--gpu-memory-utilization 0.90` |
-| `Qwen2.5-1.5B-Instruct` (FP16) | **14,9 Gio** / 16 | `0.90` réserve l'essentiel de la carte pour le cache KV, même pour un petit modèle |
+| `Qwen2.5-7B-Instruct-AWQ` (4 bits, Marlin) | **14 447 MiB** / 16 384 | poids 5,29 Gio, cache KV 6,97 Gio (130 512 tokens, 31,9x à 4096), graphes CUDA 0,35 Gio ; `--gpu-memory-utilization 0.90` |
+| `Qwen2.5-1.5B-Instruct` (FP16) | **14 860 MiB** / 16 384 | `0.90` réserve l'essentiel de la carte pour le cache KV, même pour un petit modèle |
 
 La mémoire utilisée dépend surtout de `gpu-memory-utilization`, pas du modèle : le 1,5B n'occupe pas moins de GPU, il a juste plus de cache KV (voir la piste 6).
 
@@ -150,7 +150,7 @@ Lecture :
 | 7B AWQ, 1 req/s, 3 min | 0,628 s | 0,578 s | **+50 ms** | 146 / 140 |
 | 1,5B FP16, 3 req/s, 5 min / 3 min | 0,226 s | 0,201 s | **+25 ms** | 436 / 423 |
 
-Le TPOT client est plus faible via LiteLLM (regroupement des chunks SSE) : à lire avec prudence. LiteLLM consomme ~1 Gio au repos (OOM à 1,25 Gio sous 300+ flux, anomalie 3).
+Le TPOT client est plus faible via LiteLLM (explication probable, non vérifiée : regroupement des chunks SSE) : à lire avec prudence. LiteLLM consomme ~1 Gio au repos (OOM à 1,25 Gio sous 300+ flux, anomalie 3).
 Le surcoût de la Gateway Istio elle-même n'est pas isolé (l'écart Gateway/direct vLLM nécessiterait un accès par IP de pod) ; sa latence p95 est visible dans le dashboard 01.
 
 ## 7. KEDA (`baseline-7b-keda`, 1 à 2 réplicas, 2 nœuds T4)
@@ -191,7 +191,7 @@ beaucoup plus de groupes de préfixes (> capacité du cache KV d'un pod) et/ou d
 3. **LiteLLM OOMKilled** à 3-4 req/s (limite 1,25 Gio, ~1 Gio au repos) : limite portée à 2 Gio (D-24). Piste : mesurer l'empreinte mémoire par flux, plusieurs workers.
 4. **Cache KV sous-utilisé** : 130 512 tokens pour `max-model-len 4096` (31,9x de concurrence théorique) alors que le batch réel reste bien plus petit. Pistes : `max-num-seqs` plus élevé, `max-model-len` plus grand si les cas d'usage le demandent.
 5. **Pool système juste** : `D4as_v7` à 75 % des requests CPU et 51 % des requests mémoire, mais les limites mémoire sont en sur-allocation de 267 % (OOM du nœud observé une fois). Piste : `D8as_v7` (+0,18 $/h) si l'on ajoute des composants, ou réduire Prometheus/LiteLLM.
-6. **GPU mémoire** : le 1,5B occupe 14,9 Gio (`0.90`) : le modèle partage mal le GPU. Piste : scénario `gpu-sharing` (time-slicing, `gpu-memory-utilization` 0,45 chacun) pour héberger plusieurs petits modèles sur un T4.
+6. **GPU mémoire** : le 1,5B occupe 14 860 MiB (`0.90`) : le modèle partage mal le GPU. Piste : scénario `gpu-sharing` (time-slicing, `gpu-memory-utilization` 0,45 chacun) pour héberger plusieurs petits modèles sur un T4.
 7. **Efficacité énergétique** : ~60-65 W en charge (plafond 70 W), 2,2 tokens/J pour le 7B, 6,9 pour le 1,5B ; le coût par million de tokens de sortie vaut ≈ 1,0 $ (7B) et 0,34 $ (1,5B) à ~1 et 3 req/s.
    Le coût est dominé par l'utilisation : un nœud inactif coûte 0,526 $/h (alerte `LabGPUIdleCost` après 30 min).
 8. **Cold start d'un 2e nœud GPU** : ~7 min jusqu'au pod Ready, dont le pull de l'image de 9 Go. Pistes : pré-tirer l'image (DaemonSet), disque d'images partagé, modèle sur un stockage local.

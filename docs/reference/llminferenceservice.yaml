@@ -1,0 +1,66 @@
+apiVersion: serving.kserve.io/v1alpha2
+kind: LLMInferenceService
+metadata:
+  name: qwen-1-5b
+  namespace: inference
+  labels:
+    lab/alias: qwen-1.5b
+    lab/scenario: small-fp16
+  annotations:
+    argocd.argoproj.io/tracking-id: serving:serving.kserve.io/LLMInferenceService:inference/qwen-1-5b
+spec:
+  model:
+    name: Qwen/Qwen2.5-1.5B-Instruct
+    uri: hf://Qwen/Qwen2.5-1.5B-Instruct
+  replicas: 1
+  rolloutStrategy:
+    maxSurge: 0
+    maxUnavailable: 1
+  router:
+    gateway:
+      refs:
+      - name: inference-gateway
+        namespace: inference
+    route: {}
+    scheduler:
+      template:
+        containers:
+        - name: main
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+  template:
+    containers:
+    - args:
+      - --dtype
+      - float16
+      - --max-model-len
+      - '4096'
+      - --gpu-memory-utilization
+      - '0.9'
+      - --enable-prefix-caching
+      image: vllm/vllm-openai@sha256:befccf0e7e4089aa23926bb6f887a85c0d46c2a99e6de5c5ffdf5cb7957c5b34
+      name: main
+      resources:
+        limits:
+          memory: 22Gi
+          nvidia.com/gpu: '1'
+        requests:
+          cpu: 2500m
+          memory: 18Gi
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      startupProbe:
+        failureThreshold: 120
+    nodeSelector:
+      workload: inference
+    tolerations:
+    - effect: NoSchedule
+      key: sku
+      operator: Equal
+      value: gpu
+
