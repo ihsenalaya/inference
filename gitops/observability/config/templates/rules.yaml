@@ -113,7 +113,7 @@ spec:
         - record: lab:gpu_energy_per_request_joules
           expr: sum(DCGM_FI_DEV_POWER_USAGE) / (sum(rate(vllm:request_success_total[5m])) > 0)
         - record: lab:gpu_kwh_per_million_tokens
-          expr: (1e6 / lab:tokens_per_joule) / 3.6e6
+          expr: (1e6 / (lab:tokens_per_joule > 0)) / 3.6e6     # sans trafic, tokens_per_joule vaut 0 : le filtre évite +Inf (constaté le 17/11/2026)
         # --- comparaison de plusieurs GPU
         - record: lab:gpu_temp_spread_celsius
           expr: max(DCGM_FI_DEV_GPU_TEMP) - min(DCGM_FI_DEV_GPU_TEMP)

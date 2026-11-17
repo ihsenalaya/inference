@@ -13,6 +13,10 @@ operator:
   defaultRuntime: containerd
 devicePlugin:
   enabled: true
+# DCGM autonome (pod nvidia-dcgm, port 5555) : fournit la commande `dcgmi` (santé, diagnostics, injection d'erreurs) que l'image minimale du dcgm-exporter n'a pas.
+# L'exporteur s'y connecte au lieu d'embarquer son propre moteur. Ajouté pour la séance GPU (S8, S9) ; voir docs/DECISIONS.md D-42.
+dcgm:
+  enabled: true
 daemonsets:
   tolerations:
     - { key: sku, operator: Equal, value: gpu, effect: NoSchedule }
@@ -56,7 +60,7 @@ dcgmExporter:
       DCGM_FI_PROF_PCIE_TX_BYTES, counter, Octets PCIe émis.
       DCGM_FI_PROF_PCIE_RX_BYTES, counter, Octets PCIe reçus.
       # --- Santé du GPU (ajoutés après le 17/11). Noms vérifiés dans le fichier default-counters.csv du tag 4.8.4 de dcgm-exporter
-      # (tests/fixtures + tests/check_dcgm_fields.py) ; non encore observés sur un cluster. Aucun texte d'aide ne doit contenir de virgule.
+      # (tests/fixtures + tests/check_dcgm_fields.py) ; observés sur le cluster le 17/11/2026. Aucun texte d'aide ne doit contenir de virgule.
       DCGM_FI_DEV_POWER_MGMT_LIMIT, gauge, Limite de puissance configurée (W).
       DCGM_FI_DEV_ENFORCED_POWER_LIMIT, gauge, Limite de puissance réellement appliquée par le pilote (W).
       DCGM_FI_DEV_POWER_VIOLATION, counter, Durée de bridage due à la puissance (unité à vérifier).
