@@ -2,6 +2,12 @@
 
 **Symptôme.** Le GPU bride ses fréquences (puissance ou thermique).
 
+<!-- mots: throttling -->
+> **Mots à connaître**
+> - **Throttling / limite de puissance** : Le GPU baisse sa fréquence quand il atteint sa limite (70 W sur T4).
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Vérifications
 
 - Dashboard 02 : raisons de throttling, puissance (plafond 70 W).

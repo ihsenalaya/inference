@@ -1,5 +1,18 @@
 # KServe (`LLMInferenceService`)
 
+**En une phrase.** KServe est le « constructeur » : on lui décrit un modèle dans **un seul objet** et il crée tout ce qu'il faut autour (pods vLLM, routage, sélecteur de pod).
+
+<!-- mots: kserve, crd, pod, epp, probe, taint -->
+> **Mots à connaître**
+> - **KServe / `LLMInferenceService`** : Un seul objet déclare un modèle ; KServe crée les pods, le routage et le choix du pod.
+> - **CRD / opérateur** : Nouveau type d'objet ajouté à Kubernetes / programme qui gère ces objets (ex. `LLMInferenceService`).
+> - **Pod** : La plus petite unité qui tourne : un ou plusieurs conteneurs. Un pod vLLM = un modèle sur un GPU.
+> - **llm-d / EPP** : *Endpoint Picker* : choisit le pod vLLM le mieux placé (peu chargé, cache de préfixes) pour chaque requête.
+> - **Probe (readiness)** : Test qui dit à Kubernetes si un pod est prêt à recevoir du trafic.
+> - **Taint / toleration** : « Chasse-pods » posé sur le nœud GPU (`sku=gpu`) / autorisation pour les pods qui doivent y aller.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Rôle
 Le **plan de contrôle du serving**. On écrit un objet déclaratif `LLMInferenceService` (modèle, image, arguments, ressources) ; le contrôleur `llmisvc-controller-manager` en déduit et maintient tous les objets nécessaires.
 Version **v0.21.0** (25/09/2026), API `serving.kserve.io/v1alpha2` (la `v1alpha1` reste servie). Seule la partie « LLM » de KServe est installée (charts `kserve-llmisvc-crd`, `kserve-llmisvc-resources`, `kserve-runtime-configs`).
@@ -8,7 +21,7 @@ Version **v0.21.0** (25/09/2026), API `serving.kserve.io/v1alpha2` (la `v1alpha1
 Namespace `kserve` : un seul workload (`llmisvc-controller-manager`, 50 m CPU / 128 Mi, limite 512 Mi). Il agit sur le namespace `inference`.
 
 ## Relations
-- **Lit** : les `LLMInferenceService` (créés par Argo CD depuis notre chart `gitops/serving/chart`) et les **presets** `LLMInferenceServiceConfig` (namespace `kserve`) qu'il fusionne avec la spec.
+- **Lit** : les `LLMInferenceService` (créés par Argo CD depuis notre chart `gitops/serving/chart`) et les **presets** `LLMInferenceServiceConfig` (modèles de configuration réutilisables, namespace `kserve`) qu'il fusionne avec la spec.
 - **Crée** : Deployment vLLM + Service, Deployment EPP + Service + RBAC, `InferencePool`, `HTTPRoute`, `ScaledObject` KEDA si `spec.scaling.keda` (voir [architecture §3](../guide/02-architecture.md)).
 - **S'appuie sur** : cert-manager (certificat du webhook), Gateway API + GIE (objets), Istio (implémentation de la Gateway), KEDA (autoscaling), LeaderWorkerSet (dépendance, inutilisée).
 
@@ -21,9 +34,9 @@ Namespace `kserve` : un seul workload (`llmisvc-controller-manager`, 50 m CPU / 
   - image **`vllm/vllm-openai@sha256:befccf0e…`** (v0.32.0) au lieu de l'image du preset `ghcr.io/llm-d/llm-d-cuda:v0.9.0`, qui est compilée **sans sm_75** (T4) : inutilisable ;
   - arguments `--dtype float16 --max-model-len 4096 --gpu-memory-utilization 0.90 --enable-prefix-caching` ;
   - `runAsUser: 1000` (l'image officielle tourne en root, le preset impose `runAsNonRoot`) ;
-  - `startupProbe.failureThreshold: 120` (jusqu'à 20 minutes de démarrage) ;
+  - `startupProbe.failureThreshold: 120` (test de démarrage : Kubernetes attend jusqu'à 20 minutes que vLLM soit prêt) ;
   - requests 2 500 m CPU / 18 Gio, limites 22 Gio et 1 GPU ; `nodeSelector workload=inference` + toleration du taint GPU.
-- **`rolloutStrategy: {maxSurge: 0, maxUnavailable: 1}`** : avec 1 GPU par pod et 2 GPU de quota, pas de pod de remplacement possible en parallèle : sans cela le rolling update reste bloqué en `Pending`.
+- **`rolloutStrategy: {maxSurge: 0, maxUnavailable: 1}`** (mise à jour sans pod supplémentaire : on arrête l'ancien avant de lancer le nouveau) : avec 1 GPU par pod et 2 GPU de quota, pas de pod de remplacement possible en parallèle : sans cela le rolling update reste bloqué en `Pending`.
 - Le **TLS interne de KServe est inactif** (probes en HTTP, vLLM sert en HTTP) : aucun certificat n'est monté en usage.
 
 ## Authentification

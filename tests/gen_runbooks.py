@@ -63,7 +63,22 @@ R = {
  "EPPDataLayerExtractErrors": ("Erreurs d'extraction des métriques des pods par l'EPP.", ["Version de vLLM / noms de métriques attendus par l'EPP."], ["Aligner la version de vLLM avec celle de l'EPP."]),
  "EPPExtProcStreamErrors": ("Les flux ext_proc Envoy <-> EPP se terminent en erreur.", ["Logs istio-proxy de la Gateway (Loki dashboard 05)."], ["`DestinationRule` TLS (insecureSkipVerify) vers le service EPP."]),
 }
+# Mots du glossaire repérés dans le texte d'un runbook : ils alimentent la boîte « Mots à connaître » (tests/gen_doc_boxes.py).
+import re, subprocess, sys
+GLOSS_KEYS = ["ttft", "tpot", "cache kv", "préemption", "file d'attente", "cold start", "quantization", "cache de préfixes", "keda", "burn rate",
+              "budget d'erreur", "slo", "xid", "throttling", "tensor core", "dcgm", "vram", "taint", "goodput", "saturation", "epp", "tls", "gpu_util", "gitops"]
+
+
+def keys_for(text):
+    low = text.lower()
+    found = [k for k in GLOSS_KEYS if re.search(r"(?<![\w-])" + re.escape(k) + r"(?![\w-])", low)]
+    return (found or ["alerte"])[:6] if found else ["alerte", "runbook"]
+
+
 for name, (sym, checks, levers) in R.items():
-    (OUT / f"{name}.md").write_text(f"# {name}\n\n**Symptôme.** {sym}\n\n## Vérifications\n\n" + "\n".join(f"- {c}" for c in checks) +
+    body = "\n".join(checks) + "\n" + "\n".join(levers) + "\n" + sym
+    (OUT / f"{name}.md").write_text(
+        f"# {name}\n\n**Symptôme.** {sym}\n\n<!-- mots: {', '.join(keys_for(body))} -->\n<!-- /mots -->\n\n## Vérifications\n\n" + "\n".join(f"- {c}" for c in checks) +
         "\n\n## Leviers d'optimisation\n\n" + "\n".join(f"- {l}" for l in levers) + "\n")
 print(len(R), "runbooks")
+subprocess.run([sys.executable, str(pathlib.Path(__file__).with_name("gen_doc_boxes.py"))], check=False)

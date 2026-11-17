@@ -1,5 +1,16 @@
 # Journal des décisions
 
+**À quoi ça sert.** Le journal des choix techniques : pour chaque décision, pourquoi elle a été prise et d'où vient l'information. Utile quand on se demande « pourquoi c'est configuré comme ça ? ».
+
+<!-- mots: gitops, scénario, digest d'image, quantization -->
+> **Mots à connaître**
+> - **GitOps** : L'état voulu du cluster est écrit dans Git ; Argo CD le fait appliquer. On ne modifie pas le cluster à la main.
+> - **Scénario** : Un fichier `gitops/scenarios/*.yaml` qui choisit le modèle et les réglages ; un seul est actif.
+> - **Digest d'image** : Empreinte exacte d'une image de conteneur : on « épingle » la version au lieu d'un tag qui peut changer.
+> - **Quantization / AWQ** : Stocker les poids sur 4 bits au lieu de 16 pour réduire la mémoire. Le 7B AWQ pèse **5,29 Gio** (observé) au lieu d'environ 14 (calcul).
+> - Tous les mots : [glossaire](sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 Format : décision, raison, source, date. Les versions et faits du prompt datent du 16/11/2026 ; en cas d'écart,
 la source officielle gagne.
 
@@ -31,9 +42,9 @@ la source officielle gagne.
 | D-24 | LiteLLM : limite mémoire **2 Gio** (au lieu de 1,25) | OOMKilled constaté à 3-4 req/s (300+ flux concurrents) ; le processus occupe déjà ~1 Gio au repos. | observé sur AKS | 2026-11-17 |
 | D-25 | Argo CD ignore `/webhooks` des `ValidatingWebhookConfiguration` / `MutatingWebhookConfiguration` de cert-manager, KEDA et istiod | Les contrôleurs y injectent `caBundle` et `failurePolicy` : sans cela les applications restent OutOfSync en permanence. | observé sur AKS | 2026-11-17 |
 | D-26 | Expérience de routage : EPP « charge seule » (`epp.loadOnly`) | Les scorers `prefix-cache-scorer` / `load-aware-scorer` n'existent plus (D-09) ; la comparaison porte sur le profil par défaut (filtre d'affinité de préfixes + `token-load-scorer`) contre `token-load-scorer` seul. | presets KServe v0.21.0 | 2026-11-17 |
-| D-27 | GPU Operator en **vague 1** et pré-tirage de l'image vLLM (`image-prepull`) | Mesuré : le driver attendait ~10 min derrière d'autres composants et l'image n'était tirée qu'après le téléchargement du modèle (3 min 35). **Codé, non retesté depuis zéro** (aucune réinstallation après ce changement). | `tests/coldstart.py`, BASELINE §3 | 2026-11-17 |
-| D-28 | Garde-fous de coût : budget Azure (`azurerm_consumption_budget_resource_group`), `lab.sh idle --stop-after`, `lab.sh snapshot-metrics` | Un budget prévient sans rien arrêter ; l'arrêt sur inactivité reste une commande explicite (pas de remédiation cachée). **Non testés sur Azure** ; le budget pourrait être refusé selon le type d'offre de l'abonnement. | consigne utilisateur (coût) | 2026-11-17 |
-| D-29 | Phase 0 de la campagne SRE : échauffement exclu (`WARMUP`), 3 répétitions, `tests/noise.py` ; instrumentation CPU/GPU ; **le bruit du 1,5B n'a pas été mesuré** | seuils de décision pour les futures expériences : débits CV <= 2,7 %, p95 CV 19-29 % (7B). | `docs/sre/ETAT-DES-LIEUX.md` | 2026-11-17 |
+| D-27 | GPU Operator en **vague 1** et pré-tirage de l'image vLLM (`image-prepull`) | Mesuré : le driver attendait ~10 min derrière d'autres composants et l'image n'était tirée qu'après le téléchargement du modèle (3 min 35). **Prouvé le 17/11** par une réinstallation de zéro : démarrage du driver 317 s au lieu de 590 s, pull de l'image 1 s au lieu de 215 s, nœud GPU -> vLLM prêt 721 s au lieu de 1 228 s ([module 6](formation/06-demarrage-a-froid.md)). | `tests/coldstart.py`, BASELINE §3 | 2026-11-17 |
+| D-28 | Garde-fous de coût : budget Azure (`azurerm_consumption_budget_resource_group`), `lab.sh idle --stop-after`, `lab.sh snapshot-metrics` | Un budget prévient sans rien arrêter ; l'arrêt sur inactivité reste une commande explicite (pas de remédiation cachée). Mis à l'épreuve le 17/11 : le **budget** a été créé sans refus (7 s) ; l'envoi des e-mails n'a pas été observé. **`idle` et `snapshot-metrics` restent non testés** sur un cluster. | consigne utilisateur (coût) | 2026-11-17 |
+| D-29 | Phase 0 de la campagne SRE : échauffement exclu (`WARMUP`), 3 répétitions, `tests/noise.py` ; instrumentation CPU/GPU ; bruit du 7B **et du 1,5B** mesurés (le 17/11) | seuils de décision pour les futures expériences : 7B : débits CV <= 2,7 %, p95 CV 19-29 % ; 1,5B : débits CV <= 0,7 %, p95 CV 2-7 % ([module 1](formation/01-mesurer-sans-se-tromper.md)). | `docs/sre/ETAT-DES-LIEUX.md` | 2026-11-17 |
 | D-30 | Une classe de charge = une **clé virtuelle LiteLLM** (`lab-interactive`, `lab-rag`, `lab-multiturn`, `lab-batch`), SLI par classe lus sur `api_key_alias` | vLLM ne distingue pas les clients ; LiteLLM étiquette ses métriques par alias de clé et par équipe. Pas de classe « embeddings » : aucun modèle d'embeddings n'est déployé. | `/metrics` LiteLLM sur le cluster | 2026-11-17 |
 | D-31 | Seuils de SLO de latence = **bornes de seaux** LiteLLM (TTFT interactif 5 s, RAG 10 s, durées 30 s / 300 s) ; disponibilité = 5xx et 408 uniquement (4xx exclus) | Les seaux réels n'ont pas de 3 s (premier jet) : une règle avec `le="3.0"` ne renvoie rien. Un 400 (modèle inconnu, contexte dépassé) est une faute du client. | seaux lus sur Prometheus | 2026-11-17 |
 | D-32 | Alertes de burn rate multi-fenêtres (14,4x / 1 h confirmé 5 min ; 6x / 6 h confirmé 30 min), seuils **calculés** depuis `slo.windowDays` (30) | Méthode du SRE Workbook ; changer la fenêtre recalcule les seuils. Limite : avec un objectif de 95 %, la page ne part qu'à 72 % de requêtes lentes. | tests promtool (5 cas) | 2026-11-17 |

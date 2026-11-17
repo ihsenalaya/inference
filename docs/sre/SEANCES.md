@@ -1,12 +1,23 @@
 # Compte rendu des séances SRE
 
+**En une phrase.** Un journal court : pour chaque séance de travail, ce qui a été fait, ce qui a été appris, ce qui est adopté, ce qui reste ouvert et ce que ça a coûté.
+
+<!-- mots: slo, burn rate, cold start, classe de charge -->
+> **Mots à connaître**
+> - **SLO** : Un objectif chiffré de qualité de service, par exemple « 95 % des réponses commencent en moins de 5 s ».
+> - **Burn rate** : Vitesse de consommation du budget : 1 = on l'épuise juste à la fin de la fenêtre ; 14,4 = en ~50 h pour une fenêtre de 30 jours.
+> - **Cold start** : Délai entre « on demande un GPU / un pod » et « il répond ». Ici : **721 s** pour un nœud GPU, **~3,5 min** pour changer de modèle (observé).
+> - **Classe de charge** : Un type d'usage avec son propre SLO : interactive, RAG, multi-tour, lot (embeddings non couverte).
+> - Tous les mots : [glossaire](GLOSSAIRE.md).
+<!-- /mots -->
+
 Format imposé par le prompt : ce qui a été fait, ce qui a été appris, ce qui est adopté, heures GPU consommées, puis arrêt du cluster. Heures GPU = temps pendant lequel le nœud T4 a existé
 (0,526 $/h, plus 0,182 $/h pour le nœud système).
 
 ## Séance 1 - Phase 0 : état des lieux, bruit de mesure, plan de campagne (17/11/2026) - TERMINÉE
 
 **Fait**
-- État des lieux et plan de campagne priorisé : [ETAT-DES-LIEUX.md](ETAT-DES-LIEUX.md) (la validation du plan par l'utilisateur est toujours attendue).
+- État des lieux et plan de campagne priorisé : [ETAT-DES-LIEUX.md](ETAT-DES-LIEUX.md) (le plan de campagne est retenu par défaut).
 - Bruit de mesure du **7B AWQ** (3 répétitions à 1 req/s) **et du 1,5B FP16** (3 répétitions à 2 req/s, mesuré sur le second cluster).
 - Instrumentation : CPU de vLLM, throttling, GPU alloué/utilisé, compteurs DCGM de profilage (`SM_ACTIVE`, `SM_OCCUPANCY`, `PIPE_TENSOR_ACTIVE`, `PIPE_FP16_ACTIVE`).
 - Preuve des changements d'industrialisation par une réinstallation complète : GPU Operator en vague 1, pré-tirage de l'image, budget Azure.
@@ -41,7 +52,7 @@ Format imposé par le prompt : ce qui a été fait, ce qui a été appris, ce qu
 **Adopté** : clés par classe, seuils sur seaux, disponibilité = 5xx et 408, burn rates à la place des alertes à seuil fixe, multi-tour mesuré à 0,5 req/s ([D-30 à D-34](../DECISIONS.md)).
 
 **Ouvert**
-1. **Validation des SLO par l'utilisateur** (les valeurs sont des propositions).
+1. Les SLO sont des **valeurs de départ** (déduites des mesures) ; ils seront ajustés quand l'usage réel sera mieux connu.
 2. **`LabSLOBurnFast` non déclenchée sur le cluster** (seulement validée par `promtool`) : le burn rate 1 h n'a pas dépassé 14,4.
 3. **Un seul run par couple modèle/classe** : aucune dispersion, donc aucun gain déclaré ; le RAG 7B n'a que 60 requêtes.
 4. Les 2 panneaux « budget consommé » de RAG et multi-tour sont vides quand la classe n'a pas eu de trafic récent (comportement normal, à ne pas confondre avec un bug).
@@ -56,4 +67,4 @@ Cluster détruit en fin de séance ; les snapshots Azure n'ont pas été touché
 ## Séances suivantes (non commencées)
 
 Séance 3 (goulot, lecture du GPU, CPU), 4 (attention, mémoire KV, concurrence, batching), 5 (quantization, taille, contexte, qualité), 6 (routage, passerelles), 7 (autoscaling, démarrage), 8 (opérations GPU), 9 (game days), 10 (capacité, coût, rapport final).
-Chacune annonce son budget d'heures GPU avant de démarrer et attend la validation du plan ([ETAT-DES-LIEUX.md](ETAT-DES-LIEUX.md), section 5).
+Chacune annonce son budget d'heures GPU avant de démarrer ; l'ordre suit le plan de campagne ([ETAT-DES-LIEUX.md](ETAT-DES-LIEUX.md), section 5).

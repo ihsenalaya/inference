@@ -1,5 +1,19 @@
 # Module 3 - Poser un SLO et lire le budget d'erreur : de la baseline aux objectifs
 
+**En une phrase.** Un SLO est une promesse chiffrée ; le budget d'erreur est la marge qu'on s'autorise à ne pas la tenir. Ce module montre comment les poser à partir de mesures réelles.
+
+<!-- mots: slo, sli, budget d'erreur, classe de charge, cold start, disponibilité, fenêtre glissante -->
+> **Mots à connaître**
+> - **SLO** : Un objectif chiffré de qualité de service, par exemple « 95 % des réponses commencent en moins de 5 s ».
+> - **SLI** : L'indicateur mesuré (par exemple : part de requêtes avec un TTFT ≤ 5 s).
+> - **Budget d'erreur** : La marge autorisée : 100 % − objectif. SLO à 95 % → 5 % de requêtes lentes tolérées.
+> - **Classe de charge** : Un type d'usage avec son propre SLO : interactive, RAG, multi-tour, lot (embeddings non couverte).
+> - **Cold start** : Délai entre « on demande un GPU / un pod » et « il répond ». Ici : **721 s** pour un nœud GPU, **~3,5 min** pour changer de modèle (observé).
+> - **Disponibilité** : Part des requêtes qui réussissent (pas d'erreur du côté serveur).
+> - **Fenêtre glissante** : Période qui avance avec le temps (« les 30 derniers jours »).
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 **Objectif** : savoir proposer un SLO défendable **à partir de mesures**, convertir un objectif en budget (requêtes et minutes), et dire ce que ce budget
 autorise réellement sur un cluster à un seul GPU. Marques de fiabilité : voir [le guide](../guide/README.md). Les SLO complets sont dans [docs/sre/SLO.md](../sre/SLO.md).
 
@@ -21,7 +35,7 @@ autorise réellement sur un cluster à un seul GPU. Marques de fiabilité : voir
 | Lot | 99 % | (aucun) | **95 % <= 300 s** | personne n'attend : on borne la durée pour détecter une file qui ne se vide plus ; le 1,5B saturé tient avec un p95 de 146 s |
 | Embeddings | -- | -- | -- | **pas de SLO : classe non déployée** |
 
-Ces valeurs sont des **propositions** fondées sur la baseline, à valider. Elles ne sont **pas** des engagements de service.
+Ces valeurs sont des **valeurs de départ retenues par défaut**, déduites de la baseline mesurée ; elles se changent en une ligne dans `slo.classes` et ne sont **pas** des engagements de service.
 Contrainte technique : les seuils de latence doivent être des **seaux** des histogrammes LiteLLM (1, 2, 5, 10, 30, 60, 120, 300 s... : module 4).
 
 ## 3. Du pourcentage au budget (calcul)

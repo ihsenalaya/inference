@@ -1,7 +1,23 @@
 # Baseline du lab d'inférence (AKS, 1 x T4)
 
+**En une phrase.** Le point de départ chiffré du lab : ce que le cluster sait faire avant toute optimisation, avec les mesures réelles.
+
+<!-- mots: ttft, tpot, percentile, saturation, cold start, cache kv -->
+> **Mots à connaître**
+> - **TTFT** : *Time To First Token* : attente avant le premier token de la réponse. C'est ce que l'utilisateur ressent en premier.
+> - **TPOT** : *Time Per Output Token* : durée moyenne entre deux tokens de la réponse. C'est la « fluidité » du texte qui s'affiche.
+> - **Percentile (p50, p95, p99)** : p95 = 95 % des requêtes vont plus vite que cette valeur. Le p50 est la médiane. Le p95 montre les cas lents.
+> - **Saturation / plateau** : Point où le serveur ne peut plus servir davantage : le débit n'augmente plus et la file grossit.
+> - **Cold start** : Délai entre « on demande un GPU / un pod » et « il répond ». Ici : **721 s** pour un nœud GPU, **~3,5 min** pour changer de modèle (observé).
+> - **Cache KV** : Mémoire où le modèle garde ce qu'il a déjà « compris » du texte, pour ne pas le refaire à chaque token. Il vit dans la mémoire du GPU.
+> - Tous les mots : [glossaire](sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 Mesures du 16-17/11/2026 sur le cluster déployé par `./lab.sh up` (région eastus, abonnement personnel).
 Rien n'a été optimisé : ce document décrit l'état initial et liste des pistes, classées par gain potentiel (section 9).
+
+**Comment le lire.** C'est le « point de départ » chiffré du lab : combien de requêtes par seconde il tient, avec quels délais, combien de temps il met à démarrer, ce qui le limite. Les sections 1 à 4 décrivent ce qui tourne ; la 5 donne les résultats ; les 6 à 8 comparent des chemins ou des réglages ; la 9 liste les pistes d'amélioration ; la 10 les critères d'acceptation.
+Ces mesures datent du **premier cluster** (16-17/11). Les mesures du **second cluster** (17/11 : démarrage plus rapide, bruit du 1,5B, classes de charge, SLO) sont dans [module 6](formation/06-demarrage-a-froid.md), [module 1](formation/01-mesurer-sans-se-tromper.md) et [SLO.md](sre/SLO.md).
 
 ## 1. Versions exactes déployées
 
@@ -48,7 +64,7 @@ mesuré sur la seconde installation (après `down`), 1 nœud T4, modèle `qwen-7
 | Phase | Durée |
 |---|---|
 | `terraform apply` (groupe de ressources, AKS, pool GPU, Argo CD, secrets, application racine) | 575 s (AKS 5 min 00, pool GPU 1 min 54) |
-| Convergence Argo CD des 19 applications (jusqu'à tout Synced/Healthy) | ~10 min 30 |
+| Convergence Argo CD des 19 applications de l'époque (20 aujourd'hui, jusqu'à tout Synced/Healthy) | ~10 min 30 |
 | Pods prêts (driver, modèle, vLLM) | à 03:51:41 |
 | **Total `lab.sh up` jusqu'à `smoke` 9/9 vert** | **28 min 46 s** |
 
@@ -77,6 +93,19 @@ Lecture :
 - vLLM : poids 21,7 s, torch.compile 19,8 s, graphes CUDA ~28 s, initialisation du moteur 72,8 s ; cache KV 130 512 tokens.
 - Redémarrage après `lab.sh stop` : `az aks start` 5 min 13, puis ~11 min de pods (les nœuds sont recréés : nouveau driver, nouvelle image).
 - Nœud supplémentaire (KEDA, 2e T4) : nœud prêt en 1 min 49, driver ~3 min, pod Ready ~7 min après la décision (voir section 7).
+
+### 3 bis. Même mesure sur le second cluster (17/11/2026), après les deux améliorations
+
+GPU Operator en vague 1 et pré-tirage de l'image, modèle 1,5B FP16 (le modèle n'est pas le même : seuls les deux premiers écarts sont attribuables aux changements) :
+
+| Étape | 16/11 (7B) | 17/11 (1,5B) |
+|---|---|---|
+| Nœud GPU créé -> driver NVIDIA démarré | 590 s | **317 s** |
+| Modèle téléchargé -> conteneur vLLM démarré (pull de l'image) | 215 s | **1 s** |
+| Nœud GPU créé -> vLLM Ready | 1 228 s | **721 s** |
+| Début de Terraform -> pod vLLM prêt | 28 min 46 s | **18 min 55 s** |
+
+Détail, calculs et réserves : [module 6 de la formation](formation/06-demarrage-a-froid.md).
 
 ## 4. Mémoire GPU par modèle
 
@@ -182,7 +211,7 @@ Avec 4 préfixes qui tiennent dans le cache des deux pods, l'affinité de préfi
 Les scorers `prefix-cache-scorer` / `load-aware-scorer` du prompt n'existent plus dans llm-d router v0.10 (D-09, D-26). Pour que l'écart devienne visible :
 beaucoup plus de groupes de préfixes (> capacité du cache KV d'un pod) et/ou des préfixes plus longs.
 
-## 9. Anomalies et pistes d'optimisation observées (classées par gain potentiel, rien n'est appliqué)
+## 9. Anomalies et pistes d'optimisation observées (classées par gain potentiel ; état du 16/11, les points appliqués depuis sont signalés)
 
 1. **Prefill sur T4 : attention Triton sans tensor cores** (gain potentiel : x5 à x15 sur `long-prompt`). Prompts de 2000-3500 tokens à 0,5 req/s : TTFT p50 **102 s**, 71 erreurs,
    débit de prefill ≈ 370 tokens/s ; le 1,5B tient (TTFT p50 2,8 s). Pistes : expérience A/B de version d'image (section 2), `max-num-batched-tokens`, prefill chunké, limiter la longueur des prompts, modèle plus petit pour les longs contextes.
@@ -194,7 +223,7 @@ beaucoup plus de groupes de préfixes (> capacité du cache KV d'un pod) et/ou d
 6. **GPU mémoire** : le 1,5B occupe 14 860 MiB (`0.90`) : le modèle partage mal le GPU. Piste : scénario `gpu-sharing` (time-slicing, `gpu-memory-utilization` 0,45 chacun) pour héberger plusieurs petits modèles sur un T4.
 7. **Efficacité énergétique** : ~60-65 W en charge (plafond 70 W), 2,2 tokens/J pour le 7B, 6,9 pour le 1,5B ; le coût par million de tokens de sortie vaut ≈ 1,0 $ (7B) et 0,34 $ (1,5B) à ~1 et 3 req/s.
    Le coût est dominé par l'utilisation : un nœud inactif coûte 0,526 $/h (alerte `LabGPUIdleCost` après 30 min).
-8. **Cold start d'un 2e nœud GPU** : ~7 min jusqu'au pod Ready, dont le pull de l'image de 9 Go. Pistes : pré-tirer l'image (DaemonSet), disque d'images partagé, modèle sur un stockage local.
+8. **Cold start d'un 2e nœud GPU** : ~7 min jusqu'au pod Ready, dont le pull de l'image de 9 Go. Pistes : pré-tirer l'image (DaemonSet : **fait et prouvé le 17/11**, pull de 215 s à 1 s), disque d'images partagé, modèle sur un stockage local.
 9. **Démarrage après `stop`** : les nœuds sont recréés (noms `vmss000002` / `000001`), donc driver recompilé et image retirée : ~16 min au total (`az aks start` 5 min 13).
 10. **inference-perf v0.7.0** : le sweep automatique échoue (`index out of bounds`) ; le générateur synthétique n'accepte que `/v1/completions` ; pas de bloc `observability` (D-23).
 11. **Faux positif de configuration** : l'image `llm-d-cuda:v0.9.0` livrée par KServe v0.21.0 n'a pas de noyau sm_75 (D-03), le driver ouvert (`kernel-open`) ne compile pas sur le noyau AKS 5.15 (D-18).
@@ -208,12 +237,12 @@ beaucoup plus de groupes de préfixes (> capacité du cache KV d'un pod) et/ou d
 | 3 | `LLMInferenceService` Ready, Gateway Programmed, chat via LiteLLM (stream et non), test B5 | validé (`lab.sh smoke`) |
 | 4 | Cibles Prometheus UP (DCGM, vLLM, EPP, Istio, LiteLLM, KEDA) | validé (36 cibles) |
 | 5 | Jointure GPU / pod vLLM (labels du pod sur DCGM) | validé (`honorLabels`) |
-| 6 | Aucun panneau vide après `bench steady` | validé (`tests/check_panels.py` : 59/59) |
-| 7 | promtool, alerte de test jusqu'au récepteur, alerte de file | promtool : 5 tests ; alertes TTFT/inter-token/GPU inactif reçues par le récepteur |
+| 6 | Aucun panneau vide après `bench steady` | validé (`tests/check_panels.py` : 59/59 le 16/11 ; 72 panneaux sur 74 le 17/11, les 2 vides étant des panneaux « budget consommé » de classes sans trafic récent) |
+| 7 | promtool, alerte de test jusqu'au récepteur, alerte de file | promtool : 10 tests (dont 5 de burn rate SLO) ; alertes TTFT/inter-token/GPU inactif reçues par le récepteur le 16/11, puis `LabSLOBurnSlow` le 17/11 (les alertes TTFT et inter-token ont été remplacées par les burn rates) |
 | 8 | Logs vLLM et événements dans Loki/Grafana | validé sur kind (Loki) ; dashboard 05 |
 | 9 | KEDA 1 -> 2 -> 1 avec délais | validé (section 7) |
 | 10 | Routage : hit ratio avec/sans affinité | validé (section 8) |
 | 11 | `stop`, `start`, `smoke` ; `down` ne laisse rien | validé ; `down` vérifié (groupes `inflab-rg` et `inflab-aks-nodes` supprimés) |
-| 12 | Aucun secret dans Git (gitleaks) | **partiel** : aucun secret dans l'arbre de travail (états Terraform ignorés par Git), mais l'historique contient 2 clés virtuelles LiteLLM dans d'anciens `results/*/config.yaml` (le banc de charge écrivait `api_key` dans sa configuration). Les clusters concernés sont détruits : les clés sont invalides. `tests/static.sh` signale donc encore un échec gitleaks sur l'historique ; il disparaîtrait avec une réécriture de l'historique (force-push), non faite sans accord. Le banc masque désormais la clé dans ses résultats. |
+| 12 | Aucun secret dans Git (gitleaks) | **partiel** : aucun secret dans l'arbre de travail (états Terraform ignorés par Git), mais l'historique contient 2 clés virtuelles LiteLLM dans d'anciens `results/*/config.yaml` (le banc de charge écrivait `api_key` dans sa configuration). Les clusters concernés sont détruits : les clés sont invalides. `tests/static.sh` signale donc encore un échec gitleaks sur l'historique ; il disparaîtrait avec une réécriture de l'historique (force-push), **non réalisée** : sujet laissé de côté sur instruction du propriétaire du dépôt. Le banc masque désormais la clé dans ses résultats. |
 
 Corrections apportées pendant le déploiement : voir `docs/DECISIONS.md` (D-17 à D-26).

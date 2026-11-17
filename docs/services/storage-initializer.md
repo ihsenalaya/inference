@@ -1,10 +1,21 @@
 # storage-initializer et Hugging Face
 
+**En une phrase.** Avant de démarrer vLLM, ce petit programme télécharge les « poids » du modèle (les nombres appris) depuis Hugging Face, la bibliothèque publique de modèles.
+
+<!-- mots: paramètres, pod, secret, cold start -->
+> **Mots à connaître**
+> - **Paramètres / poids** : Les nombres appris par le modèle. « 7B » = 7 milliards. Ils sont chargés une fois dans la VRAM.
+> - **Pod** : La plus petite unité qui tourne : un ou plusieurs conteneurs. Un pod vLLM = un modèle sur un GPU.
+> - **ConfigMap / Secret** : Configuration / données sensibles (mots de passe, clés) injectées dans les pods.
+> - **Cold start** : Délai entre « on demande un GPU / un pod » et « il répond ». Ici : **721 s** pour un nœud GPU, **~3,5 min** pour changer de modèle (observé).
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Rôle
-**Init container** ajouté par KServe à chaque pod vLLM : il **télécharge les poids du modèle** depuis l'URI déclarée (`hf://Qwen/...`) vers `/mnt/models` avant que vLLM ne démarre. Image `kserve/storage-initializer:v0.21.0`.
+**Init container** (un conteneur qui s'exécute et se termine avant le conteneur principal) ajouté par KServe à chaque pod vLLM : il **télécharge les poids du modèle** depuis l'URI déclarée (`hf://Qwen/...`) vers `/mnt/models` avant que vLLM ne démarre. Image `kserve/storage-initializer:v0.21.0`.
 
 ## Place dans l'architecture
-Premier acteur du démarrage d'un pod vLLM. Il s'exécute **avant** le conteneur principal : le pull de l'image vLLM (9 Go) n'a lieu qu'après lui (d'où le pré-tirage proposé, voir [image-prepull](image-prepull.md)).
+Premier acteur du démarrage d'un pod vLLM. Il s'exécute **avant** le conteneur principal : le pull de l'image vLLM (9 Go) n'a lieu qu'après lui (d'où le pré-tirage de l'image, désormais en place : voir [image-prepull](image-prepull.md)).
 
 ## Relations
 Hugging Face Hub (HTTPS, sortie via le Load Balancer AKS) -> volume `emptyDir kserve-provision-location` -> monté dans le pod vLLM.
@@ -21,7 +32,7 @@ Aucune (anonyme). Si un token est fourni, il est transmis à Hugging Face.
 Les **poids du modèle** : 7B AWQ ~5,5 Go, 1,5B FP16 ~3 Go. Aucun prompt.
 
 ## Contribution à l'inférence
-Détermine le **temps de démarrage** : mesuré **41 s** pour le 7B AWQ depuis la région Azure `eastus` (observé, 41 à 59 s selon les essais). Une panne de Hugging Face empêche tout nouveau réplica de démarrer (scénario de game day prévu).
+Détermine le **temps de démarrage** : mesuré **41 s** pour le 7B AWQ depuis la région Azure `eastus` (observé, 41 à 59 s selon les essais) ; **35 s** pour le même 7B et **24 s** pour le 1,5B FP16 (3 Gio) le 17/11. Une panne de Hugging Face empêche tout nouveau réplica de démarrer (scénario de game day prévu).
 
 ## Métriques
 Pas de métrique propre ; durée visible dans les conditions du pod (`Initialized`), logs `storage.initializer` (`Model downloaded in N seconds`). Mesure automatisée : `tests/coldstart.py`.

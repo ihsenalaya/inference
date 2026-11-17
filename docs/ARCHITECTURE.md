@@ -1,12 +1,25 @@
 # Architecture
 
+**En une phrase.** Une page pour voir l'ensemble : le trajet d'une requête (client -> LiteLLM -> Gateway -> EPP -> vLLM -> GPU), l'infrastructure Azure qui le porte, et l'ordre dans lequel tout est installé.
+
+<!-- mots: litellm, epp, vllm, gitops, terraform, pod -->
+> **Mots à connaître**
+> - **LiteLLM** : Passerelle OpenAI-compatible : clés virtuelles, budgets, limites, métriques par client.
+> - **llm-d / EPP** : *Endpoint Picker* : choisit le pod vLLM le mieux placé (peu chargé, cache de préfixes) pour chaque requête.
+> - **vLLM** : Le programme qui charge le modèle sur le GPU et répond aux requêtes. Le « moteur ».
+> - **GitOps** : L'état voulu du cluster est écrit dans Git ; Argo CD le fait appliquer. On ne modifie pas le cluster à la main.
+> - **Terraform** : Décrit l'infrastructure Azure (AKS, pools, secrets) dans des fichiers et la crée ou la détruit : `apply` / `destroy`.
+> - **Pod** : La plus petite unité qui tourne : un ou plusieurs conteneurs. Un pod vLLM = un modèle sur un GPU.
+> - Tous les mots : [glossaire](sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Chemin d'une requête
 
 `client -> LiteLLM -> Gateway Istio -> HTTPRoute -> InferencePool + EPP llm-d -> pod vLLM (1 T4)`
 
 - **LiteLLM** (AI gateway) : clés virtuelles, budgets, quotas, routage par modèle (`model_list` généré par scénario), fallback.
-  PostgreSQL stocke clés, équipes, dépenses. Deux équipes créées par un hook Argo CD PostSync : `lab-bench` (sans limite), `lab-user`
-  (budget 5, 60 rpm, 20 000 tpm).
+  PostgreSQL stocke clés, équipes, dépenses. Six équipes et clés créées par un hook Argo CD PostSync : `lab-bench` (sans limite), `lab-user`
+  (budget 5, 60 rpm, 20 000 tpm) et une par classe de charge SLO (`lab-interactive`, `lab-rag`, `lab-multiturn`, `lab-batch`).
 - **Gateway Istio** : `Gateway` Gateway API de classe `istio`, Service ClusterIP, pas de sidecar dans les namespaces d'inférence.
   Istio upstream (chart `istiod` seul) avec `ENABLE_GATEWAY_API_INFERENCE_EXTENSION=true`.
 - **EPP llm-d** (Endpoint Picker) : appelé en `ext_proc` gRPC par Envoy ; choisit le pod selon le cache de préfixes, la file et la charge.
@@ -28,13 +41,13 @@
 
 ## GitOps
 
-Application racine -> chart `gitops/root` -> une Application par composant, ordonnées par vagues :
+Application racine -> chart `gitops/root` -> une Application par composant (20 sur Azure), ordonnées par vagues (`sync-wave` : l'ordre dans lequel Argo CD les applique) :
 
 | Vague | Contenu |
 |---|---|
 | 0 | CRDs Gateway API v1.5.1 et GIE v1.5.0 |
-| 1 | cert-manager, kube-prometheus-stack |
-| 2-3 | istio-base ; istiod, GPU Operator, KEDA, LeaderWorkerSet, Loki, Alloy |
+| 1 | cert-manager, kube-prometheus-stack, **GPU Operator**, **pré-tirage de l'image vLLM** (azure seulement) |
+| 2-3 | istio-base ; istiod, KEDA, LeaderWorkerSet, Loki, Alloy |
 | 4-6 | KServe (CRDs, contrôleur, presets), Gateway |
 | 7-8 | scénario de serving, PostgreSQL, LiteLLM |
 | 9 | ServiceMonitors, règles, dashboards |
@@ -44,4 +57,4 @@ Les applications convergent par réessais (backoff) : l'ordre est une aide, pas 
 ## Observabilité
 
 Prometheus (rétention 7 j), règles d'enregistrement `lab:*`, alertes avec `runbook_url` (docs/runbooks), Grafana provisionné
-(6 dashboards maison, 5 dashboards llm-d, DCGM), Loki (logs pods + événements), Alertmanager (inhibition, webhook ou récepteur local).
+(7 dashboards maison dont « 06 - SLO par classe de charge », 5 dashboards llm-d, DCGM), alertes de burn rate par classe de charge, Loki (logs pods + événements), Alertmanager (inhibition, webhook ou récepteur local).

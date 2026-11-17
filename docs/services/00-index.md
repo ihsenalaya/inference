@@ -1,7 +1,21 @@
 # Fiches par service
 
+**En une phrase.** une fiche par composant du cluster, pour comprendre **ce qu'il fait**, **à qui il parle** et **quoi surveiller**.
+
+<!-- mots: pod, namespace, argo cd, kserve, prometheus -->
+> **Mots à connaître**
+> - **Pod** : La plus petite unité qui tourne : un ou plusieurs conteneurs. Un pod vLLM = un modèle sur un GPU.
+> - **Namespace** : Un « dossier » qui range les objets (`inference`, `gateway`, `monitoring`...).
+> - **Argo CD / Application** : Applique ce qui est dans Git sur le cluster. Une *Application* = un composant suivi.
+> - **KServe / `LLMInferenceService`** : Un seul objet déclare un modèle ; KServe crée les pods, le routage et le choix du pod.
+> - **Prometheus / Alertmanager** : Stocke les métriques / envoie les alertes.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 Chaque fiche suit le même plan : **rôle**, **place dans l'architecture**, **relations**, **configuration retenue**, **authentification**, **données traitées**, **contribution à l'inférence**, **métriques à suivre**, **pannes et diagnostic**.
 Convention de fiabilité (observé / config / doc / calcul / non vérifié) : voir [le guide](../guide/README.md).
+
+Les fiches sont écrites pour un débutant : chacune commence par « En une phrase » et une boîte « Mots à connaître » ; [le glossaire](../sre/GLOSSAIRE.md) donne tous les mots.
 
 Inventaire réel des workloads (images, requests, limites, ports, ServiceAccounts) : [docs/reference/workloads.txt](../reference/workloads.txt).
 
@@ -27,7 +41,7 @@ Inventaire réel des workloads (images, requests, limites, ports, ServiceAccount
 | LeaderWorkerSet | [lws.md](lws.md) | dépendance de KServe (inutilisé) |
 | cert-manager | [cert-manager.md](cert-manager.md) | certificats du webhook KServe |
 | Argo CD | [argocd.md](argocd.md) | applique Git sur le cluster |
-| Pré-tirage d'image | [image-prepull.md](image-prepull.md) | tire l'image vLLM tôt (codé, non retesté) |
+| Pré-tirage d'image | [image-prepull.md](image-prepull.md) | tire l'image vLLM tôt (prouvé le 17/11 : pull de 1 s au lieu de 215 s) |
 
 ## Observabilité
 

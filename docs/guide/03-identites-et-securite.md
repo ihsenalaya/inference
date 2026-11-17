@@ -2,6 +2,20 @@
 
 Ce lab est un **lab d'apprentissage**, pas une production : plusieurs choix ci-dessous sont volontairement simples (HTTP en clair dans le cluster, accès anonyme à Hugging Face).
 Cette page dit **qui s'authentifie auprès de qui**, ce qui protège quoi, et ce qui ne protège **pas**.
+En deux mots : chaque fois qu'un composant en appelle un autre, quelle preuve d'identité présente-t-il ? À l'extérieur du cluster, des mots de passe et des clés ; **à l'intérieur, le plus souvent aucune**
+(le lab est fermé : rien n'est exposé sur Internet).
+
+<!-- mots: authentification, clé virtuelle, serviceaccount, rbac, tls, secret, digest d'image -->
+> **Mots à connaître**
+> - **Authentification** : Prouver qui on est (mot de passe, clé d'API, certificat, jeton).
+> - **Clé virtuelle** : Clé d'API LiteLLM par client ; l'alias de la clé sert ici à identifier la **classe de charge**.
+> - **ServiceAccount / jeton** : L'identité d'un programme dans Kubernetes et le « badge » temporaire qu'il présente à l'API.
+> - **RBAC / ClusterRole** : Les droits donnés à une identité (par exemple « lire les pods »). Un *ClusterRole* vaut pour tout le cluster.
+> - **TLS / mTLS** : Chiffrement d'un échange ; en *mTLS* les deux côtés prouvent aussi leur identité.
+> - **ConfigMap / Secret** : Configuration / données sensibles (mots de passe, clés) injectées dans les pods.
+> - **Digest d'image** : Empreinte exacte d'une image de conteneur : on « épingle » la version au lieu d'un tag qui peut changer.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
 
 ## 1. Matrice « qui parle à qui, avec quelle identité »
 
@@ -14,7 +28,7 @@ Cette page dit **qui s'authentifie auprès de qui**, ce qui protège quoi, et ce
 | Argo CD | API Kubernetes | ServiceAccount `argocd-application-controller` | jeton projeté | (observé) |
 | Vous | Argo CD (UI) | `admin` + mot de passe initial | secret `argocd-initial-admin-secret` | (observé, `lab.sh ui`) |
 | Vous | Grafana | `admin` + mot de passe généré | secret `grafana-admin` (créé par Terraform) | (config) |
-| Client | LiteLLM | **clé virtuelle** `Authorization: Bearer sk-...` | `lab-bench` ou `lab-user` (secret `litellm-keys`) | (observé) |
+| Client | LiteLLM | **clé virtuelle** `Authorization: Bearer sk-...` | `lab-bench`, `lab-user` ou une des 4 clés de classe de charge `lab-interactive`, `lab-rag`, `lab-multiturn`, `lab-batch` (secret `litellm-keys`) | (observé) |
 | Admin LiteLLM | LiteLLM (API d'administration) | **master key** | `LITELLM_MASTER_KEY` (secret `litellm-secrets`) | (observé : noms des clés du secret) |
 | LiteLLM | PostgreSQL | utilisateur `litellm` + mot de passe | `DATABASE_URL`, `POSTGRES_PASSWORD` | (observé) |
 | LiteLLM | Gateway Istio | **aucune** (`api_key: none`) | - | (config) `configmap.yaml` |
@@ -35,7 +49,7 @@ Cette page dit **qui s'authentifie auprès de qui**, ce qui protège quoi, et ce
 | Secret | Créé par | Namespace | Contenu |
 |---|---|---|---|
 | `litellm-secrets` | Terraform (`random_password`) | `gateway` | `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, `POSTGRES_PASSWORD`, `DATABASE_URL` |
-| `litellm-keys` | hook Argo CD PostSync (job `litellm-bootstrap-keys`) | `gateway` | clés virtuelles `lab-bench`, `lab-user` |
+| `litellm-keys` | hook Argo CD PostSync (job `litellm-bootstrap-keys`) | `gateway` | 6 clés virtuelles : `lab-bench`, `lab-user`, `lab-interactive`, `lab-rag`, `lab-multiturn`, `lab-batch` (observé le 17/11) |
 | `grafana-admin` | Terraform | `monitoring` | `admin-user`, `admin-password` |
 | `alert-webhook` | Terraform | `monitoring` | `url` du récepteur (défaut : `alert-sink` interne) |
 | `hf-token` | Terraform | `inference` | `HF_TOKEN` (**vide** par défaut) |

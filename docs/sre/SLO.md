@@ -1,11 +1,27 @@
 # SLO par classe de charge (séance 2)
 
+**En une phrase.** Pour chaque type d'usage (chat, RAG, multi-tour, lot), on fixe une promesse chiffrée, on la mesure sur le cluster réel et on dit si elle est tenue.
+
+<!-- mots: slo, sli, budget d'erreur, classe de charge, goodput, ttft, rag -->
+> **Mots à connaître**
+> - **SLO** : Un objectif chiffré de qualité de service, par exemple « 95 % des réponses commencent en moins de 5 s ».
+> - **SLI** : L'indicateur mesuré (par exemple : part de requêtes avec un TTFT ≤ 5 s).
+> - **Budget d'erreur** : La marge autorisée : 100 % − objectif. SLO à 95 % → 5 % de requêtes lentes tolérées.
+> - **Classe de charge** : Un type d'usage avec son propre SLO : interactive, RAG, multi-tour, lot (embeddings non couverte).
+> - **Goodput** : Débit des requêtes **réussies et assez rapides** (qui respectent le SLO), pas le débit brut.
+> - **TTFT** : *Time To First Token* : attente avant le premier token de la réponse. C'est ce que l'utilisateur ressent en premier.
+> - **RAG** : Question accompagnée de longs documents retrouvés par ailleurs : prompt très long, réponse courte.
+> - Tous les mots : [glossaire](GLOSSAIRE.md).
+<!-- /mots -->
+
 Date : 17/11/2026. Cluster AKS `eastus`, 1 x T4. Formation associée : [modules 2, 3 et 4](../formation/README.md). Marques de fiabilité : [le guide](../guide/README.md).
 
-> **Statut : propositions à valider.** Les objectifs ci-dessous sont déduits de la baseline et de la séance 2 ; ce ne sont pas des engagements. Ils sont écrits à un seul endroit
-> (`slo.classes` dans `gitops/observability/config/values.yaml`), lus par les règles Prometheus et par `tests/goodput.py`.
+> **Statut : valeurs de départ retenues.** Les objectifs ci-dessous sont déduits de la baseline et des mesures de la séance 2 ; ce ne sont pas des engagements de service. Ils sont écrits à un seul endroit
+> (`slo.classes` dans `gitops/observability/config/values.yaml`), lus par les règles Prometheus et par `tests/goodput.py` : on les change en une ligne si les besoins évoluent.
 
 ## 1. Classes, SLI, SLO
+
+Comment lire ce tableau : chaque ligne est un **type d'usage** (une classe) avec **sa** promesse. « 95 % <= 5 s » veut dire : au moins 95 requêtes sur 100 doivent obtenir leur premier token en moins de 5 secondes ; les 5 % restants sont le **budget d'erreur**.
 
 | Classe | Profil de charge | Disponibilité | TTFT | Durée de bout en bout |
 |---|---|---|---|---|
@@ -94,5 +110,5 @@ Lecture :
 - **RAG 7B : 60 requêtes seulement** (0,1 req/s x 600 s) ; **RAG 1,5B, multi-tour : 150 requêtes** ; les parts bonnes ont une incertitude de plusieurs points.
 - Le goodput client est calculé sur les `300 s` finales d'envoi ; le serveur compte les requêtes **terminées** dans sa fenêtre : ils diffèrent quand une file existe.
 - Les SLI serveur par classe reposent sur les métriques de **LiteLLM** (clé = classe) : un client qui utiliserait la mauvaise clé fausserait sa classe.
-- Les SLO sont des **propositions** ; la validation par le propriétaire du lab reste à faire.
+- Les SLO sont des **valeurs de départ** déduites des mesures ; elles sont à resserrer ou à relâcher quand on connaîtra mieux l'usage réel.
 - Embeddings : classe non mesurée.

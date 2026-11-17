@@ -1,5 +1,16 @@
 # Alertmanager et le récepteur d'alertes (`alert-sink`)
 
+**En une phrase.** Alertmanager reçoit les alertes de Prometheus, évite les doublons et les envoie à une adresse (ici un récepteur interne qui les écrit simplement dans ses logs).
+
+<!-- mots: alerte, webhook, runbook, slo, burn rate -->
+> **Mots à connaître**
+> - **Alerte / runbook** : Notification d'un problème / fiche qui dit quoi vérifier et quoi faire (`docs/runbooks/`).
+> - **Webhook** : Adresse HTTP qui reçoit des messages d'un autre programme (ici : les alertes d'Alertmanager).
+> - **SLO** : Un objectif chiffré de qualité de service, par exemple « 95 % des réponses commencent en moins de 5 s ».
+> - **Burn rate** : Vitesse de consommation du budget : 1 = on l'épuise juste à la fin de la fenêtre ; 14,4 = en ~50 h pour une fenêtre de 30 jours.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Rôle
 Reçoit les alertes de Prometheus, les **regroupe**, les **déduplique**, applique des **inhibitions** et les envoie à un récepteur. Version v0.35.0 (StatefulSet `alertmanager-kps-alertmanager`).
 
@@ -19,7 +30,7 @@ Aucune entre Prometheus et Alertmanager (interne). L'URL du webhook externe (Tea
 Libellés et annotations d'alertes (nom, modèle, pod...). Pas de contenu de requête.
 
 ## Contribution à l'inférence
-Indirecte : prévient d'une saturation, d'une erreur GPU ou d'un GPU inutilisé. **Les alertes de burn rate SLO ne sont pas encore écrites** (phase SLO) ; les alertes actuelles sont à seuils fixes larges.
+Indirecte : prévient d'une saturation, d'une erreur GPU, d'un GPU inutilisé et, depuis le 17/11, d'une consommation trop rapide du budget d'erreur d'une classe de charge (`LabSLOBurnFast` et `LabSLOBurnSlow`, voir [module 4](../formation/04-burn-rate-et-alertes.md)). Les autres alertes ont des seuils fixes larges.
 
 ## Métriques / pannes
 `alertmanager_alerts`, `alertmanager_notifications_failed_total`. Si le webhook est injoignable, les alertes restent visibles dans l'UI mais ne sont pas livrées.

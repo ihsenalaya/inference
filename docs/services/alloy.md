@@ -1,5 +1,16 @@
 # Grafana Alloy
 
+**En une phrase.** Alloy est le facteur des logs : il lit ce que chaque pod écrit et le dépose dans Loki.
+
+<!-- mots: alloy, loki, daemonset, taint, serviceaccount -->
+> **Mots à connaître**
+> - **Grafana / Loki / Alloy** : Tableaux de bord / stockage des logs / agent qui collecte les logs.
+> - **Deployment / DaemonSet / Job** : Programme à N copies / une copie par nœud / tâche qui se termine (un bench).
+> - **Taint / toleration** : « Chasse-pods » posé sur le nœud GPU (`sku=gpu`) / autorisation pour les pods qui doivent y aller.
+> - **ServiceAccount / jeton** : L'identité d'un programme dans Kubernetes et le « badge » temporaire qu'il présente à l'API.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Rôle
 **Collecteur de logs** (et d'événements) : lit les logs des conteneurs via l'API Kubernetes et les pousse dans Loki. Version v1.22.0 (chart `grafana/alloy` 1.16.0), DaemonSet `alloy`.
 

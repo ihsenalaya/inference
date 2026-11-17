@@ -1,5 +1,16 @@
 # PostgreSQL (base de LiteLLM)
 
+**En une phrase.** PostgreSQL est le carnet de LiteLLM : il garde les clés, les équipes et la consommation de chacun.
+
+<!-- mots: litellm, clé virtuelle, pvc, secret -->
+> **Mots à connaître**
+> - **LiteLLM** : Passerelle OpenAI-compatible : clés virtuelles, budgets, limites, métriques par client.
+> - **Clé virtuelle** : Clé d'API LiteLLM par client ; l'alias de la clé sert ici à identifier la **classe de charge**.
+> - **PVC / disque persistant** : Demande de stockage qui survit au redémarrage d'un pod (disque managé Azure). Prometheus, Loki et PostgreSQL en ont un.
+> - **ConfigMap / Secret** : Configuration / données sensibles (mots de passe, clés) injectées dans les pods.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Rôle
 Stocke l'état de LiteLLM : **clés virtuelles, équipes, budgets, dépenses**. Sans base, LiteLLM n'a pas de clés virtuelles ni de suivi de budget (doc LiteLLM).
 

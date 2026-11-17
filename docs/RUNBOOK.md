@@ -1,5 +1,16 @@
 # Runbook d'exploitation
 
+**En une phrase.** Le mode d'emploi du quotidien : allumer, mettre en pause, détruire, changer de modèle, diagnostiquer, mesurer.
+
+<!-- mots: scénario, cold start, gitops, taint -->
+> **Mots à connaître**
+> - **Scénario** : Un fichier `gitops/scenarios/*.yaml` qui choisit le modèle et les réglages ; un seul est actif.
+> - **Cold start** : Délai entre « on demande un GPU / un pod » et « il répond ». Ici : **721 s** pour un nœud GPU, **~3,5 min** pour changer de modèle (observé).
+> - **GitOps** : L'état voulu du cluster est écrit dans Git ; Argo CD le fait appliquer. On ne modifie pas le cluster à la main.
+> - **Taint / toleration** : « Chasse-pods » posé sur le nœud GPU (`sku=gpu`) / autorisation pour les pods qui doivent y aller.
+> - Tous les mots : [glossaire](sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Cycle de vie (coût)
 
 | Action | Commande | Effet sur la facture |
@@ -10,7 +21,7 @@
 | 2e GPU | `./lab.sh gpu-scale 2` | +0,526 $/h |
 | Fin | `./lab.sh down --yes` | plus rien de facturé |
 
-`start` peut échouer en `AllocationFailed` (capacité T4 malgré le quota, constatée en 2026) : le script le signale ;
+`down` demande une confirmation interactive : utiliser `--yes` dans un script. `start` peut échouer en `AllocationFailed` (capacité T4 malgré le quota, constatée en 2026) : le script le signale ;
 réessayer plus tard, ou `down` puis `up`.
 
 ## Accès
@@ -36,6 +47,25 @@ Les réglages (max-model-len, gpu-memory-utilization, max-num-seqs, cache de pr�
 | Application Argo CD OutOfSync | `kubectl -n argocd get app <nom> -o yaml` ; les CRD arrivent avant les ressources (réessais) |
 
 Chaque alerte a son runbook : `docs/runbooks/<Alerte>.md`.
+
+## Mesurer
+
+| Besoin | Commande |
+|---|---|
+| Un run simple | `RATE=2 DURATION=300 WARMUP=60 ./lab.sh bench steady` |
+| Les 4 classes de charge | `INT_RATE=1 RAG_RATE=0.1 MT_RATE=0.5 BATCH_RATE=2.5 tests/classes.sh` (clé et goodput par classe) |
+| Bruit de mesure (3 répétitions) | `PER_REQUEST=true tests/repeat_steady.sh <débit> 3 noise` puis `tests/noise.py 'results/*noise-r*'` |
+| Signaux serveur et GPU d'un run | `ALIAS=lab-<classe> tests/run_window.py results/<run>` (Prometheus sur `127.0.0.1:19090`) |
+| Essai d'alerte de burn rate | `tests/slo_alert_test.sh 0.5 600` (surcharge volontaire de la classe RAG) |
+| Démarrage à froid | `python3 tests/coldstart.py` |
+
+Règle : même profil, même durée, même échauffement, 3 répétitions avant de comparer ([module 1](formation/01-mesurer-sans-se-tromper.md)).
+
+## Pièges d'environnement connus
+
+- Si Docker Desktop est arrêté sous WSL, le lien `/usr/local/bin/kubectl` (qui pointe vers Docker Desktop) répond « Input/output error » et `lab.sh` s'arrête sans message pendant l'attente : installer un `kubectl` dans `~/.local/bin` (que `lab.sh` utilise en premier).
+- Ne pas modifier `lab.sh` pendant qu'une commande tourne (bash lit le script au fur et à mesure).
+- `pkill -f` peut tuer votre propre shell : arrêter les processus par numéro.
 
 ## Tests
 

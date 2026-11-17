@@ -1,10 +1,21 @@
 # cert-manager
 
+**En une phrase.** cert-manager fabrique et renouvelle les certificats (les « cartes d'identité » chiffrées) dont KServe a besoin pour que Kubernetes accepte de lui parler.
+
+<!-- mots: tls, kserve, secret, crd -->
+> **Mots à connaître**
+> - **TLS / mTLS** : Chiffrement d'un échange ; en *mTLS* les deux côtés prouvent aussi leur identité.
+> - **KServe / `LLMInferenceService`** : Un seul objet déclare un modèle ; KServe crée les pods, le routage et le choix du pod.
+> - **ConfigMap / Secret** : Configuration / données sensibles (mots de passe, clés) injectées dans les pods.
+> - **CRD / opérateur** : Nouveau type d'objet ajouté à Kubernetes / programme qui gère ces objets (ex. `LLMInferenceService`).
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Rôle
 Émet et renouvelle des **certificats TLS** pour les composants du cluster.
 
 ## Place dans l'architecture
-Prérequis de KServe : le contrôleur `llmisvc` expose un **webhook d'admission** (validation et mutation des `LLMInferenceService`) en HTTPS ; son certificat est géré par cert-manager.
+Prérequis de KServe : le contrôleur `llmisvc` expose un **webhook d'admission** (un contrôle que Kubernetes appelle avant d'accepter un objet : validation et modification des `LLMInferenceService`) en HTTPS ; son certificat est géré par cert-manager.
 Version **v1.17.4** : la mineure 1.17 est imposée par la version de KServe (v0.21.0).
 
 ## Relations

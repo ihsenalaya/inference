@@ -1,5 +1,18 @@
 # AKS et ressources Azure
 
+**En une phrase.** AKS est le terrain de jeu : Azure fait tourner le « cerveau » de Kubernetes et le lab loue les machines (un petit nœud pour la plateforme, un nœud avec un GPU pour le modèle).
+
+<!-- mots: aks, kubernetes, nœud, vmss, taint, pvc -->
+> **Mots à connaître**
+> - **AKS** : Kubernetes managé par Azure : Azure gère le « cerveau », vous payez les machines.
+> - **Kubernetes / cluster** : Système qui fait tourner des programmes en conteneurs sur plusieurs machines et les maintient en vie.
+> - **Nœud / pool de nœuds** : Une machine (VM) du cluster / un groupe de machines identiques. Le lab a un pool « système » et un pool « GPU ».
+> - **VMSS** : Groupe de machines virtuelles identiques d'Azure qui se trouve derrière un pool de nœuds.
+> - **Taint / toleration** : « Chasse-pods » posé sur le nœud GPU (`sku=gpu`) / autorisation pour les pods qui doivent y aller.
+> - **PVC / disque persistant** : Demande de stockage qui survit au redémarrage d'un pod (disque managé Azure). Prometheus, Loki et PostgreSQL en ont un.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Rôle
 Azure Kubernetes Service fournit le **plan de contrôle Kubernetes managé** (API server, etcd, scheduler, controller-manager) et les nœuds (VM Azure en VMSS).
 Le lab utilise le tier **Free** : pas de SLA sur le plan de contrôle, ce qui suffit pour un lab (config `sku_tier = "Free"`).

@@ -2,6 +2,12 @@
 
 **Symptôme.** Le GPU a signalé une erreur XID (matériel, driver ou application).
 
+<!-- mots: xid -->
+> **Mots à connaître**
+> - **XID** : Code d'erreur NVIDIA signalant un problème GPU (ex. 79 : GPU tombé du bus).
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Vérifications
 
 - `nvidia-smi -q | grep -i xid` dans le pod GPU Operator ; `dmesg` du nœud.

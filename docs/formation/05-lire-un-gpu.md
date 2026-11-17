@@ -1,5 +1,21 @@
 # Module 5 - Lire un GPU en inférence : ce que disent (et ne disent pas) les compteurs du T4
 
+**En une phrase.** Un compteur « GPU utilisé à 100 % » ne dit presque rien : ce module apprend à lire les bons compteurs du T4, avec leurs valeurs réelles dans cinq situations.
+
+<!-- mots: gpu_util, sm_active, sm, noyau gpu, nvidia t4, tensor core, dcgm, throttling, vram -->
+> **Mots à connaître**
+> - **GPU_UTIL** : Part du temps où *au moins un* calcul tournait. **100 % ne veut pas dire saturé** (observé : le même GPU passe de 284 à 933 tokens/s à `GPU_UTIL` constant ou plus bas).
+> - **SM_ACTIVE / TENSOR / DRAM_ACTIVE** : Compteurs plus fins : unités de calcul actives / tensor cores actifs / mémoire du GPU active.
+> - **SM / warp** : SM : unité de calcul du GPU (le T4 en a 40, doc NVIDIA) ; warp : groupe de 32 threads qui avancent ensemble.
+> - **Noyau GPU (kernel)** : Petit programme exécuté sur le GPU. À ne pas confondre avec le noyau Linux du nœud.
+> - **NVIDIA T4** : Le GPU du lab : architecture Turing, 16 Go, 70 W maximum, pas de bf16 ni FP8. Peu cher, peu puissant.
+> - **Tensor core** : Unité du GPU spécialisée en multiplications de matrices, très rapide pour l'IA.
+> - **DCGM** : Outil NVIDIA qui mesure le GPU ; `dcgm-exporter` publie ces mesures pour Prometheus.
+> - **Throttling / limite de puissance** : Le GPU baisse sa fréquence quand il atteint sa limite (70 W sur T4).
+> - **GPU / VRAM** : Le processeur de calcul (ici un NVIDIA T4) et sa mémoire (16 Go). Le modèle et le cache KV doivent y tenir.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 **Objectif** : savoir lire les compteurs DCGM d'un GPU pendant l'inférence, et ne plus confondre « GPU utilisé à 100 % » avec « GPU saturé ».
 Toutes les valeurs ci-dessous sont des **moyennes sur la fenêtre de mesure** de runs réels du lab (`tests/run_window.py`, Prometheus), 1 x T4.
 Marques de fiabilité : voir [le guide](../guide/README.md).

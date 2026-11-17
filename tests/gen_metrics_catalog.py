@@ -34,5 +34,10 @@ for name in sorted(meta):
 out = pathlib.Path(__file__).resolve().parent.parent / "docs/METRIQUES.md"
 out.write_text("# Catalogue des métriques\n\nGénéré depuis les `/metrics` réels (`tests/gen_metrics_catalog.py`, API metadata de Prometheus). "
                "Les noms changent d'une version à l'autre : toujours relire ce fichier avant d'écrire une requête.\n\n"
+               "**Pour débutant.** Une *métrique* est un nombre mesuré dans le temps. Type *counter* : ne fait que monter (on regarde sa vitesse avec `rate()`) ; *gauge* : monte et descend (une file, une température) ; "
+               "*histogram* : des compteurs par tranches de durée (`_bucket`, `_sum`, `_count`), pour calculer des percentiles. Le préfixe dit d'où vient la mesure : `vllm:` le moteur, `litellm_` la passerelle, `llm_d_epp_` / `inference_extension_` "
+               "le sélecteur de pod, `DCGM_FI_` le GPU, `istio_` / `envoy_` la Gateway, `kube_` / `container_` Kubernetes. Mots : [glossaire](sre/GLOSSAIRE.md).\n\n"
+               "**Catalogue du 16/11/2026** (premier cluster). Depuis, le cluster du 17/11 expose aussi `DCGM_FI_PROF_SM_ACTIVE`, `_SM_OCCUPANCY`, `_PIPE_TENSOR_ACTIVE`, `_PIPE_FP16_ACTIVE`, et les règles du dépôt ajoutent des séries `lab:*` et `slo:*` "
+               "(voir [guide observabilité](guide/04-observabilite.md) §3).\n\n"
                "| Métrique | Type | Signification | Levier d'optimisation |\n|---|---|---|---|\n" + "\n".join(rows) + "\n")
 print(len(rows), "métriques")

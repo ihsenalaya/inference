@@ -1,5 +1,21 @@
 # 04 - Observabilité : quoi regarder, où, et comment le lire
 
+Observer un cluster, c'est pouvoir répondre à « que se passe-t-il ? » sans deviner. Trois outils s'en chargent : des **chiffres** dans le temps (métriques), des **textes** (logs) et des **messages d'alerte**.
+Grafana les réunit dans des tableaux de bord. Ce chapitre dit où chaque chiffre naît, comment le retrouver et comment le lire.
+
+<!-- mots: métrique, scrape, promql, recording rule, dashboard, percentile, histogramme, alerte -->
+> **Mots à connaître**
+> - **Métrique** : Un nombre mesuré dans le temps (ex. `vllm:num_requests_waiting`). *Counter* = ne fait que monter ; *gauge* = monte et descend.
+> - **Scrape / cible** : Prometheus interroge périodiquement chaque programme exposant `/metrics`.
+> - **PromQL** : Langage de requête de Prometheus.
+> - **Recording rule** : Requête PromQL précalculée et enregistrée comme nouvelle métrique (nom en `lab:` ou `slo:`).
+> - **Dashboard / panneau / annotation** : Page Grafana / un graphique / un repère de temps (début et fin d'un bench).
+> - **Percentile (p50, p95, p99)** : p95 = 95 % des requêtes vont plus vite que cette valeur. Le p50 est la médiane. Le p95 montre les cas lents.
+> - **Histogramme / seau (bucket)** : Façon de compter les durées par tranches (≤ 1 s, ≤ 2 s, ≤ 5 s...). Les quantiles calculés dessus sont approximatifs.
+> - **Alerte / runbook** : Notification d'un problème / fiche qui dit quoi vérifier et quoi faire (`docs/runbooks/`).
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## 1. Les trois piliers et leur contenu
 
 | Pilier | Outil | Ce qu'il contient | Rétention (config) |
@@ -8,7 +24,7 @@
 | **Logs** | Loki (3.7.10) alimenté par Alloy | logs de tous les pods, **événements Kubernetes**, access logs JSON de la Gateway | 7 jours, disque 5 Gio |
 | **Alertes** | Alertmanager (v0.35.0) | alertes de Prometheus, regroupées, inhibées, envoyées à un webhook (`alert-sink` par défaut) | - |
 
-Grafana (13.3.1) est le point d'entrée : datasources `Prometheus`, `Loki` et `Alertmanager`, 12 dashboards provisionnés depuis Git (`lab.sh ui` -> http://localhost:3000).
+Grafana (13.3.1) est le point d'entrée : datasources `Prometheus`, `Loki` et `Alertmanager`, 13 dashboards provisionnés depuis Git (7 « Lab » + 6 importés) (`lab.sh ui` -> http://localhost:3000).
 Il n'y a **pas de traces** (OpenTelemetry/Tempo non déployés).
 
 **Persistance :** les disques survivent à `lab.sh stop`, **pas** à `lab.sh down` (les mesures sont perdues). Avant une destruction : `./lab.sh snapshot-metrics` (non testé sur cluster) exporte l'historique des règles `lab:*` dans `results/`.
@@ -47,7 +63,8 @@ Des requêtes lourdes précalculées (`gitops/observability/config/templates/rul
 | `lab:prefix_cache_hit_ratio` | hits / requêtes du cache de préfixes |
 | `lab:tokens_per_second_per_gpu`, `lab:tokens_per_joule`, `lab:cost_per_million_tokens_usd`, `lab:gpu_idle_ratio` | efficacité et coût (prix horaire 0,526 $ codé dans `lab:gpu_hourly_price_usd`) |
 | `lab:replica_load_gap`, `lab:epp_decision_seconds:p95`, `lab:litellm_overhead_seconds:p95` | routage et passerelles |
-| `lab:vllm_cpu_cores`, `lab:vllm_cpu_throttled_ratio`, `lab:gpu_capacity/allocatable/allocated/used` | CPU et allocation GPU (ajoutés, **non déployés** au moment de la dernière destruction) |
+| `lab:vllm_cpu_cores`, `lab:vllm_cpu_throttled_ratio`, `lab:gpu_capacity/allocatable/allocated/used` | CPU et allocation GPU (déployés et alimentés sur le cluster du 17/11 : `vllm_cpu_cores` de 0,16 à 0,36 coeur en charge) |
+| `slo:error_ratio:rate5m/30m/1h/6h`, `slo:error_budget`, `slo:burn_rate:5m/30m/1h/6h` | SLO par classe de charge : part de requêtes mauvaises, budget d'erreur et vitesse de consommation (`class` = classe, `sli` = `availability`, `ttft` ou `e2e`) ; fichier `templates/slo.yaml` |
 
 ## 4. Les dashboards (dossier Grafana « Lab » + « Imported »)
 
@@ -59,6 +76,7 @@ Des requêtes lourdes précalculées (`gitops/observability/config/templates/rul
 | **03 - Capacité et coût** | on parle d'argent | débit max, coût horaire, $ / million de tokens, cold start |
 | **04 - Comparaison de runs** | avant/après un changement | les **annotations** de bench (début/fin, profil, scénario, SHA Git) délimitent chaque run |
 | **05 - Logs** | une erreur apparaît | Loki : erreurs vLLM, événements Kubernetes, access logs Envoy |
+| **06 - SLO par classe de charge** | on veut savoir si l'objectif est tenu | burn rate (1 h, 5 min, 6 h), part de requêtes mauvaises, budget consommé, goodput et latences par classe (interactive, rag, multiturn, batch) |
 | llm-d (5 dashboards importés) | routage, saturation, cache KV | vue du scheduler llm-d v1.0.0 |
 | NVIDIA DCGM Exporter (12239) | santé du GPU | référence NVIDIA |
 
@@ -81,7 +99,8 @@ Chaque panneau porte un titre, une unité et une **description** : ce qu'il mesu
 
 **Piège d'interprétation** : `DCGM_FI_DEV_GPU_UTIL` est un **rapport cyclique** (« un noyau tournait pendant la période »), pas un taux de travail.
 Il peut afficher 100 % avec un GPU très sous-utilisé. Lire plutôt `DCGM_FI_PROF_GR_ENGINE_ACTIVE` (activité du moteur graphique) et `DCGM_FI_PROF_DRAM_ACTIVE` (bande passante mémoire).
-Sur le T4, seules ces deux-là (plus PCIe) sont exposées : `SM_ACTIVE`, `SM_OCCUPANCY`, `PIPE_TENSOR_ACTIVE` ne le sont pas avec la configuration actuelle (observé : l'exporteur n'a exposé que `DRAM_ACTIVE`, `GR_ENGINE_ACTIVE`, `PCIE_*` ; cause probable non vérifiée : groupes de compteurs de profilage incompatibles entre eux sur Turing).
+Les compteurs fins `SM_ACTIVE`, `SM_OCCUPANCY`, `PIPE_TENSOR_ACTIVE` et `PIPE_FP16_ACTIVE` **sont exposés sur le T4** avec la configuration actuelle (observé le 17/11 sur un cluster installé de zéro : `SM_ACTIVE` 0,88 à 0,97, `PIPE_TENSOR_ACTIVE` 0,04 à 0,32 selon la charge).
+Une première série de mesures avait conclu le contraire ; l'explication probable (non vérifiable, ce cluster-là était détruit) est un exporteur resté sur l'ancienne liste de champs : l'opérateur ne surveille pas ce ConfigMap, il faut redémarrer le DaemonSet de l'exporteur. Exemple de lecture : [module 5 de la formation](../formation/05-lire-un-gpu.md).
 
 ## 6. Les métriques à suivre, par couche
 
@@ -106,13 +125,14 @@ Catalogue complet généré depuis le cluster réel : [docs/METRIQUES.md](../MET
   Les deux préfixes (`llm_d_epp_*` et `inference_*`) coexistent dans cette version.
 
 **LiteLLM** (`litellm_`) - passerelle et coûts
-- `litellm_proxy_total_requests_metric_total`, `litellm_proxy_failed_requests_metric_total` : taux d'erreur.
+- `litellm_proxy_total_requests_metric_total`, `litellm_proxy_failed_requests_metric_total` : taux d'erreur. Elles portent les labels `api_key_alias` (= la **classe de charge**, une clé par classe), `team_alias`, `status_code` / `exception_status`.
+- `litellm_llm_api_time_to_first_token_metric`, `litellm_request_total_latency_metric` (histogrammes par classe ; seaux : 0,005 ... 1, 2, 5, 10, 30, 60, 120, 300, 420, 600 s) : base des SLO par classe.
 - `litellm_overhead_latency_metric` (histogramme) : surcoût de LiteLLM ; `litellm_in_flight_requests`.
 - `litellm_spend_metric_total`, `litellm_remaining_team_budget_metric` (labels `team`, `team_alias`) : budgets.
 
 **Envoy / Istio** : `istio_requests_total`, `istio_request_duration_milliseconds` (code de réponse, durée).
 
-**GPU (DCGM)** : `DCGM_FI_DEV_GPU_UTIL`, `_FB_USED`/`_FB_FREE` (MiB), `_POWER_USAGE` (W, plafond 70 W sur T4), `_GPU_TEMP`, `_TOTAL_ENERGY_CONSUMPTION` (mJ), `_CLOCK_THROTTLE_REASONS`, `_XID_ERRORS`, `_ECC_*`, `DCGM_FI_PROF_GR_ENGINE_ACTIVE`, `_DRAM_ACTIVE`, `_PCIE_TX/RX_BYTES`.
+**GPU (DCGM)** : `DCGM_FI_DEV_GPU_UTIL`, `_FB_USED`/`_FB_FREE` (MiB), `_POWER_USAGE` (W, plafond 70 W sur T4), `_GPU_TEMP`, `_TOTAL_ENERGY_CONSUMPTION` (mJ), `_CLOCK_THROTTLE_REASONS`, `_XID_ERRORS`, `_ECC_*`, `DCGM_FI_PROF_GR_ENGINE_ACTIVE`, `_SM_ACTIVE`, `_SM_OCCUPANCY`, `_PIPE_TENSOR_ACTIVE`, `_PIPE_FP16_ACTIVE`, `_DRAM_ACTIVE`, `_PCIE_TX/RX_BYTES`.
 Labels utiles (observé) : `pod`, `namespace`, `container`, `modelName`, `gpu`, `Hostname`.
 
 **KEDA / HPA** : `keda_scaler_metrics_value`, `kube_horizontalpodautoscaler_status_desired_replicas`, `kube_deployment_status_replicas_ready`.
@@ -121,7 +141,7 @@ Labels utiles (observé) : `pod`, `namespace`, `container`, `modelName`, `gpu`, 
 
 ## 7. Les alertes
 
-33 règles d'enregistrement (26 déployées sur Azure + 7 ajoutées ensuite) et 29 alertes (22 `lab-alerts` + 7 `lab-epp-alerts` importées de llm-d), dans `rules.yaml` et `files/epp-rules.yaml`. Chaque alerte porte `severity`, `category` (`slo`, `saturation`, `gpu`, `cost`, `platform`), `component` et une `runbook_url` vers `docs/runbooks/<Alerte>.md` (symptôme, vérifications, leviers).
+92 règles d'enregistrement (33 dans `rules.yaml` + 59 pour les SLO dans `slo.yaml`) et 28 alertes (19 `lab-alerts`, 2 `LabSLOBurn*` dans `lab-slo`, 7 `lab-epp-alerts` importées de llm-d dans `files/epp-rules.yaml`). Chaque alerte porte `severity`, `category` (`slo`, `saturation`, `gpu`, `cost`, `platform`), `component` et une `runbook_url` vers `docs/runbooks/<Alerte>.md` (symptôme, vérifications, leviers).
 Les seuils sont **larges par défaut** et à resserrer après mesure (`alertThresholds` dans les scénarios). Inhibition : une cible de scrape absente (`LabScrapeTargetMissing`) masque les alertes SLO du même `component`.
 Des alertes sont réellement arrivées au récepteur pendant les tests Azure : `LabRequestsWaiting`, `LabGPUIdleCost`, `EPPNoReadyEndpoints` (au démarrage, avant que le modèle soit prêt : normal), et le 17/11 `LabSLOBurnSlow` (classe `rag`). Les anciennes alertes à seuil fixe `LabTTFTHigh`, `LabInterTokenLatencyHigh` et `LabErrorRateHigh` (arrivées au récepteur le 16/11) ont été **remplacées** par les alertes de burn rate par classe.
 

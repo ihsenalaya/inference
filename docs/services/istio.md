@@ -1,18 +1,29 @@
 # Istio (istiod) et la Gateway d'inférence
 
+**En une phrase.** Ici Istio ne sert qu'à fabriquer et piloter la porte d'entrée HTTP (un proxy Envoy) devant les modèles ; ce n'est pas utilisé comme « maillage de services ».
+
+<!-- mots: gateway api, epp, tls, service -->
+> **Mots à connaître**
+> - **Gateway API / GIE / Istio** : Standard de routage HTTP / son extension pour l'inférence / l'implémentation qui fait tourner la Gateway (Envoy).
+> - **llm-d / EPP** : *Endpoint Picker* : choisit le pod vLLM le mieux placé (peu chargé, cache de préfixes) pour chaque requête.
+> - **TLS / mTLS** : Chiffrement d'un échange ; en *mTLS* les deux côtés prouvent aussi leur identité.
+> - **Service** : Adresse stable devant un ou plusieurs pods.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Rôle
 Deux éléments distincts :
 1. **istiod** (plan de contrôle) : lit les objets Gateway API et **configure Envoy** ; v1.30.8.
 2. La **Gateway** `inference-gateway` : un déploiement **Envoy** (`proxyv2:1.30.8`) créé automatiquement par istiod à partir de l'objet `Gateway` (classe `istio`). C'est le **point d'entrée de l'inférence**.
 
-Istio n'est **pas** utilisé comme service mesh : pas de sidecar, pas de mTLS automatique (label `sidecar.istio.io/inject: false` sur les pods de la Gateway).
+Istio n'est **pas** utilisé comme service mesh (réseau de proxys autour de chaque pod) : pas de sidecar (proxy ajouté à chaque pod), pas de mTLS automatique (chiffrement mutuel entre pods) (label `sidecar.istio.io/inject: false` sur les pods de la Gateway).
 
 ## Place dans l'architecture
 `LiteLLM -> Gateway (Envoy) -> EPP (ext_proc) -> pod vLLM`. La Gateway est dans le namespace `inference`, Service `inference-gateway-istio` (ClusterIP, port 80 ; l'annotation `networking.istio.io/service-type: ClusterIP` évite le LoadBalancer).
 
 ## Relations
 - Reçoit les requêtes de LiteLLM (HTTP).
-- Lit les `HTTPRoute` créées par KServe ; appelle l'**EPP** par `ext_proc` (gRPC + TLS) ; transmet au pod choisi.
+- Lit les `HTTPRoute` créées par KServe ; appelle l'**EPP** par `ext_proc` (le mécanisme qui lui délègue le choix du pod ; gRPC + TLS) ; transmet au pod choisi.
 - Exporte ses métriques à Prometheus (`:15090`, `/stats/prometheus`) et ses **access logs JSON** sur stdout (collectés par Alloy -> Loki).
 
 ## Configuration retenue (config : `gitops/platform/istiod/values.yaml`, `gitops/gateway/inference-gateway`)

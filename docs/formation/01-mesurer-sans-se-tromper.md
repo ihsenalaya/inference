@@ -1,5 +1,18 @@
 # Module 1 - Mesurer sans se tromper : boucle ouverte, échauffement, répétitions, bruit
 
+**En une phrase.** Avant de dire « c'est plus rapide », il faut savoir de combien le résultat varie quand on ne change **rien**. Ce module montre comment le mesurer, avec les chiffres de ce cluster.
+
+<!-- mots: boucle ouverte, échauffement, percentile, bruit de mesure, débit, saturation -->
+> **Mots à connaître**
+> - **Boucle ouverte / fermée** : Ouverte : on impose un débit d'arrivée (comme de vrais utilisateurs) ; elle révèle les files. Fermée : N clients attendent chacun leur réponse ; elle masque la surcharge.
+> - **Échauffement** : Début de run exclu de la mesure (caches vides, régime pas encore stable). Ici 60 s.
+> - **Percentile (p50, p95, p99)** : p95 = 95 % des requêtes vont plus vite que cette valeur. Le p50 est la médiane. Le p95 montre les cas lents.
+> - **Bruit de mesure / CV** : Variation d'un run à l'autre. CV = écart-type / moyenne. Un écart plus petit que le bruit n'est pas un gain.
+> - **Débit** : Quantité servie par seconde : **req/s** (requêtes) ou **tokens/s** (tokens de sortie).
+> - **Saturation / plateau** : Point où le serveur ne peut plus servir davantage : le débit n'augmente plus et la file grossit.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 **Objectif** : savoir quand un écart de mesure est un **gain réel** et quand c'est du **bruit**. Tout le reste de la campagne d'optimisation
 (quantization, `max-num-seqs`, routage, autoscaling) repose sur ce module. Marques de fiabilité : voir [le guide](../guide/README.md).
 
@@ -80,7 +93,7 @@ plusieurs pistes). Conséquence : on ne compare **jamais** deux runs de durée o
 
 ## 6. Exercice (à faire vous-même)
 
-Objectif : déterminer si une réduction de `--max-num-seqs` sur le 7B a un effet, **sans** que je vous donne le verdict.
+Objectif : déterminer si une réduction de `--max-num-seqs` (le nombre maximal de requêtes que vLLM traite ensemble) sur le 7B a un effet, **sans** que je vous donne le verdict.
 1. Rédigez l'hypothèse, la métrique de décision et le critère de succès **avant** de lancer quoi que ce soit.
 2. Dites combien de répétitions il vous faut et pourquoi, à partir du tableau du §3.
 3. Dites quelle métrique ne peut pas servir de critère avec trois répétitions (indice : la dernière ligne du tableau de seuils).

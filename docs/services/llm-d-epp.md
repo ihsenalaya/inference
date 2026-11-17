@@ -1,5 +1,18 @@
 # EPP llm-d (Endpoint Picker) - le routeur d'inférence
 
+**En une phrase.** L'EPP est l'« aiguilleur intelligent » : pour chaque requête, il choisit quel pod vLLM la traitera, en regardant lequel est le moins chargé et lequel a déjà le début du texte en mémoire.
+
+<!-- mots: epp, cache de préfixes, cache kv, file d'attente, tls, serviceaccount -->
+> **Mots à connaître**
+> - **llm-d / EPP** : *Endpoint Picker* : choisit le pod vLLM le mieux placé (peu chargé, cache de préfixes) pour chaque requête.
+> - **Cache de préfixes** : Réutilise le cache KV quand deux requêtes commencent par le même texte (même consigne système). Taux de réussite = *hit ratio*.
+> - **Cache KV** : Mémoire où le modèle garde ce qu'il a déjà « compris » du texte, pour ne pas le refaire à chaque token. Il vit dans la mémoire du GPU.
+> - **File d'attente** : Requêtes acceptées mais pas encore calculées (`waiting`). `running` = en cours de calcul. Une file qui grossit = capacité dépassée.
+> - **TLS / mTLS** : Chiffrement d'un échange ; en *mTLS* les deux côtés prouvent aussi leur identité.
+> - **ServiceAccount / jeton** : L'identité d'un programme dans Kubernetes et le « badge » temporaire qu'il présente à l'API.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Rôle
 Un **routeur intelligent** : parmi les pods vLLM d'un pool, il choisit **celui qui servira chaque requête**, au lieu d'un simple tour de rôle. Il est livré avec KServe (image `ghcr.io/llm-d/llm-d-router-endpoint-picker:v0.10.0`), un par `LLMInferenceService`
 (Deployment `<nom>-kserve-router-scheduler`, Service `<nom>-epp-service`).
@@ -9,15 +22,15 @@ Deux requêtes ne coûtent pas la même chose : une requête dont le **préfixe 
 Un répartiteur HTTP classique ignore tout cela.
 
 ## Place dans l'architecture
-Envoy (Gateway) l'appelle en **ext_proc** (gRPC) pour chaque requête d'inférence ; l'EPP répond « envoie-la à tel pod ». Il tourne sur le pool **système**.
+Envoy (Gateway) l'appelle en **ext_proc** (le mécanisme qui lui délègue la décision ; gRPC) pour chaque requête d'inférence ; l'EPP répond « envoie-la à tel pod ». Il tourne sur le pool **système**.
 
 ## Relations
 - **Appelé par** : la Gateway Istio (gRPC :9002, TLS auto-signé).
-- **Lit** : l'API Kubernetes (pods, `InferencePool`, EndpointSlices) pour connaître les membres du pool ; **scrape les métriques de chaque pod vLLM** (file, cache KV, requêtes en cours, cache de préfixes) pour décider.
+- **Lit** : l'API Kubernetes (pods, `InferencePool`, EndpointSlices = listes d'adresses de pods) pour connaître les membres du pool ; **scrape les métriques de chaque pod vLLM** (file, cache KV, requêtes en cours, cache de préfixes) pour décider.
 - **Scrapé par** : Prometheus (port 9090, jeton requis).
 
 ## Configuration retenue
-Ports (observé) : `9002` gRPC ext_proc, `9003` santé gRPC, `9090` métriques, `5557` zmq. Arguments : `--pool-name <nom>-inference-pool --pool-namespace inference --grpc-port 9002 --grpc-health-port 9003 --zap-encoder json`.
+Ports (observé) : `9002` gRPC ext_proc, `9003` santé gRPC, `9090` métriques, `5557` zmq (ZeroMQ, une bibliothèque de messagerie interne ; usage exact non vérifié). Arguments : `--pool-name <nom>-inference-pool --pool-namespace inference --grpc-port 9002 --grpc-health-port 9003 --zap-encoder json`.
 Ressources : le preset demandait 1 CPU / 2 Gi (limite 6 CPU / 16 Gi) ; nous les surchargeons à **100 m / 256 Mi (limite 1 Gio)** (`scheduler.resources`) pour tenir sur le nœud système.
 
 Configuration de routage = `EndpointPickerConfig` (preset `kserve-config-llm-scheduler-eppconfig-default`, observé) :

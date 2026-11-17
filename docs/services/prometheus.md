@@ -1,5 +1,18 @@
 # Prometheus (kube-prometheus-stack)
 
+**En une phrase.** Prometheus est le relevé de compteurs du cluster : toutes les 15 à 30 secondes il va lire les chiffres de chaque composant et les garde 7 jours pour qu'on puisse les tracer et déclencher des alertes.
+
+<!-- mots: prometheus, métrique, scrape, promql, recording rule, servicemonitor -->
+> **Mots à connaître**
+> - **Prometheus / Alertmanager** : Stocke les métriques / envoie les alertes.
+> - **Métrique** : Un nombre mesuré dans le temps (ex. `vllm:num_requests_waiting`). *Counter* = ne fait que monter ; *gauge* = monte et descend.
+> - **Scrape / cible** : Prometheus interroge périodiquement chaque programme exposant `/metrics`.
+> - **PromQL** : Langage de requête de Prometheus.
+> - **Recording rule** : Requête PromQL précalculée et enregistrée comme nouvelle métrique (nom en `lab:` ou `slo:`).
+> - **ServiceMonitor / PrometheusRule** : Objets qui déclarent à Prometheus quoi scruter / quelles règles et alertes appliquer.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Rôle
 Collecte, stocke et interroge les **métriques**. Déployé par le chart `kube-prometheus-stack` 93.3.0 (nom court `kps`), qui apporte aussi l'opérateur, kube-state-metrics, node-exporter, Alertmanager et Grafana. Namespace `monitoring`.
 
@@ -23,7 +36,7 @@ Il **scrape** toutes les cibles listées dans le [guide observabilité §2](../g
 - Rétention **7 jours**, `scrapeInterval` et `evaluationInterval` 30 s (15 s pour vLLM/EPP/LiteLLM/Envoy/DCGM via leurs monitors). PVC **8 Gio** `managed-csi` sur Azure.
 - Ressources : requests 200 m / 768 Mi, limite mémoire 1,5 Gio.
 - Plan de contrôle managé : scrapes `kube-scheduler`, `kube-controller-manager`, `etcd`, `kube-proxy` **désactivés** (inaccessibles sur AKS, fausses alertes).
-- Règles : `lab-recording` (26 déployées + 7 ajoutées), `lab-alerts` (22), `lab-epp-alerts` (7) + les règles par défaut du chart.
+- Règles : `lab-recording` (33 enregistrements), `lab-slo` (59 enregistrements + 2 alertes de burn rate), `lab-alerts` (19 alertes), `lab-epp-alerts` (7) + les règles par défaut du chart. Les 4 groupes `lab.slo*` ont été évalués sans erreur sur le cluster du 17/11.
 
 ## Authentification
 Scrapes anonymes en HTTP, sauf EPP et KServe (jeton `bearerTokenFile` du ServiceAccount). Prometheus lui-même n'a pas d'authentification (accès par port-forward).

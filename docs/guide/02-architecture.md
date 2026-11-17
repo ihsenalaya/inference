@@ -1,5 +1,20 @@
 # 02 - Architecture du cluster
 
+Ce chapitre répond à trois questions : **par où passe une requête**, **qui crée quoi**, et **qui tourne sur quelle machine**. Le schéma se lit de gauche à droite : c'est le trajet d'une question jusqu'au GPU, puis le retour de la réponse.
+
+<!-- mots: pod, namespace, nœud, EPP, KServe, Gateway API, Argo CD, taint -->
+> **Mots à connaître**
+> - **Pod** : La plus petite unité qui tourne : un ou plusieurs conteneurs. Un pod vLLM = un modèle sur un GPU.
+> - **Namespace** : Un « dossier » qui range les objets (`inference`, `gateway`, `monitoring`...).
+> - **Nœud / pool de nœuds** : Une machine (VM) du cluster / un groupe de machines identiques. Le lab a un pool « système » et un pool « GPU ».
+> - **llm-d / EPP** : *Endpoint Picker* : choisit le pod vLLM le mieux placé (peu chargé, cache de préfixes) pour chaque requête.
+> - **KServe / `LLMInferenceService`** : Un seul objet déclare un modèle ; KServe crée les pods, le routage et le choix du pod.
+> - **Gateway API / GIE / Istio** : Standard de routage HTTP / son extension pour l'inférence / l'implémentation qui fait tourner la Gateway (Envoy).
+> - **Argo CD / Application** : Applique ce qui est dans Git sur le cluster. Une *Application* = un composant suivi.
+> - **Taint / toleration** : « Chasse-pods » posé sur le nœud GPU (`sku=gpu`) / autorisation pour les pods qui doivent y aller.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## 1. Vue d'ensemble
 
 ```mermaid
@@ -33,7 +48,7 @@ flowchart LR
   A[Argo CD] -.->|applique depuis Git| inf & gw & obs
 ```
 
-Trois « plans » à distinguer :
+Trois « plans » à distinguer (en clair : le **trajet** d'une question, ce qui **construit et règle** le système, ce qui **regarde et prévient**) :
 
 | Plan | Rôle | Composants |
 |---|---|---|
@@ -47,10 +62,10 @@ Exemple : `POST /v1/chat/completions` avec `model: qwen-7b-awq`.
 
 | # | Où | Ce qui se passe | Preuve |
 |---|---|---|---|
-| 1 | client -> LiteLLM `:4000` | le client présente une **clé virtuelle** (`Authorization: Bearer sk-...`). LiteLLM vérifie la clé, l'équipe, le budget et les limites dans PostgreSQL | (observé) équipes `lab-bench` / `lab-user` |
+| 1 | client -> LiteLLM `:4000` | le client présente une **clé virtuelle** (`Authorization: Bearer sk-...`). LiteLLM vérifie la clé, l'équipe, le budget et les limites dans PostgreSQL | (observé) équipes `lab-bench` / `lab-user`, et depuis le 17/11 une équipe et une clé par classe de charge (`lab-interactive`, `lab-rag`, `lab-multiturn`, `lab-batch`) |
 | 2 | LiteLLM | `model_name: qwen-7b-awq` est traduit en `hosted_vllm/Qwen/Qwen2.5-7B-Instruct-AWQ` et envoyé à `http://inference-gateway-istio.inference.svc.cluster.local/inference/qwen-7b-awq/v1/chat/completions` | (config) `gitops/gateway/litellm/templates/configmap.yaml` |
 | 3 | Gateway Istio (Envoy) | une règle `HTTPRoute` reconnaît le préfixe `/inference/qwen-7b-awq/v1/chat/completions`, le **réécrit** en `/v1/chat/completions` et désigne l'`InferencePool` comme backend. Pas de timeout de requête (`request: 0s`) | (observé) `docs/reference/routing.yaml` |
-| 4 | Envoy -> EPP | un filtre **ext_proc** envoie les en-têtes (et le corps) de la requête à l'EPP par gRPC sur `:9002`, **en TLS auto-signé** | (observé) sans `DestinationRule` TLS : `ext_proc_error_gRPC_error_14`, HTTP 500 ; (doc) le protocole ext_proc de la Gateway API Inference Extension transmet en-têtes et corps |
+| 4 | Envoy -> EPP | un filtre **ext_proc** (mécanisme d'Envoy pour confier une décision à un service externe) envoie les en-têtes (et le corps) de la requête à l'EPP (*Endpoint Picker*, le sélecteur de pod) par gRPC (appels de fonctions entre services) sur `:9002`, **en TLS auto-signé** (chiffré, avec un certificat que personne ne signe) | (observé) sans `DestinationRule` TLS : `ext_proc_error_gRPC_error_14`, HTTP 500 ; (doc) le protocole ext_proc de la Gateway API Inference Extension transmet en-têtes et corps |
 | 5 | EPP | il connaît tous les pods vLLM du pool et leurs métriques (file, cache KV, cache de préfixes). Il applique ses filtres et scorers et **renvoie l'adresse du pod retenu** | (observé) EPP `qwen-.../router-scheduler`, plugins `approx-prefix-cache-producer`, `inflight-load-producer`, `prefix-cache-affinity-filter`, `token-load-scorer` |
 | 6 | Envoy -> pod vLLM | Envoy envoie la requête **directement à l'IP du pod** désigné, port 8000, en HTTP | (doc) l'EPP renvoie l'endpoint choisi, Envoy s'y connecte ; (observé) les requêtes se répartissent entre les pods (277 / 299 sur 2 réplicas) |
 | 7 | vLLM | tokenise, **prefill**, puis **decode** token par token ; en streaming, chaque token repart en SSE (`data: {...}`) | (observé) |
@@ -100,6 +115,8 @@ Le banc de charge (`inference-perf`) s'exécute volontairement sur le pool **sys
 
 ## 5. Ports et protocoles
 
+Mini-lexique : **HTTP** = requêtes web ; **SSE** = flux d'événements sur HTTP, utilisé pour le streaming ; **gRPC** = appels de fonctions entre services ; **TLS** = chiffrement ; **ClusterIP** = adresse joignable seulement depuis l'intérieur du cluster ; **port-forward** = tunnel temporaire depuis votre poste.
+
 | Source -> destination | Port | Protocole | Chiffrement |
 |---|---|---|---|
 | client -> LiteLLM | 4000 | HTTP (SSE en streaming) | aucun (port-forward ou ClusterIP) |
@@ -116,7 +133,7 @@ Seule exception réseau sortante : AKS fournit un Standard Load Balancer pour la
 
 ## 6. Ordre de démarrage (GitOps)
 
-Terraform crée l'infrastructure puis installe **Argo CD** et l'**application racine**. Celle-ci rend 19 `Application` (une par composant), annotées par des **vagues** (`sync-wave`) :
+Terraform crée l'infrastructure puis installe **Argo CD** et l'**application racine**. Celle-ci crée 20 `Application` (une par composant ; 21 avec la racine), annotées par des **vagues** (`sync-wave` : l'ordre dans lequel Argo CD applique les composants) :
 
 | Vague | Composants (azure) |
 |---|---|
@@ -129,8 +146,9 @@ Terraform crée l'infrastructure puis installe **Argo CD** et l'**application ra
 | 9 | ServiceMonitors, règles, dashboards |
 
 **Réserve (observé)** : les vagues ordonnent la création des `Application`, mais Argo CD ne bloque pas toujours la suivante ; certains composants échouent à leur première tentative (CRDs de Prometheus absentes, par exemple)
-puis réussissent aux **réessais** (backoff). La convergence est garantie par réessais, pas par l'ordre. Elle a pris ~10 min 30 sur la dernière installation complète.
-Note : le déplacement du GPU Operator et le pré-tirage en vague 1 sont des changements **non retestés depuis zéro** (voir `docs/BASELINE.md` §3 pour les mesures avant changement).
+puis réussissent aux **réessais** (backoff). La convergence est garantie par réessais, pas par l'ordre.
+Sur l'installation complète du 17/11 **(observé, horodatages Argo CD)** : les 21 applications sont `Healthy` 17 min 57 s après le début de Terraform, dont ~9 min pour la partie Argo CD ; le pod vLLM est prêt à 18 min 55 s.
+Le déplacement du GPU Operator et le pré-tirage en vague 1 sont donc **prouvés** (voir [module 6](../formation/06-demarrage-a-froid.md) pour le détail et les réserves).
 
 ## 7. Tout est dans Git
 

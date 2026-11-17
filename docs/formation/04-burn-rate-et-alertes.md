@@ -1,8 +1,22 @@
 # Module 4 - Burn rate : alerter sur la vitesse à laquelle on consomme le budget d'erreur
 
+**En une phrase.** Plutôt que d'alerter « la latence est haute », on alerte sur **la vitesse à laquelle on gaspille la marge d'erreur** : une alerte qui part vite quand c'est grave, lentement quand c'est modéré.
+
+<!-- mots: burn rate, budget d'erreur, slo, page, ticket, fenêtre glissante, histogramme, promtool -->
+> **Mots à connaître**
+> - **Burn rate** : Vitesse de consommation du budget : 1 = on l'épuise juste à la fin de la fenêtre ; 14,4 = en ~50 h pour une fenêtre de 30 jours.
+> - **Budget d'erreur** : La marge autorisée : 100 % − objectif. SLO à 95 % → 5 % de requêtes lentes tolérées.
+> - **SLO** : Un objectif chiffré de qualité de service, par exemple « 95 % des réponses commencent en moins de 5 s ».
+> - **Page / ticket** : Alerte urgente qui doit réveiller quelqu'un / alerte à traiter pendant les heures ouvrées.
+> - **Fenêtre glissante** : Période qui avance avec le temps (« les 30 derniers jours »).
+> - **Histogramme / seau (bucket)** : Façon de compter les durées par tranches (≤ 1 s, ≤ 2 s, ≤ 5 s...). Les quantiles calculés dessus sont approximatifs.
+> - **promtool** : Outil qui teste les règles Prometheus avec des données fabriquées (`tests/promtool/`).
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 **Objectif** : comprendre pourquoi on remplace l'alerte « latence p95 > seuil » par une alerte de **taux de consommation du budget
 (burn rate) à fenêtres multiples**, savoir **recalculer** les seuils pour une autre fenêtre de SLO, et lire/tester les règles du lab.
-Vous connaissez déjà SLI, SLO et budget d'erreur : ce module ne les réexplique pas, il montre ce qui est propre à ce lab.
+Rappel express : le SLI est ce qu'on mesure, le SLO l'objectif sur cette mesure, le budget d'erreur la marge d'écart autorisée (100 % moins l'objectif) ; ce module montre ce qui est propre à ce lab.
 
 ## 1. Le concept en dix lignes
 

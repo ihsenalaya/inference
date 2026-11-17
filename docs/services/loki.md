@@ -1,5 +1,15 @@
 # Loki
 
+**En une phrase.** Loki garde les textes que les programmes écrivent (les logs), classés par étiquettes, pour qu'on retrouve la cause d'une erreur.
+
+<!-- mots: loki, alloy, pvc, namespace -->
+> **Mots à connaître**
+> - **Grafana / Loki / Alloy** : Tableaux de bord / stockage des logs / agent qui collecte les logs.
+> - **PVC / disque persistant** : Demande de stockage qui survit au redémarrage d'un pod (disque managé Azure). Prometheus, Loki et PostgreSQL en ont un.
+> - **Namespace** : Un « dossier » qui range les objets (`inference`, `gateway`, `monitoring`...).
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Rôle
 Stocke et indexe les **logs** (par étiquettes, pas par contenu). Version 3.7.10, chart `grafana-community/loki` 21.2.3, mode **Monolithic** (un seul pod, `loki-0`).
 

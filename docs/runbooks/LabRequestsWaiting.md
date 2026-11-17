@@ -2,6 +2,13 @@
 
 **Symptôme.** Des requêtes attendent depuis plus de 5 min : la capacité est insuffisante.
 
+<!-- mots: cold start, keda -->
+> **Mots à connaître**
+> - **Cold start** : Délai entre « on demande un GPU / un pod » et « il répond ». Ici : **721 s** pour un nœud GPU, **~3,5 min** pour changer de modèle (observé).
+> - **KEDA** : Ajoute ou retire des pods selon la file d'attente de vLLM.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Vérifications
 
 - `lab:requests_waiting`, KEDA (réplicas désirés/prêts), état du GPU.

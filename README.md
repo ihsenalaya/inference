@@ -5,6 +5,21 @@ vLLM · llm-d · KServe · Istio · LiteLLM · KEDA · Prometheus / Grafana / Al
 Lab d'apprentissage de l'optimisation d'inférence (GPU, modèles, cluster) : reproductible, bon marché, mesurable.
 Ce n'est pas une production.
 
+**En une phrase.** Un petit cluster Azure (1 GPU T4) sur lequel on fait tourner un modèle de langage, qu'on crée et détruit par des commandes, et dont on mesure tout (vitesse, mémoire, coût) pour apprendre à l'optimiser.
+
+**Si vous débutez**, lisez dans cet ordre : le [glossaire](docs/sre/GLOSSAIRE.md) (les 12 premiers mots), le [guide](docs/guide/README.md), puis la [formation](docs/formation/README.md).
+
+<!-- mots: inférence, llm, token, vram, vllm, gitops -->
+> **Mots à connaître**
+> - **Inférence** : Faire répondre un modèle déjà entraîné (par opposition à l'entraîner). Ce cluster ne fait que ça.
+> - **LLM** : *Large Language Model* : un modèle qui produit du texte, un morceau (token) à la fois.
+> - **Token** : Le morceau de texte que le modèle lit et écrit (un mot courant fait environ 1 à 2 tokens). C'est l'unité de tous les calculs.
+> - **GPU / VRAM** : Le processeur de calcul (ici un NVIDIA T4) et sa mémoire (16 Go). Le modèle et le cache KV doivent y tenir.
+> - **vLLM** : Le programme qui charge le modèle sur le GPU et répond aux requêtes. Le « moteur ».
+> - **GitOps** : L'état voulu du cluster est écrit dans Git ; Argo CD le fait appliquer. On ne modifie pas le cluster à la main.
+> - Tous les mots : [glossaire](docs/sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 ## Architecture
 
 ```mermaid
@@ -41,7 +56,8 @@ cp .env.example .env            # AZ_SUBSCRIPTION_ID, AZ_LOCATION=eastus ...
 ```
 
 Autres commandes : `status`, `ui` (port-forwards Grafana/Prometheus/Alertmanager/Argo CD/LiteLLM), `scenario <nom>`,
-`gpu-scale <0-2>`, `stop` / `start`, `cost`, `versions`, `kind-up` / `kind-down` (tests locaux sans GPU).
+`gpu-scale <0-2>`, `stop` / `start`, `cost`, `versions`, `idle` et `snapshot-metrics` (garde-fous de coût, non testés sur cluster), `kind-up` / `kind-down` (tests locaux sans GPU).
+Mesurer par classe de charge : `tests/classes.sh` ; détail dans le [runbook](docs/RUNBOOK.md).
 
 ## Coûts (eastus, Linux, pay-as-you-go, Azure Retail Prices du 16/11/2026)
 
@@ -64,9 +80,10 @@ infra/terraform/        AKS, pool GPU, Argo CD, secrets, application racine
 gitops/root/            app-of-apps : une Application par composant (+ versions.yaml, source unique des versions)
 gitops/platform|observability|gateway|serving|bench   composants
 gitops/scenarios/       un fichier par scénario ; gitops/active-<env>.yaml = scénario actif (Git)
-tests/                  static.sh (validations gratuites), promtool, test KEDA
-results/                résultats des benchs
-docs/                   ARCHITECTURE, DECISIONS, RUNBOOK, METRIQUES, BASELINE, runbooks/
+tests/                  static.sh (validations gratuites), promtool, scripts de mesure (classes, goodput, bruit, démarrage à froid), générateurs de docs
+results/                résultats des benchs et de l'essai d'alerte
+docs/                   guide/ (comprendre), formation/ (apprendre avec les chiffres), services/ (une fiche par composant), sre/ (SLO, séances, glossaire),
+                        ARCHITECTURE, DECISIONS, RUNBOOK, METRIQUES, BASELINE, reference/, runbooks/
 ```
 
 Sécurité : aucun secret dans Git (générés par Terraform, état local ignoré) ; le lab ne touche qu'au groupe de ressources

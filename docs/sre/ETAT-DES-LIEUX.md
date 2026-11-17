@@ -1,5 +1,18 @@
 # État des lieux - séance 1 (phase 0)
 
+**En une phrase.** L'état des lieux dit où en est le cluster avant de l'optimiser : ce qui marche, de combien une mesure varie quand on ne change rien (le « bruit »), et dans quel ordre on va l'améliorer.
+
+<!-- mots: bruit de mesure, boucle ouverte, tensor core, dcgm, cold start, goodput -->
+> **Mots à connaître**
+> - **Bruit de mesure / CV** : Variation d'un run à l'autre. CV = écart-type / moyenne. Un écart plus petit que le bruit n'est pas un gain.
+> - **Boucle ouverte / fermée** : Ouverte : on impose un débit d'arrivée (comme de vrais utilisateurs) ; elle révèle les files. Fermée : N clients attendent chacun leur réponse ; elle masque la surcharge.
+> - **Tensor core** : Unité du GPU spécialisée en multiplications de matrices, très rapide pour l'IA.
+> - **DCGM** : Outil NVIDIA qui mesure le GPU ; `dcgm-exporter` publie ces mesures pour Prometheus.
+> - **Cold start** : Délai entre « on demande un GPU / un pod » et « il répond ». Ici : **721 s** pour un nœud GPU, **~3,5 min** pour changer de modèle (observé).
+> - **Goodput** : Débit des requêtes **réussies et assez rapides** (qui respectent le SLO), pas le débit brut.
+> - Tous les mots : [glossaire](GLOSSAIRE.md).
+<!-- /mots -->
+
 Date : 17/11/2026. Cluster : AKS `eastus`, 1 x T4 (`NC4as_T4_v3`), pool système `D4as_v7`.
 
 > **Mise à jour (fin de séance 1, même jour, cluster réinstallé de zéro).** La séance 1 avait été interrompue par une destruction du cluster. Elle a été **complétée** sur un
@@ -57,13 +70,13 @@ Outil : `tests/noise.py` (stage 1 de chaque run). Runs : `results/2026-11-17-bas
 - Règles : `lab:vllm_cpu_cores`, `lab:vllm_cpu_throttled_ratio`, `lab:gpu_capacity`, `lab:gpu_allocatable`, `lab:gpu_allocated`, `lab:gpu_used` ; 3 panneaux dans le dashboard 02 (CPU vLLM vs activité GPU, throttling, GPU capacité/allouable/alloué/utilisé).
 - Attribution GPU <-> pod : déjà en place (`honorLabels`, `enablePodLabels`).
 
-## 5. Plan de campagne proposé (à valider)
+## 5. Plan de campagne (ordre retenu par défaut pour la suite)
 
 Gain attendu sur le goodput de la classe concernée, coût estimé en heures de T4 (1 nœud GPU + système : 0,71 $/h ; 2 nœuds : 1,23 $/h). Les estimations d'heures supposent un démarrage de cluster d'~30 min à chaque séance.
 
 | Priorité | ID | Expérience | Classe | Gain attendu | Coût (h GPU) | Dépendances / risques |
 |---|---|---|---|---|---|---|
-| 1 | V1 | Version d'image / backend d'attention sur `long-prompt` (+ config DCGM « tensor ») | RAG | **très élevé** (TTFT 102 s -> ? ; prefill x5-15 si FlashInfer revient) | 2-3 | image plus ancienne à identifier et à valider (noms de métriques, CUDA) ; fork = accord |
+| 1 | V1 | Version d'image / backend d'attention sur `long-prompt` (les compteurs DCGM `PIPE_TENSOR_ACTIVE` et `SM_ACTIVE` sont déjà disponibles) | RAG | **très élevé** (TTFT 102 s -> ? ; prefill x5-15 si FlashInfer revient) | 2-3 | image plus ancienne à identifier et à valider (noms de métriques, CUDA) ; fork = accord |
 | 2 | V7 + G1 | CPU de vLLM et lecture des signaux GPU (à vide, prefill, decode, saturation) | toutes | faible (CPU non limitant) mais **déterminant pour la méthode** | 1 | peu coûteux : mesures existantes + 1 run |
 | 3 | V3, V4 | `--max-num-seqs`, `--max-num-batched-tokens` (balayage, boucle fermée puis ouverte) | interactif, lot | moyen (compromis TTFT / ITL / débit) | 3-4 | chaque valeur = redémarrage du pod (~3 min, image en cache) |
 | 4 | V2 | `--gpu-memory-utilization` (0.90 vs défaut vs `--kv-cache-memory`) | toutes | faible à moyen (stabilité, préemptions) | 1-2 | |
@@ -74,7 +87,7 @@ Gain attendu sur le goodput de la classe concernée, coût estimé en heures de 
 | 9 | A1 | KEDA : seuil 1, 2, 4 ; `pollingInterval`, `cooldownPeriod` | interactif | moyen (réactivité vs oscillations) | 2-3 | **2 GPU** |
 | P1 | V5, V6, G2-G6, R2-R5, A2, A4-A5, P1-P4, M4-M6 | selon budget | | | | G2/G3 (partage GPU) : attribution DCGM à vérifier |
 
-**Total P0 estimé : ~17-25 heures de T4**, soit ~12-18 $ avec 1 nœud (un peu plus pour les expériences à 2 nœuds). Ce sont des estimations, pas des engagements ; la séance 2 (SLO) ne demande presque pas de GPU.
+**Total P0 estimé : ~17-25 heures de T4**, soit ~12-18 $ avec 1 nœud (un peu plus pour les expériences à 2 nœuds). Ce sont des estimations, pas des engagements. La séance 2 (SLO) a été faite le même jour (voir [SLO.md](SLO.md)).
 
 ## 5 bis. Preuve des changements d'industrialisation (second cluster, 17/11/2026)
 
@@ -91,5 +104,5 @@ Toujours **non testés sur cluster** : `lab.sh idle` et `lab.sh snapshot-metrics
 - ~~Validation sur Azure des changements d'industrialisation~~ **FAIT** pour GPU Operator en vague 1, pré-tirage et budget Azure (section 5 bis) ; **reste non testé** : `lab.sh idle`, `lab.sh snapshot-metrics` (`tests/static.sh`, shellcheck, `terraform validate`).
 - Heures GPU de la séance : ~1 h (04:14-05:12 environ) ; depuis le début du projet, le cluster a tourné ~6 h (dont ~40 min à 2 nœuds), soit un ordre de grandeur de **4 à 5 $** (estimation).
 
-## 7. Décision attendue de l'utilisateur
-Valider (ou modifier) la priorité du plan ci-dessus, puis passer à la séance 2 (classes de charge, SLO, burn rate), qui peut se faire presque sans GPU.
+## 7. Suite
+La séance 2 (classes de charge, SLO, burn rate) est faite : [SLO.md](SLO.md) et [SEANCES.md](SEANCES.md). La prochaine est la séance 3 (goulots, lecture du GPU, CPU) ; le plan de la section 5 est l'ordre retenu par défaut.

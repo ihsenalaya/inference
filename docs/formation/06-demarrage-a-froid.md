@@ -1,5 +1,19 @@
 # Module 6 - Le démarrage à froid : où va le temps, et ce qu'on a gagné
 
+**En une phrase.** Un GPU coûte de l'argent dès qu'il existe, même quand il ne répond à personne : ce module décompose tout ce qu'il faut attendre avant qu'un modèle serve, et montre ce qu'on a gagné.
+
+<!-- mots: cold start, driver, daemonset, argo cd, sync wave, terraform, torch.compile -->
+> **Mots à connaître**
+> - **Cold start** : Délai entre « on demande un GPU / un pod » et « il répond ». Ici : **721 s** pour un nœud GPU, **~3,5 min** pour changer de modèle (observé).
+> - **Driver / device plugin** : Pilote du GPU installé sur le nœud / composant qui déclare `nvidia.com/gpu` à Kubernetes.
+> - **Deployment / DaemonSet / Job** : Programme à N copies / une copie par nœud / tâche qui se termine (un bench).
+> - **Argo CD / Application** : Applique ce qui est dans Git sur le cluster. Une *Application* = un composant suivi.
+> - **Sync wave / self-heal / prune** : Ordre d'application / remet en place toute modification manuelle / supprime ce qui a disparu de Git.
+> - **Terraform** : Décrit l'infrastructure Azure (AKS, pools, secrets) dans des fichiers et la crée ou la détruit : `apply` / `destroy`.
+> - **torch.compile / graphes CUDA** : Optimisations faites au démarrage de vLLM : compiler le modèle et préenregistrer des séquences d'opérations GPU. Elles allongent le démarrage et accélèrent ensuite.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 **Objectif** : savoir décomposer le démarrage d'un cluster d'inférence, lire chaque étape dans les objets Kubernetes,
 et juger un « gain » avec des chiffres comparables. Marques de fiabilité : voir [le guide](../guide/README.md).
 

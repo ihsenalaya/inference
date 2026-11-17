@@ -1,5 +1,21 @@
 # Module 2 - Classes de charge et SLI : pourquoi un SLO global ne veut rien dire en inférence
 
+**En une phrase.** Un chat, une recherche dans des documents et un gros traitement de nuit n'ont pas les mêmes besoins : on les mesure donc **séparément**, chacun avec son propre objectif.
+
+<!-- mots: classe de charge, rag, ttft, tpot, goodput, histogramme, clé virtuelle, disponibilité, 4xx -->
+> **Mots à connaître**
+> - **Classe de charge** : Un type d'usage avec son propre SLO : interactive, RAG, multi-tour, lot (embeddings non couverte).
+> - **RAG** : Question accompagnée de longs documents retrouvés par ailleurs : prompt très long, réponse courte.
+> - **TTFT** : *Time To First Token* : attente avant le premier token de la réponse. C'est ce que l'utilisateur ressent en premier.
+> - **TPOT** : *Time Per Output Token* : durée moyenne entre deux tokens de la réponse. C'est la « fluidité » du texte qui s'affiche.
+> - **Goodput** : Débit des requêtes **réussies et assez rapides** (qui respectent le SLO), pas le débit brut.
+> - **Histogramme / seau (bucket)** : Façon de compter les durées par tranches (≤ 1 s, ≤ 2 s, ≤ 5 s...). Les quantiles calculés dessus sont approximatifs.
+> - **Clé virtuelle** : Clé d'API LiteLLM par client ; l'alias de la clé sert ici à identifier la **classe de charge**.
+> - **Disponibilité** : Part des requêtes qui réussissent (pas d'erreur du côté serveur).
+> - **4xx / 5xx** : Codes de réponse HTTP : 4xx = erreur du côté client (requête invalide, contexte trop long) ; 5xx = erreur du côté serveur ; 408 = délai dépassé.
+> - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
+<!-- /mots -->
+
 **Objectif** : savoir définir des **classes de charge**, choisir les bons **SLI** pour chacune, et savoir **où** chaque SLI se mesure dans ce cluster
 (client, passerelle, moteur). Marques de fiabilité : voir [le guide](../guide/README.md).
 

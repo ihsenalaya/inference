@@ -64,6 +64,10 @@ if ls tests/promtool/*.yml >/dev/null 2>&1; then
   promtool test rules tests/promtool/*.yml >/tmp/ptt.txt 2>&1 && ok "promtool test rules" || { ko "promtool test"; cat /tmp/ptt.txt; }
 fi
 
+echo "== documentation"
+python3 tests/gen_doc_boxes.py --check >/tmp/docbox.txt 2>&1 && ok "boîtes « Mots à connaître » à jour (glossaire)" || { ko "boîtes de mots"; cat /tmp/docbox.txt; }
+python3 tests/check_links.py >/tmp/links.txt 2>&1 && ok "liens relatifs des docs" || { ko "liens cassés"; cat /tmp/links.txt; }
+
 echo "== terraform"
 (cd infra/terraform && terraform fmt -check -recursive >/dev/null && terraform validate >/dev/null) && ok "terraform fmt + validate" || ko "terraform"
 echo "== shellcheck"
