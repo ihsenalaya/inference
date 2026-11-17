@@ -1,5 +1,6 @@
-# Hook PostSync : crée les équipes lab-bench (sans limite) et lab-user (budget, rpm, tpm),
-# leurs clés virtuelles, et les range dans le Secret litellm-keys. Idempotent.
+# Hook PostSync : crée les équipes lab-bench (sans limite) et lab-user (budget, rpm, tpm), plus une équipe et une clé
+# par classe de charge SLO (lab-interactive, lab-rag, lab-multiturn, lab-batch : l'alias de clé identifie la classe dans
+# les métriques LiteLLM), et range les clés dans le Secret litellm-keys. Idempotent.
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -69,4 +70,8 @@ spec:
               bench=$(mk_team lab-bench "")
               user=$(mk_team lab-user ',"max_budget":5,"rpm_limit":60,"tpm_limit":20000')
               kb=$(mk_key lab-bench-key "$bench"); ku=$(mk_key lab-user-key "$user")
-              kubectl -n gateway create secret generic litellm-keys --from-literal=lab-bench="$kb" --from-literal=lab-user="$ku"
+              args=(--from-literal=lab-bench="$kb" --from-literal=lab-user="$ku")
+              for c in interactive rag multiturn batch; do
+                t=$(mk_team "lab-$c" ""); k=$(mk_key "lab-$c" "$t"); args+=(--from-literal="lab-$c=$k")
+              done
+              kubectl -n gateway create secret generic litellm-keys "${args[@]}"
