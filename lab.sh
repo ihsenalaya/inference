@@ -350,6 +350,7 @@ cmd_bench() {
   [[ -n "${RATE:-}" ]] && extra+=(--set "rate=$RATE")
   [[ -n "${DURATION:-}" ]] && extra+=(--set "duration=$DURATION")
   [[ -n "${SWEEP_RATES:-}" ]] && extra+=(--set "sweepRates={${SWEEP_RATES}}")
+  [[ -n "${WARMUP:-}" ]] && extra+=(--set "warmup=$WARMUP")
   [[ -n "${STAGE_DURATION:-}" ]] && extra+=(--set "stageDuration=$STAGE_DURATION")
   log INFO "bench $profile sur $scen (cible $target, modèle $model)"
   grafana_annotation "bench $profile début | scénario $scen | git $sha | cible $target" '"bench","start"'

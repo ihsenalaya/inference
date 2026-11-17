@@ -9,6 +9,7 @@ tokenizerModel: Qwen/Qwen2.5-7B-Instruct-AWQ
 rate: 2
 sweepRates: [0.5, 1, 1.5, 2, 3, 4]   # paliers du profil sweep (req/s) ; SWEEP_RATES="1,2,4,8" pour les changer
 stageDuration: 90
+warmup: 0                       # secondes d'échauffement avant la mesure (profil steady) ; WARMUP=60
 duration: 600
 prometheusUrl: http://kps-prometheus.monitoring.svc:9090
 # inference-perf v0.7.0 par digest (index multi-arch)

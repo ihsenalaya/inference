@@ -2,6 +2,9 @@
 load:
   type: constant
   stages:
+    {{- if .Values.warmup }}
+    - { rate: {{ .Values.rate }}, duration: {{ .Values.warmup }} }   # échauffement : stage_0, exclu de la mesure
+    {{- end }}
     - { rate: {{ .Values.rate }}, duration: {{ .Values.duration }} }
 data:
   type: synthetic
