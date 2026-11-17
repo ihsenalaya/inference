@@ -328,7 +328,7 @@ grafana_annotation() { # texte tags
 
 cmd_bench() {
   local profile="${1:-}"; shift || true
-  [[ -n "$profile" ]] || die "usage : $0 bench <smoke|sweep|steady|shared-prefix|multi-turn|long-prompt|burst> [--target litellm|gateway] [--model alias]"
+  [[ -n "$profile" ]] || die "usage : $0 bench <smoke|sweep|steady|shared-prefix|multi-turn|long-prompt|burst> [--target litellm|gateway|direct] [--model alias]"
   local target=litellm model=""
   while [[ $# -gt 0 ]]; do case "$1" in --target) target="$2"; shift 2 ;; --model) model="$2"; shift 2 ;; *) die "option inconnue $1" ;; esac; done
   [[ -f "$ROOT/gitops/bench/profiles/$profile.yaml" ]] || die "profil inconnu : $profile"
@@ -343,6 +343,9 @@ cmd_bench() {
   if [[ "$target" == litellm ]]; then
     key="$(litellm_key "${BENCH_KEY:-lab-bench}")"; base="http://litellm.gateway.svc:4000"; apipath=""
     model="$alias_name"
+  elif [[ "$target" == direct ]]; then
+    # directement le Service de vLLM (sans LiteLLM, Gateway ni EPP) : mesures du GPU seul, ou Gateway indisponible
+    key=""; base="http://${res_name}-kserve-workload-svc.inference.svc.cluster.local:8000"; apipath=""; model="$hf_name"
   else
     key=""; base="http://inference-gateway-istio.inference.svc.cluster.local"; apipath="/inference/${res_name}"; model="$hf_name"
   fi
@@ -574,7 +577,7 @@ usage : $0 <commande>
   status               nœuds, GPU, applications Argo CD, LLMInferenceService
   smoke                tests sans charge (chaîne complète, B5, Prometheus)
   scenario <nom>       change le scénario actif par Git (gitops/scenarios/<nom>.yaml)
-  bench <profil>       smoke|sweep|steady|shared-prefix|multi-turn|long-prompt|burst [--target litellm|gateway]
+  bench <profil>       smoke|sweep|steady|shared-prefix|multi-turn|long-prompt|burst [--target litellm|gateway|direct]
   ui                   port-forwards Grafana, Prometheus, Alertmanager, Argo CD, LiteLLM
   gpu-scale <0-2>      nombre de nœuds GPU (Terraform)
   stop | start         az aks stop / start (avec revérification)

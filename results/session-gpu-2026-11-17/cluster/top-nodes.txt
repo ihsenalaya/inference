@@ -1,0 +1,3 @@
+NAME                             CPU(cores)   CPU(%)   MEMORY(bytes)   MEMORY(%)   
+aks-gpu-30210252-vmss000001      358m         9%       8139Mi          35%         
+aks-system-36313122-vmss000001   332m         8%       7244Mi          61%         

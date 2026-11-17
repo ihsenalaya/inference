@@ -1,0 +1,155 @@
+{
+  "benchmark_time_seconds": 0.0,
+  "load_summary": {},
+  "successes": {
+    "count": 478.695652,
+    "rate": 1.304348,
+    "prompt_len": {
+      "mean": 601.016667,
+      "rate": 658.498551
+    },
+    "output_len": {
+      "mean": 141.836111,
+      "rate": 200.455072
+    },
+    "queue_len": {
+      "mean": 24.125
+    },
+    "request_latency": {
+      "mean": 106.649752,
+      "median": 105.176471,
+      "p90": 210.491803,
+      "p99": 237.04918
+    },
+    "time_to_first_token": {
+      "mean": 23.391938,
+      "median": 8.865741,
+      "p90": 74.603175,
+      "p99": 150.057143
+    },
+    "time_per_output_token": {
+      "mean": 0.607743,
+      "median": 0.61859,
+      "p90": 0.983333,
+      "p99": 2.322368
+    },
+    "kv_cache_usage_percentage": {
+      "mean": 0.577302,
+      "median": 0.673794,
+      "p90": 0.996089,
+      "p99": 0.997804
+    },
+    "num_requests_swapped": {
+      "mean": 0.0
+    },
+    "num_preemptions_total": {
+      "mean": 30.10822
+    },
+    "prefix_cache_hit_percent": {
+      "mean": 0.25669943826234515
+    },
+    "inter_token_latency": {
+      "mean": 0.549284,
+      "median": 0.259672,
+      "p90": 1.806087,
+      "p99": 2.430791
+    },
+    "num_requests_running": {
+      "mean": 107.708333
+    },
+    "request_queue_time": {
+      "mean": 18.899527,
+      "median": 4.085366,
+      "p90": 77.142857,
+      "p99": 115.714286
+    },
+    "request_inference_time": {
+      "mean": 86.593512,
+      "median": 69.047619,
+      "p90": 194.237288,
+      "p99": 235.423729
+    },
+    "request_prefill_time": {
+      "mean": 2.633624,
+      "median": 2.481132,
+      "p90": 4.854497,
+      "p99": 9.338235
+    },
+    "request_decode_time": {
+      "mean": 83.959888,
+      "median": 64.46281,
+      "p90": 192.212389,
+      "p99": 235.221239
+    },
+    "request_prompt_tokens": {
+      "mean": 522.557778,
+      "median": 529.787234,
+      "p90": 912.765957,
+      "p99": 998.93617
+    },
+    "request_generation_tokens": {
+      "mean": 153.824444,
+      "median": 146.236559,
+      "p90": 422.857143,
+      "p99": 492.285714
+    },
+    "request_max_num_generation_tokens": {
+      "mean": 153.824444,
+      "median": 146.236559,
+      "p90": 422.857143,
+      "p99": 492.285714
+    },
+    "request_params_n": {
+      "mean": 1.0,
+      "median": 0.5,
+      "p90": 0.9,
+      "p99": 0.99
+    },
+    "request_params_max_tokens": {
+      "mean": 153.824444,
+      "median": 146.236559,
+      "p90": 422.857143,
+      "p99": 492.285714
+    },
+    "request_success_count": 478.695652,
+    "iteration_tokens": {
+      "mean": 358.047215,
+      "median": 76.917431,
+      "p90": 1420.52766,
+      "p99": 3419.3408
+    },
+    "prompt_tokens_cached": 614.62298,
+    "external_prefix_cache_hit_percent": {
+      "mean": 0.0
+    },
+    "mm_cache_hit_percent": {
+      "mean": 0.0
+    },
+    "corrupted_requests": 0.0,
+    "request_prefill_kv_computed_tokens": {
+      "mean": 521.242222,
+      "median": 527.777778,
+      "p90": 912.393162,
+      "p99": 998.931624
+    },
+    "kv_block_idle_before_evict": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    "kv_block_lifetime": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    "kv_block_reuse_gap": {
+      "mean": 0.0,
+      "median": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    }
+  },
+  "failures": {}
+}

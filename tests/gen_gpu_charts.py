@@ -32,7 +32,7 @@ plt.rcParams.update({"svg.fonttype": "path", "font.family": "DejaVu Sans", "font
 PEAK_TFLOPS = 65.0        # fiche NVIDIA du T4 (mars 2019) : « Mixed-Precision (FP16/FP32) 65 TFLOPS »
 BW_GBS = 320.0            # 320 Go/s (page produit / 5001 MHz x 2 x 256 bits) ; la fiche de 2019 indique 300 Go/s
 POWER_LIMIT_W = 70.0      # fiche NVIDIA : 70 W
-CLOCK_MAX_MHZ = 1590.0    # relevé nvidia-smi publié sur le forum NVIDIA (horloges max 5001 mémoire, 1590 SM) : à relire sur notre T4
+CLOCK_MAX_MHZ = 1590.0    # horloge maximale des SM, confirmée le 17/11/2026 par `nvidia-smi -q -d CLOCK` sur notre T4 (aussi publiée sur le forum NVIDIA)
 
 RUNS = [  # (étiquette, modèle, dossier results, étiquette courte)
     ("Interactif 2 req/s", "1,5B", "small-fp16-interactive-class"),

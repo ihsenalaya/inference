@@ -1,0 +1,14 @@
+$ dcgmi policy --get
+Policy information
++-----------------------------+------------------------------------------------+
+| Policy Information                                                           |
+| DCGM_ALL_SUPPORTED_GPUS                                                      |
++=============================+================================================+
+| Violation conditions        | None                                           |
+| Isolation mode              | Automatic                                      |
+| Action on violation         | None                                           |
+| Validation after action     | None                                           |
+| Validation failure action   | None                                           |
++-----------------------------+------------------------------------------------+
+**** Non-homogenous settings across group. Use with –v flag to see details.
+[exit 0 ; durée 2 s]

@@ -1,0 +1,16 @@
+$ dcgmi health -c
++---------------------------+----------------------------------------------------------+
+| Health Monitor Report                                                                |
++===========================+==========================================================+
+| Overall Health            | Failure                                                  |
+| GPU                       |                                                          |
+| -> 0                      | Failure                                                  |
+|    -> Errors              |                                                          |
+|       -> Internal error   | Failure                                                  |
+|                           | GPU 0 has fallen off the bus Please re-seat the GPU,     |
+|                           | check for thermal and power issues, and verify that      |
+|                           | there is no outstanding bug against your driver or       |
+|                           | BIOS versions. If the issue persists, please run a       |
+|                           | field diagnostic on the GPU.  (triggered by XID 79:      |
+|                           | GPU %d has fallen off the bus)                           |
++---------------------------+----------------------------------------------------------+

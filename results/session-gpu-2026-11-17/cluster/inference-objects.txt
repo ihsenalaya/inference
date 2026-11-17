@@ -1,0 +1,8 @@
+NAME                                                URL                                                                                READY   REASON   AGE    URLS
+llminferenceservice.serving.kserve.io/qwen-7b-awq   http://inference-gateway-istio.inference.svc.cluster.local/inference/qwen-7b-awq   True             162m   http://inference-gateway-istio.inference.svc.cluster.local/
+
+NAME                                                           HOSTNAMES   AGE
+httproute.gateway.networking.k8s.io/qwen-7b-awq-kserve-route               162m
+
+NAME                                                                   AGE
+inferencepool.inference.networking.k8s.io/qwen-7b-awq-inference-pool   162m

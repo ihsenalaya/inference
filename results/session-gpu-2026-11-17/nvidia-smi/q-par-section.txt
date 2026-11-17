@@ -1,0 +1,418 @@
+##### nvidia-smi -q -d SUPPORTED_CLOCKS
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Tue Nov 17 16:39:16 2026
+Driver Version                            : 580.95.05
+CUDA Version                              : 13.0
+
+Attached GPUs                             : 1
+GPU 00000001:00:00.0
+    Supported Clocks
+        Memory                            : 5001 MHz
+            Graphics                      : 1590 MHz
+            Graphics                      : 1575 MHz
+            Graphics                      : 1560 MHz
+            Graphics                      : 1545 MHz
+            Graphics                      : 1530 MHz
+            Graphics                      : 1515 MHz
+            Graphics                      : 1500 MHz
+            Graphics                      : 1485 MHz
+            Graphics                      : 1470 MHz
+            Graphics                      : 1455 MHz
+            Graphics                      : 1440 MHz
+            Graphics                      : 1425 MHz
+            Graphics                      : 1410 MHz
+            Graphics                      : 1395 MHz
+            Graphics                      : 1380 MHz
+            Graphics                      : 1365 MHz
+            Graphics                      : 1350 MHz
+            Graphics                      : 1335 MHz
+            Graphics                      : 1320 MHz
+            Graphics                      : 1305 MHz
+            Graphics                      : 1290 MHz
+            Graphics                      : 1275 MHz
+            Graphics                      : 1260 MHz
+            Graphics                      : 1245 MHz
+            Graphics                      : 1230 MHz
+            Graphics                      : 1215 MHz
+            Graphics                      : 1200 MHz
+            Graphics                      : 1185 MHz
+            Graphics                      : 1170 MHz
+            Graphics                      : 1155 MHz
+            Graphics                      : 1140 MHz
+            Graphics                      : 1125 MHz
+            Graphics                      : 1110 MHz
+            Graphics                      : 1095 MHz
+            Graphics                      : 1080 MHz
+            Graphics                      : 1065 MHz
+            Graphics                      : 1050 MHz
+            Graphics                      : 1035 MHz
+            Graphics                      : 1020 MHz
+            Graphics                      : 1005 MHz
+            Graphics                      : 990 MHz
+            Graphics                      : 975 MHz
+            Graphics                      : 960 MHz
+            Graphics                      : 945 MHz
+            Graphics                      : 930 MHz
+            Graphics                      : 915 MHz
+            Graphics                      : 900 MHz
+            Graphics                      : 885 MHz
+            Graphics                      : 870 MHz
+            Graphics                      : 855 MHz
+            Graphics                      : 840 MHz
+            Graphics                      : 825 MHz
+            Graphics                      : 810 MHz
+            Graphics                      : 795 MHz
+            Graphics                      : 780 MHz
+            Graphics                      : 765 MHz
+            Graphics                      : 750 MHz
+            Graphics                      : 735 MHz
+            Graphics                      : 720 MHz
+            Graphics                      : 705 MHz
+            Graphics                      : 690 MHz
+            Graphics                      : 675 MHz
+            Graphics                      : 660 MHz
+            Graphics                      : 645 MHz
+            Graphics                      : 630 MHz
+            Graphics                      : 615 MHz
+            Graphics                      : 600 MHz
+            Graphics                      : 585 MHz
+            Graphics                      : 570 MHz
+            Graphics                      : 555 MHz
+            Graphics                      : 540 MHz
+            Graphics                      : 525 MHz
+            Graphics                      : 510 MHz
+            Graphics                      : 495 MHz
+            Graphics                      : 480 MHz
+            Graphics                      : 465 MHz
+            Graphics                      : 450 MHz
+            Graphics                      : 435 MHz
+            Graphics                      : 420 MHz
+            Graphics                      : 405 MHz
+            Graphics                      : 390 MHz
+            Graphics                      : 375 MHz
+            Graphics                      : 360 MHz
+            Graphics                      : 345 MHz
+            Graphics                      : 330 MHz
+            Graphics                      : 315 MHz
+            Graphics                      : 300 MHz
+        Memory                            : 405 MHz
+            Graphics                      : 645 MHz
+            Graphics                      : 630 MHz
+            Graphics                      : 615 MHz
+            Graphics                      : 600 MHz
+            Graphics                      : 585 MHz
+            Graphics                      : 570 MHz
+            Graphics                      : 555 MHz
+            Graphics                      : 540 MHz
+            Graphics                      : 525 MHz
+            Graphics                      : 510 MHz
+            Graphics                      : 495 MHz
+            Graphics                      : 480 MHz
+            Graphics                      : 465 MHz
+            Graphics                      : 450 MHz
+            Graphics                      : 435 MHz
+            Graphics                      : 420 MHz
+            Graphics                      : 405 MHz
+            Graphics                      : 390 MHz
+            Graphics                      : 375 MHz
+            Graphics                      : 360 MHz
+            Graphics                      : 345 MHz
+            Graphics                      : 330 MHz
+            Graphics                      : 315 MHz
+            Graphics                      : 300 MHz
+
+##### nvidia-smi -q -d PERFORMANCE
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Tue Nov 17 16:39:16 2026
+Driver Version                            : 580.95.05
+CUDA Version                              : 13.0
+
+Attached GPUs                             : 1
+GPU 00000001:00:00.0
+    Performance State                     : P0
+    Clocks Event Reasons
+        Idle                              : Not Active
+        Applications Clocks Setting       : Not Active
+        SW Power Cap                      : Not Active
+        HW Slowdown                       : Not Active
+            HW Thermal Slowdown           : Not Active
+            HW Power Brake Slowdown       : Not Active
+        Sync Boost                        : Not Active
+        SW Thermal Slowdown               : Not Active
+        Display Clock Setting             : Not Active
+    Clocks Event Reasons Counters
+        SW Power Capping                  : 0 us
+        Sync Boost                        : 0 us
+        SW Thermal Slowdown               : 0 us
+        HW Thermal Slowdown               : 0 us
+        HW Power Braking                  : 0 us
+    Sparse Operation Mode                 : N/A
+
+##### nvidia-smi -q -d POWER
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Tue Nov 17 16:39:16 2026
+Driver Version                            : 580.95.05
+CUDA Version                              : 13.0
+
+Attached GPUs                             : 1
+GPU 00000001:00:00.0
+    GPU Power Readings
+        Average Power Draw                : N/A
+        Instantaneous Power Draw          : 30.63 W
+        Current Power Limit               : 70.00 W
+        Requested Power Limit             : 70.00 W
+        Default Power Limit               : 70.00 W
+        Min Power Limit                   : 60.00 W
+        Max Power Limit                   : 70.00 W
+    Power Samples
+        Duration                          : 2.37 sec
+        Number of Samples                 : 119
+        Max                               : 30.73 W
+        Min                               : 30.63 W
+        Avg                               : 30.71 W
+    GPU Memory Power Readings 
+        Average Power Draw                : N/A
+        Instantaneous Power Draw          : N/A
+    Module Power Readings
+        Average Power Draw                : N/A
+        Instantaneous Power Draw          : N/A
+        Current Power Limit               : N/A
+        Requested Power Limit             : N/A
+        Default Power Limit               : N/A
+        Min Power Limit                   : N/A
+        Max Power Limit                   : N/A
+
+##### nvidia-smi -q -d TEMPERATURE
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Tue Nov 17 16:39:17 2026
+Driver Version                            : 580.95.05
+CUDA Version                              : 13.0
+
+Attached GPUs                             : 1
+GPU 00000001:00:00.0
+    Temperature
+        GPU Current Temp                  : 55 C
+        GPU T.Limit Temp                  : N/A
+        GPU Shutdown Temp                 : 96 C
+        GPU Slowdown Temp                 : 93 C
+        GPU Max Operating Temp            : 85 C
+        GPU Target Temperature            : N/A
+        Memory Current Temp               : N/A
+        Memory Max Operating Temp         : N/A
+
+##### nvidia-smi -q -d ECC
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Tue Nov 17 16:39:17 2026
+Driver Version                            : 580.95.05
+CUDA Version                              : 13.0
+
+Attached GPUs                             : 1
+GPU 00000001:00:00.0
+    ECC Mode
+        Current                           : Enabled
+        Pending                           : Enabled
+    ECC Errors
+        Volatile
+            SRAM Correctable              : 0
+            SRAM Uncorrectable            : 0
+            DRAM Correctable              : 0
+            DRAM Uncorrectable            : 0
+        Aggregate
+            SRAM Correctable              : 0
+            SRAM Uncorrectable            : 0
+            DRAM Correctable              : 0
+            DRAM Uncorrectable            : 0
+
+##### nvidia-smi -q -d PAGE_RETIREMENT
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Tue Nov 17 16:39:17 2026
+Driver Version                            : 580.95.05
+CUDA Version                              : 13.0
+
+Attached GPUs                             : 1
+GPU 00000001:00:00.0
+    Retired Pages
+        Single Bit ECC                    : 0
+        Double Bit ECC                    : 0
+        Pending Page Blacklist            : No
+
+##### nvidia-smi -q -d CLOCK
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Tue Nov 17 16:39:17 2026
+Driver Version                            : 580.95.05
+CUDA Version                              : 13.0
+
+Attached GPUs                             : 1
+GPU 00000001:00:00.0
+    Clocks
+        Graphics                          : 585 MHz
+        SM                                : 585 MHz
+        Memory                            : 5000 MHz
+        Video                             : 750 MHz
+    Applications Clocks
+        Graphics                          : 585 MHz
+        Memory                            : 5001 MHz
+    Default Applications Clocks
+        Graphics                          : 585 MHz
+        Memory                            : 5001 MHz
+    Deferred Clocks
+        Memory                            : N/A
+    Max Clocks
+        Graphics                          : 1590 MHz
+        SM                                : 1590 MHz
+        Memory                            : 5001 MHz
+        Video                             : 1470 MHz
+    Max Customer Boost Clocks
+        Graphics                          : 1590 MHz
+    SM Clock Samples
+        Duration                          : Not Found
+        Number of Samples                 : Not Found
+        Max                               : Not Found
+        Min                               : Not Found
+        Avg                               : Not Found
+    Memory Clock Samples
+        Duration                          : Not Found
+        Number of Samples                 : Not Found
+        Max                               : Not Found
+        Min                               : Not Found
+        Avg                               : Not Found
+    Clock Policy
+        Auto Boost                        : N/A
+        Auto Boost Default                : N/A
+
+##### nvidia-smi -q -d MEMORY
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Tue Nov 17 16:39:17 2026
+Driver Version                            : 580.95.05
+CUDA Version                              : 13.0
+
+Attached GPUs                             : 1
+GPU 00000001:00:00.0
+    FB Memory Usage
+        Total                             : 15360 MiB
+        Reserved                          : 448 MiB
+        Used                              : 13191 MiB
+        Free                              : 1722 MiB
+    BAR1 Memory Usage
+        Total                             : 256 MiB
+        Used                              : 5 MiB
+        Free                              : 251 MiB
+    Conf Compute Protected Memory Usage
+        Total                             : 0 MiB
+        Used                              : 0 MiB
+        Free                              : 0 MiB
+
+##### nvidia-smi -q -d UTILIZATION
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Tue Nov 17 16:39:17 2026
+Driver Version                            : 580.95.05
+CUDA Version                              : 13.0
+
+Attached GPUs                             : 1
+GPU 00000001:00:00.0
+    Utilization
+        GPU                               : 0 %
+        Memory                            : 0 %
+        Encoder                           : 0 %
+        Decoder                           : 0 %
+        JPEG                              : 0 %
+        OFA                               : 0 %
+    GPU Utilization Samples
+        Duration                          : 14.04 sec
+        Number of Samples                 : 71
+        Max                               : 0 %
+        Min                               : 0 %
+        Avg                               : 0 %
+    Memory Utilization Samples
+        Duration                          : 14.04 sec
+        Number of Samples                 : 71
+        Max                               : 0 %
+        Min                               : 0 %
+        Avg                               : 0 %
+    ENC Utilization Samples
+        Duration                          : 14.04 sec
+        Number of Samples                 : 71
+        Max                               : 0 %
+        Min                               : 0 %
+        Avg                               : 0 %
+    DEC Utilization Samples
+        Duration                          : 14.04 sec
+        Number of Samples                 : 71
+        Max                               : 0 %
+        Min                               : 0 %
+        Avg                               : 0 %
+    JPG Utilization Samples
+        Duration                          : 14.04 sec
+        Number of Samples                 : 71
+        Max                               : 0 %
+        Min                               : 0 %
+        Avg                               : 0 %
+    OFA Utilization Samples
+        Duration                          : 14.04 sec
+        Number of Samples                 : 71
+        Max                               : 0 %
+        Min                               : 0 %
+        Avg                               : 0 %
+
+##### nvidia-smi -q -d PIDS
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Tue Nov 17 16:39:17 2026
+Driver Version                            : 580.95.05
+CUDA Version                              : 13.0
+
+Attached GPUs                             : 1
+GPU 00000001:00:00.0
+    Processes
+        GPU instance ID                   : N/A
+        Compute instance ID               : N/A
+        Process ID                        : 41329
+            Type                          : C
+            Name                          : VLLM::EngineCore
+            Used GPU Memory               : 13188 MiB
+
+##### nvidia-smi -q -d ROW_REMAPPER
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Tue Nov 17 16:39:17 2026
+Driver Version                            : 580.95.05
+CUDA Version                              : 13.0
+
+Attached GPUs                             : 1
+GPU 00000001:00:00.0
+    Remapped Rows                         : N/A
+
+##### nvidia-smi -q -d ACCOUNTING
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Tue Nov 17 16:39:17 2026
+Driver Version                            : 580.95.05
+CUDA Version                              : 13.0
+
+Attached GPUs                             : 1
+GPU 00000001:00:00.0
+    Accounting Mode                       : Disabled
+    Accounting Mode Buffer Size           : 4000
+    Accounted Processes                   : None
+

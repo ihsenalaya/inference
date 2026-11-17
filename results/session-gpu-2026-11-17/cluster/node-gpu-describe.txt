@@ -1,0 +1,245 @@
+Name:               aks-gpu-30210252-vmss000001
+Roles:              <none>
+Labels:             accelerator=nvidia
+                    agentpool=gpu
+                    beta.kubernetes.io/arch=amd64
+                    beta.kubernetes.io/instance-type=Standard_NC4as_T4_v3
+                    beta.kubernetes.io/os=linux
+                    failure-domain.beta.kubernetes.io/region=eastus
+                    failure-domain.beta.kubernetes.io/zone=0
+                    feature.node.kubernetes.io/cpu-cpuid.ADX=true
+                    feature.node.kubernetes.io/cpu-cpuid.AESNI=true
+                    feature.node.kubernetes.io/cpu-cpuid.AVX=true
+                    feature.node.kubernetes.io/cpu-cpuid.AVX2=true
+                    feature.node.kubernetes.io/cpu-cpuid.CLZERO=true
+                    feature.node.kubernetes.io/cpu-cpuid.CMPXCHG8=true
+                    feature.node.kubernetes.io/cpu-cpuid.FMA3=true
+                    feature.node.kubernetes.io/cpu-cpuid.FXSR=true
+                    feature.node.kubernetes.io/cpu-cpuid.FXSROPT=true
+                    feature.node.kubernetes.io/cpu-cpuid.HYPERVISOR=true
+                    feature.node.kubernetes.io/cpu-cpuid.LAHF=true
+                    feature.node.kubernetes.io/cpu-cpuid.MOVBE=true
+                    feature.node.kubernetes.io/cpu-cpuid.MOVU=true
+                    feature.node.kubernetes.io/cpu-cpuid.OSXSAVE=true
+                    feature.node.kubernetes.io/cpu-cpuid.RDPRU=true
+                    feature.node.kubernetes.io/cpu-cpuid.SHA=true
+                    feature.node.kubernetes.io/cpu-cpuid.SSE4A=true
+                    feature.node.kubernetes.io/cpu-cpuid.SYSCALL=true
+                    feature.node.kubernetes.io/cpu-cpuid.SYSEE=true
+                    feature.node.kubernetes.io/cpu-cpuid.TOPEXT=true
+                    feature.node.kubernetes.io/cpu-cpuid.TSA_L1_NO=true
+                    feature.node.kubernetes.io/cpu-cpuid.TSA_SQ_NO=true
+                    feature.node.kubernetes.io/cpu-cpuid.X86_64_V1=true
+                    feature.node.kubernetes.io/cpu-cpuid.X86_64_V2=true
+                    feature.node.kubernetes.io/cpu-cpuid.X86_64_V3=true
+                    feature.node.kubernetes.io/cpu-cpuid.X87=true
+                    feature.node.kubernetes.io/cpu-cpuid.XGETBV1=true
+                    feature.node.kubernetes.io/cpu-cpuid.XSAVE=true
+                    feature.node.kubernetes.io/cpu-cpuid.XSAVEC=true
+                    feature.node.kubernetes.io/cpu-cpuid.XSAVEOPT=true
+                    feature.node.kubernetes.io/cpu-cpuid.XSAVES=true
+                    feature.node.kubernetes.io/cpu-hardware_multithreading=false
+                    feature.node.kubernetes.io/cpu-model.family=23
+                    feature.node.kubernetes.io/cpu-model.hypervisor=msvm
+                    feature.node.kubernetes.io/cpu-model.id=49
+                    feature.node.kubernetes.io/cpu-model.vendor_id=AMD
+                    feature.node.kubernetes.io/kernel-config.NO_HZ=true
+                    feature.node.kubernetes.io/kernel-config.NO_HZ_FULL=true
+                    feature.node.kubernetes.io/kernel-version.full=5.15.0-1126-azure
+                    feature.node.kubernetes.io/kernel-version.major=5
+                    feature.node.kubernetes.io/kernel-version.minor=15
+                    feature.node.kubernetes.io/kernel-version.revision=0
+                    feature.node.kubernetes.io/pci-10de.present=true
+                    feature.node.kubernetes.io/pci-15b3.present=true
+                    feature.node.kubernetes.io/rdma.capable=true
+                    feature.node.kubernetes.io/system-os_release.ID=ubuntu
+                    feature.node.kubernetes.io/system-os_release.VERSION_ID=22.04
+                    feature.node.kubernetes.io/system-os_release.VERSION_ID.major=22
+                    feature.node.kubernetes.io/system-os_release.VERSION_ID.minor=04
+                    kubernetes.azure.com/accelerator=nvidia
+                    kubernetes.azure.com/agentpool=gpu
+                    kubernetes.azure.com/azure-cni-overlay=true
+                    kubernetes.azure.com/ca-hash=
+                    kubernetes.azure.com/cluster=inflab-aks-nodes
+                    kubernetes.azure.com/consolidated-additional-properties=5fef8788-e28d-11f1-b056-8e72a0292b30
+                    kubernetes.azure.com/kubelet-identity-client-id=3a4f3bb4-8441-4fd6-9b65-c5a7d4dbaae5
+                    kubernetes.azure.com/kubelet-serving-ca=cluster
+                    kubernetes.azure.com/localdns-state=disabled
+                    kubernetes.azure.com/mode=user
+                    kubernetes.azure.com/network-name=aks-vnet-15824137
+                    kubernetes.azure.com/network-policy=none
+                    kubernetes.azure.com/network-resourcegroup=inflab-aks-nodes
+                    kubernetes.azure.com/network-stateless-cni=true
+                    kubernetes.azure.com/network-subnet=aks-subnet
+                    kubernetes.azure.com/network-subscription=60f9b06a-66b1-437f-ac92-3b5e9720e34a
+                    kubernetes.azure.com/node-image-version=AKSUbuntu-2204gen2containerd-202610.30.1
+                    kubernetes.azure.com/nodenetwork-vnetguid=28602d69-0f5e-4333-913a-f54bbfb227b4
+                    kubernetes.azure.com/nodepool-type=VirtualMachineScaleSets
+                    kubernetes.azure.com/os-sku=Ubuntu
+                    kubernetes.azure.com/os-sku-effective=Ubuntu2204
+                    kubernetes.azure.com/os-sku-requested=Ubuntu
+                    kubernetes.azure.com/podnetwork-type=overlay
+                    kubernetes.azure.com/priority=regular
+                    kubernetes.azure.com/role=agent
+                    kubernetes.azure.com/sku-cpu=4
+                    kubernetes.azure.com/sku-memory=28672
+                    kubernetes.io/arch=amd64
+                    kubernetes.io/hostname=aks-gpu-30210252-vmss000001
+                    kubernetes.io/os=linux
+                    node.kubernetes.io/instance-type=Standard_NC4as_T4_v3
+                    nvidia.com/cuda.driver-version.full=580.95.05
+                    nvidia.com/cuda.driver-version.major=580
+                    nvidia.com/cuda.driver-version.minor=95
+                    nvidia.com/cuda.driver-version.revision=05
+                    nvidia.com/cuda.driver.major=580
+                    nvidia.com/cuda.driver.minor=95
+                    nvidia.com/cuda.driver.rev=05
+                    nvidia.com/cuda.runtime-version.full=13.0
+                    nvidia.com/cuda.runtime-version.major=13
+                    nvidia.com/cuda.runtime-version.minor=0
+                    nvidia.com/cuda.runtime.major=13
+                    nvidia.com/cuda.runtime.minor=0
+                    nvidia.com/gfd.timestamp=1794931715
+                    nvidia.com/gpu-driver-upgrade-state=upgrade-done
+                    nvidia.com/gpu.compute.major=7
+                    nvidia.com/gpu.compute.minor=5
+                    nvidia.com/gpu.count=1
+                    nvidia.com/gpu.deploy.client=true
+                    nvidia.com/gpu.deploy.container-toolkit=true
+                    nvidia.com/gpu.deploy.dcgm=true
+                    nvidia.com/gpu.deploy.dcgm-exporter=true
+                    nvidia.com/gpu.deploy.device-plugin=true
+                    nvidia.com/gpu.deploy.driver=true
+                    nvidia.com/gpu.deploy.gpu-feature-discovery=true
+                    nvidia.com/gpu.deploy.node-status-exporter=true
+                    nvidia.com/gpu.deploy.nvsm=
+                    nvidia.com/gpu.deploy.operator-validator=true
+                    nvidia.com/gpu.family=turing
+                    nvidia.com/gpu.machine=Virtual-Machine
+                    nvidia.com/gpu.memory=15360
+                    nvidia.com/gpu.mode=compute
+                    nvidia.com/gpu.present=true
+                    nvidia.com/gpu.product=Tesla-T4
+                    nvidia.com/gpu.replicas=1
+                    nvidia.com/gpu.sharing-strategy=none
+                    nvidia.com/mig.capable=false
+                    nvidia.com/mig.strategy=single
+                    nvidia.com/mps.capable=false
+                    nvidia.com/vgpu.present=false
+                    topology.disk.csi.azure.com/zone=
+                    topology.kubernetes.io/region=eastus
+                    topology.kubernetes.io/zone=0
+                    workload=inference
+Annotations:        alpha.kubernetes.io/provided-node-ip: 10.224.0.5
+                    csi.volume.kubernetes.io/nodeid: {"disk.csi.azure.com":"aks-gpu-30210252-vmss000001","file.csi.azure.com":"aks-gpu-30210252-vmss000001"}
+                    kubernetes.azure.com/live-patching-config-goal-hash: f5f962eef209103cce4ae12e80eddf4c491e0ec58bdcc651a7cc157688d32eb0
+                    kubernetes.azure.com/live-patching-golden-timestamp: 
+                    kubernetes.azure.com/live-patching-status:
+                      {"currentHash":"f5f962eef209103cce4ae12e80eddf4c491e0ec58bdcc651a7cc157688d32eb0","components":{"securityPatch":{"code":"Succeeded"}}}
+                    nfd.node.kubernetes.io/feature-labels:
+                      cpu-cpuid.ADX,cpu-cpuid.AESNI,cpu-cpuid.AVX,cpu-cpuid.AVX2,cpu-cpuid.CLZERO,cpu-cpuid.CMPXCHG8,cpu-cpuid.FMA3,cpu-cpuid.FXSR,cpu-cpuid.FXS...
+                    node.alpha.kubernetes.io/ttl: 0
+                    nvidia.com/gpu-driver-upgrade-enabled: true
+                    volumes.kubernetes.io/controller-managed-attach-detach: true
+CreationTimestamp:  Tue, 17 Nov 2026 17:01:13 +0100
+Taints:             sku=gpu:NoSchedule
+Unschedulable:      false
+Lease:
+  HolderIdentity:  aks-gpu-30210252-vmss000001
+  AcquireTime:     <unset>
+  RenewTime:       Tue, 17 Nov 2026 17:39:30 +0100
+Conditions:
+  Type                          Status  LastHeartbeatTime                 LastTransitionTime                Reason                          Message
+  ----                          ------  -----------------                 ------------------                ------                          -------
+  KernelDeadlock                False   Tue, 17 Nov 2026 17:37:18 +0100   Tue, 17 Nov 2026 17:01:33 +0100   KernelHasNoDeadlock             kernel has no deadlock
+  ContainerRuntimeProblem       False   Tue, 17 Nov 2026 17:37:18 +0100   Tue, 17 Nov 2026 17:01:33 +0100   ContainerRuntimeIsUp            container runtime service is up
+  KubeletProblem                False   Tue, 17 Nov 2026 17:37:18 +0100   Tue, 17 Nov 2026 17:01:33 +0100   KubeletIsUp                     kubelet service is up
+  FrequentDockerRestart         False   Tue, 17 Nov 2026 17:37:18 +0100   Tue, 17 Nov 2026 17:01:33 +0100   NoFrequentDockerRestart         docker is functioning properly
+  ReadonlyFilesystem            False   Tue, 17 Nov 2026 17:37:18 +0100   Tue, 17 Nov 2026 17:01:33 +0100   FilesystemIsNotReadOnly         Filesystem is not read-only
+  FrequentContainerdRestart     False   Tue, 17 Nov 2026 17:37:18 +0100   Tue, 17 Nov 2026 17:01:33 +0100   NoFrequentContainerdRestart     containerd is functioning properly
+  FrequentUnregisterNetDevice   False   Tue, 17 Nov 2026 17:37:18 +0100   Tue, 17 Nov 2026 17:01:33 +0100   NoFrequentUnregisterNetDevice   node is functioning properly
+  FrequentKubeletRestart        False   Tue, 17 Nov 2026 17:37:18 +0100   Tue, 17 Nov 2026 17:01:33 +0100   NoFrequentKubeletRestart        kubelet is functioning properly
+  VMEventScheduled              False   Tue, 17 Nov 2026 17:37:18 +0100   Tue, 17 Nov 2026 17:02:12 +0100   NoVMEventScheduled              VM has no scheduled event
+  FilesystemCorruptionProblem   False   Tue, 17 Nov 2026 17:37:18 +0100   Tue, 17 Nov 2026 17:01:33 +0100   FilesystemIsOK                  Filesystem is healthy
+  MemoryPressure                False   Tue, 17 Nov 2026 17:35:32 +0100   Tue, 17 Nov 2026 17:01:13 +0100   KubeletHasSufficientMemory      kubelet has sufficient memory available
+  DiskPressure                  False   Tue, 17 Nov 2026 17:35:32 +0100   Tue, 17 Nov 2026 17:01:13 +0100   KubeletHasNoDiskPressure        kubelet has no disk pressure
+  PIDPressure                   False   Tue, 17 Nov 2026 17:35:32 +0100   Tue, 17 Nov 2026 17:01:13 +0100   KubeletHasSufficientPID         kubelet has sufficient PID available
+  Ready                         True    Tue, 17 Nov 2026 17:35:32 +0100   Tue, 17 Nov 2026 17:01:37 +0100   KubeletReady                    kubelet is posting ready status
+Addresses:
+  InternalIP:  10.224.0.5
+  Hostname:    aks-gpu-30210252-vmss000001
+Capacity:
+  cpu:                4
+  ephemeral-storage:  129886128Ki
+  hugepages-1Gi:      0
+  hugepages-2Mi:      0
+  memory:             28736440Ki
+  nvidia.com/gpu:     1
+  pods:               250
+Allocatable:
+  cpu:                3860m
+  ephemeral-storage:  119703055367
+  hugepages-1Gi:      0
+  hugepages-2Mi:      0
+  memory:             23462840Ki
+  nvidia.com/gpu:     1
+  pods:               250
+System Info:
+  Machine ID:                 230fdf50b8054624aa9a79e59990bbfd
+  System UUID:                f825f9d0-cb1e-4db3-9b69-b762734a9698
+  Boot ID:                    72ef5460-84ad-43f3-99e7-12a9ce9080f1
+  Kernel Version:             5.15.0-1126-azure
+  OS Image:                   Ubuntu 22.04.5 LTS
+  Operating System:           linux
+  Architecture:               amd64
+  Container Runtime Version:  containerd://1.7.36-5
+  Kubelet Version:            v1.34.12
+  Kube-Proxy Version:         
+ProviderID:                   azure:///subscriptions/60f9b06a-66b1-437f-ac92-3b5e9720e34a/resourceGroups/inflab-aks-nodes/providers/Microsoft.Compute/virtualMachineScaleSets/aks-gpu-30210252-vmss/virtualMachines/1
+Non-terminated Pods:          (17 in total)
+  Namespace                   Name                                                    CPU Requests  CPU Limits  Memory Requests  Memory Limits  Age
+  ---------                   ----                                                    ------------  ----------  ---------------  -------------  ---
+  gpu-operator                gpu-feature-discovery-j8c5q                             0 (0%)        0 (0%)      0 (0%)           0 (0%)         34m
+  gpu-operator                gpu-operator-node-feature-discovery-worker-k25n5        5m (0%)       0 (0%)      64Mi (0%)        512Mi (2%)     37m
+  gpu-operator                nvidia-container-toolkit-daemonset-m967d                0 (0%)        0 (0%)      0 (0%)           0 (0%)         34m
+  gpu-operator                nvidia-dcgm-exporter-qmfzf                              0 (0%)        0 (0%)      0 (0%)           0 (0%)         34m
+  gpu-operator                nvidia-device-plugin-daemonset-r9898                    0 (0%)        0 (0%)      0 (0%)           0 (0%)         34m
+  gpu-operator                nvidia-driver-daemonset-6vwj6                           0 (0%)        0 (0%)      0 (0%)           0 (0%)         34m
+  gpu-operator                nvidia-operator-validator-8trq2                         0 (0%)        0 (0%)      0 (0%)           0 (0%)         34m
+  inference                   image-prepull-g4bhf                                     1m (0%)       0 (0%)      4Mi (0%)         16Mi (0%)      37m
+  inference                   qwen-7b-awq-kserve-76c5bdcfb-8tf7b                      2500m (64%)   2 (51%)     18Gi (80%)       22Gi (98%)     134m
+  kube-system                 azure-cns-pzbjl                                         40m (1%)      40m (1%)    250Mi (1%)       250Mi (1%)     38m
+  kube-system                 azure-ip-masq-agent-2bx2b                               50m (1%)      500m (12%)  36Mi (0%)        250Mi (1%)     38m
+  kube-system                 cloud-node-manager-gfdxq                                50m (1%)      0 (0%)      50Mi (0%)        512Mi (2%)     38m
+  kube-system                 csi-azuredisk-node-jr5d9                                30m (0%)      0 (0%)      60Mi (0%)        5800Mi (25%)   38m
+  kube-system                 csi-azurefile-node-d5v6r                                40m (1%)      0 (0%)      80Mi (0%)        700Mi (3%)     38m
+  kube-system                 kube-proxy-nxgz8                                        100m (2%)     0 (0%)      0 (0%)           0 (0%)         38m
+  monitoring                  alloy-qklms                                             40m (1%)      0 (0%)      146Mi (0%)       0 (0%)         38m
+  monitoring                  kube-prometheus-stack-prometheus-node-exporter-5jpc5    10m (0%)      0 (0%)      24Mi (0%)        0 (0%)         38m
+Allocated resources:
+  (Total limits may be over 100 percent, i.e., overcommitted.)
+  Resource           Requests       Limits
+  --------           --------       ------
+  cpu                2866m (74%)    2540m (65%)
+  memory             19146Mi (83%)  30568Mi (133%)
+  ephemeral-storage  0 (0%)         0 (0%)
+  hugepages-1Gi      0 (0%)         0 (0%)
+  hugepages-2Mi      0 (0%)         0 (0%)
+  nvidia.com/gpu     1              1
+Events:
+  Type     Reason                   Age                From                                                          Message
+  ----     ------                   ----               ----                                                          -------
+  Normal   Starting                 38m                kube-proxy                                                    
+  Normal   NodeAllocatableEnforced  38m                kubelet                                                       Updated Node Allocatable limit across pods
+  Normal   Starting                 38m                kubelet                                                       Starting kubelet.
+  Normal   NodeHasSufficientMemory  38m (x3 over 38m)  kubelet                                                       Node aks-gpu-30210252-vmss000001 status is now: NodeHasSufficientMemory
+  Normal   NodeHasNoDiskPressure    38m (x3 over 38m)  kubelet                                                       Node aks-gpu-30210252-vmss000001 status is now: NodeHasNoDiskPressure
+  Normal   NodeHasSufficientPID     38m (x3 over 38m)  kubelet                                                       Node aks-gpu-30210252-vmss000001 status is now: NodeHasSufficientPID
+  Normal   CreatedNNC               38m                dnc-rc/node-reconciler                                        Created NodeNetworkConfig aks-gpu-30210252-vmss000001
+  Normal   RegisteredNode           38m                node-controller                                               Node aks-gpu-30210252-vmss000001 event: Registered Node aks-gpu-30210252-vmss000001 in Controller
+  Warning  CoreDNSUnreachable       38m                dns-problem-monitor                                           dns test to coredns:10.0.0.10 over udp failed after 2 attempts
+  Normal   NodeReady                37m                kubelet                                                       Node aks-gpu-30210252-vmss000001 status is now: NodeReady
+  Normal   NoVMEventScheduled       37m                custom-scheduledevents-consolidated-condition-plugin-monitor  Node condition VMEventScheduled is now: Unknown, reason: NoVMEventScheduled, message: "Unable to verify scheduled events (IMDS unavailable)"
+  Normal   NoVMEventScheduled       37m                custom-scheduledevents-consolidated-condition-plugin-monitor  Node condition VMEventScheduled is now: False, reason: NoVMEventScheduled, message: "VM has no scheduled event"
+  Normal   GPUDriverUpgrade         32m                nvidia-gpu-operator                                           Successfully updated node state label to upgrade-done
+  Warning  ContainerdStart          31m (x2 over 38m)  systemd-monitor                                               Starting containerd container runtime...

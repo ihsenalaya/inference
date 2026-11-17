@@ -1,0 +1,31 @@
+debut 18:26:08
+Successfully ran diagnostic for group.
++---------------------------+------------------------------------------------+
+| Diagnostic                | Result                                         |
++===========================+================================================+
+|-----  Metadata  ----------+------------------------------------------------|
+| DCGM Version              | 4.6.1                                          |
+| Driver Version Detected   | 580.95.05                                      |
+| GPU Device IDs Detected   | 1eb8                                           |
+|-----  Deployment  --------+------------------------------------------------|
+| software                  | Pass                                           |
+|                           | GPU0: Pass                                     |
++-----  Hardware  ----------+------------------------------------------------+
+| memory                    | Pass                                           |
+|                           | GPU0: Pass                                     |
+| diagnostic                | Pass                                           |
+|                           | GPU0: Pass                                     |
+| nvbandwidth               | Skip                                           |
+|                           | GPU0: Skip                                     |
++-----  Integration  -------+------------------------------------------------+
+| pcie                      | Pass                                           |
+|                           | GPU0: Pass                                     |
++-----  Stress  ------------+------------------------------------------------+
+| memory_bandwidth          | Pass                                           |
+|                           | GPU0: Pass                                     |
+| targeted_stress           | Pass                                           |
+|                           | GPU0: Pass                                     |
+| targeted_power            | Pass                                           |
+|                           | GPU0: Pass                                     |
++---------------------------+------------------------------------------------+
+[exit 0 ; durée 348 s ; fin 18:31:56]

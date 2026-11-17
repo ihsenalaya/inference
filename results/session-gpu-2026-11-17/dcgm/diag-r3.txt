@@ -1,0 +1,36 @@
+debut 18:14:46
+Successfully ran diagnostic for group.
++---------------------------+------------------------------------------------+
+| Diagnostic                | Result                                         |
++===========================+================================================+
+|-----  Metadata  ----------+------------------------------------------------|
+| DCGM Version              | 4.6.1                                          |
+| Driver Version Detected   | 580.95.05                                      |
+| GPU Device IDs Detected   | 1eb8                                           |
+|-----  Deployment  --------+------------------------------------------------|
+| software                  | Pass                                           |
+|                           | GPU0: Pass                                     |
++-----  Hardware  ----------+------------------------------------------------+
+| memory                    | Skip                                           |
+|                           | GPU0: Skip                                     |
+| diagnostic                | Pass                                           |
+|                           | GPU0: Pass                                     |
+| nvbandwidth               | Skip                                           |
+|                           | GPU0: Skip                                     |
++-----  Integration  -------+------------------------------------------------+
+| pcie                      | Pass                                           |
+|                           | GPU0: Pass                                     |
++-----  Stress  ------------+------------------------------------------------+
+| memory_bandwidth          | Pass                                           |
+|                           | GPU0: Pass                                     |
+| targeted_stress           | Pass                                           |
+|                           | GPU0: Pass                                     |
+| targeted_power            | Fail                                           |
+|                           | GPU0: Fail                                     |
+| Warning: GPU0             | API call cudaMalloc failed for GPU 0: 'out of  |
+|                           |  memory' Check DCGM and system logs for error  |
+|                           | s. Reset GPU. Restart DCGM. Rerun diagnostics  |
+|                           | . (for 268435456 bytes                         |
++---------------------------+------------------------------------------------+
+command terminated with exit code 226
+[exit 226 ; durée 223 s ; fin 18:18:29]

@@ -1,0 +1,3 @@
+$ dcgmi health -s a
+Health monitor systems set successfully.
+[exit 0 ; durée 2 s]

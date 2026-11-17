@@ -22,6 +22,13 @@ Q = {
     "waiting": "sum(lab:requests_waiting)",
     "kv_usage": "max(lab:kv_cache_usage:max)",
     "vllm_cpu_cores": "sum(lab:vllm_cpu_cores)",
+    "temp_c_max": "max(DCGM_FI_DEV_GPU_TEMP)",
+    "throttle_mask_max": "max(DCGM_FI_DEV_CLOCK_THROTTLE_REASONS)",
+    "sw_power_cap_part": "avg(lab:gpu_throttle_sw_power_cap)",
+    "hw_slowdown_part": "avg(lab:gpu_throttle_hw_slowdown)",
+    "mbu": "lab:gpu_mbu",
+    "mfu": "lab:gpu_mfu",
+    "energy_j_per_req": "lab:gpu_energy_per_request_joules",
 }
 
 

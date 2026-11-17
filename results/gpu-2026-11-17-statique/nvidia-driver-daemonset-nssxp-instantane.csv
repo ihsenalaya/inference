@@ -1,0 +1,2 @@
+timestamp, index, name, temperature.gpu, power.draw [W], power.limit [W], clocks.current.sm [MHz], clocks.current.memory [MHz], utilization.gpu [%], utilization.memory [%], memory.used [MiB], memory.total [MiB]
+2026/11/17 14:02:04.009, 0, Tesla T4, 47, 31.27 W, 70.00 W, 585 MHz, 5000 MHz, 0 %, 0 %, 12585 MiB, 15360 MiB

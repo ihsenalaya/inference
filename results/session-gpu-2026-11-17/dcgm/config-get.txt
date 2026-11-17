@@ -1,0 +1,17 @@
+$ dcgmi config --get
++------------------------------+------------------------------+------------------------------+
+| DCGM_ALL_SUPPORTED_GPUS                                                                    |
+| Group of 1 GPUs                                                                            |
++==============================+==============================+==============================+
+| Field                        | Target                       | Current                      |
++------------------------------+------------------------------+------------------------------+
+| Compute Mode                 | Not Specified                | Unrestricted                 |
+| ECC Mode                     | Not Specified                | Enabled                      |
+| Sync Boost                   | Not Specified                | Not Supported                |
+| Memory Application Clock     | Not Specified                | 5001                         |
+| SM Application Clock         | Not Specified                | 585                          |
+| Power Limit                  | Not Specified                | 70                           |
+| Power Profile                | Not Specified                | Not Specified                |
++------------------------------+------------------------------+------------------------------+
+**** Non-homogenous settings across group. Use with –v flag to see details.
+[exit 0 ; durée 1 s]

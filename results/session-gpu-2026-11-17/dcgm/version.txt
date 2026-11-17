@@ -1,0 +1,5 @@
+$ dcgmi --version
+
+dcgmi  version: 4.6.1
+
+[exit 0 ; durée 2 s]

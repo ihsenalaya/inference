@@ -1,0 +1,360 @@
+groupe	type	nom	état	santé	évaluation_ms
+alertmanager.rules	alerting	AlertmanagerFailedReload	inactive	ok	0.29
+alertmanager.rules	alerting	AlertmanagerMembersInconsistent	inactive	ok	0.08
+alertmanager.rules	alerting	AlertmanagerFailedToSendAlerts	inactive	ok	0.98
+alertmanager.rules	alerting	AlertmanagerClusterFailedToSendAlerts	inactive	ok	0.84
+alertmanager.rules	alerting	AlertmanagerClusterFailedToSendAlerts	inactive	ok	0.08
+alertmanager.rules	alerting	AlertmanagerConfigInconsistent	inactive	ok	0.05
+alertmanager.rules	alerting	AlertmanagerClusterDown	inactive	ok	0.08
+alertmanager.rules	alerting	AlertmanagerClusterCrashlooping	inactive	ok	0.06
+alertmanager.rules	alerting	AlertmanagerClusterFailedPeers	inactive	ok	0.03
+config-reloaders	alerting	ConfigReloaderSidecarErrors	inactive	ok	0.35
+general.rules	alerting	TargetDown	firing	ok	0.79
+general.rules	alerting	Watchdog	firing	ok	0.11
+general.rules	alerting	InfoInhibitor	inactive	ok	0.13
+k8s.rules.container_cpu_usage_seconds_total	recording	node_namespace_pod_container:container_cpu_usage_seconds_total:sum_rate5m		ok	2.69
+k8s.rules.container_cpu_usage_seconds_total	recording	node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate		ok	2.22
+k8s.rules.container_memory_cache	recording	node_namespace_pod_container:container_memory_cache		ok	1.65
+k8s.rules.container_memory_rss	recording	node_namespace_pod_container:container_memory_rss		ok	1.87
+k8s.rules.container_memory_swap	recording	node_namespace_pod_container:container_memory_swap		ok	1.93
+k8s.rules.container_memory_working_set_bytes	recording	node_namespace_pod_container:container_memory_working_set_bytes		ok	1.78
+k8s.rules.container_resource	recording	cluster:namespace:pod_memory:active:kube_pod_container_resource_requests		ok	1.13
+k8s.rules.container_resource	recording	namespace_memory:kube_pod_container_resource_requests:sum		ok	0.6
+k8s.rules.container_resource	recording	cluster:namespace:pod_cpu:active:kube_pod_container_resource_requests		ok	0.61
+k8s.rules.container_resource	recording	namespace_cpu:kube_pod_container_resource_requests:sum		ok	0.62
+k8s.rules.container_resource	recording	cluster:namespace:pod_memory:active:kube_pod_container_resource_limits		ok	0.55
+k8s.rules.container_resource	recording	namespace_memory:kube_pod_container_resource_limits:sum		ok	0.5
+k8s.rules.container_resource	recording	cluster:namespace:pod_cpu:active:kube_pod_container_resource_limits		ok	0.38
+k8s.rules.container_resource	recording	namespace_cpu:kube_pod_container_resource_limits:sum		ok	0.35
+k8s.rules.pod_owner	recording	namespace_workload_pod:kube_pod_owner:relabel		ok	0.5
+k8s.rules.pod_owner	recording	namespace_workload_pod:kube_pod_owner:relabel		ok	0.52
+k8s.rules.pod_owner	recording	namespace_workload_pod:kube_pod_owner:relabel		ok	2.02
+k8s.rules.pod_owner	recording	namespace_workload_pod:kube_pod_owner:relabel		ok	0.15
+k8s.rules.pod_owner	recording	namespace_workload_pod:kube_pod_owner:relabel		ok	0.21
+k8s.rules.pod_owner	recording	namespace_workload_pod:kube_pod_owner:relabel		ok	0.09
+k8s.rules.pod_owner	recording	namespace_workload_pod:kube_pod_owner:relabel		ok	0.04
+k8s.rules.pod_owner	recording	namespace_workload_pod:kube_pod_owner:relabel		ok	0.32
+kube-apiserver-availability.rules	recording	code_verb:apiserver_request_total:increase30d		ok	0.39
+kube-apiserver-availability.rules	recording	code:apiserver_request_total:increase30d		ok	0.09
+kube-apiserver-availability.rules	recording	code:apiserver_request_total:increase30d		ok	0.08
+kube-apiserver-availability.rules	recording	cluster_verb_scope_le:apiserver_request_sli_duration_seconds_bucket:increase1h		ok	10.81
+kube-apiserver-availability.rules	recording	cluster_verb_scope_le:apiserver_request_sli_duration_seconds_bucket:increase30d		ok	0.59
+kube-apiserver-availability.rules	recording	cluster_verb_scope:apiserver_request_sli_duration_seconds_count:increase1h		ok	0.08
+kube-apiserver-availability.rules	recording	cluster_verb_scope:apiserver_request_sli_duration_seconds_count:increase30d		ok	0.06
+kube-apiserver-availability.rules	recording	apiserver_request:availability30d		ok	0.43
+kube-apiserver-availability.rules	recording	apiserver_request:availability30d		ok	0.22
+kube-apiserver-availability.rules	recording	apiserver_request:availability30d		ok	0.13
+kube-apiserver-availability.rules	recording	code_resource:apiserver_request_total:rate5m		ok	0.98
+kube-apiserver-availability.rules	recording	code_resource:apiserver_request_total:rate5m		ok	0.63
+kube-apiserver-availability.rules	recording	code_verb:apiserver_request_total:increase1h		ok	1.49
+kube-apiserver-availability.rules	recording	code_verb:apiserver_request_total:increase1h		ok	0.12
+kube-apiserver-availability.rules	recording	code_verb:apiserver_request_total:increase1h		ok	0.36
+kube-apiserver-availability.rules	recording	code_verb:apiserver_request_total:increase1h		ok	0.09
+kube-apiserver-burnrate.rules	recording	cluster_verb:apiserver_request_sli_bad_events:rate5m		ok	2.67
+kube-apiserver-burnrate.rules	recording	cluster_verb:apiserver_request_sli_bad_events:rate5m		ok	1.28
+kube-apiserver-burnrate.rules	recording	cluster_verb:apiserver_request_sli_events:rate5m		ok	0.7
+kube-apiserver-burnrate.rules	recording	cluster_verb:apiserver_request_sli_events:rate5m		ok	0.45
+kube-apiserver-burnrate.rules	recording	apiserver_request:burnrate5m		ok	0.05
+kube-apiserver-burnrate.rules	recording	apiserver_request:burnrate1h		ok	3.54
+kube-apiserver-burnrate.rules	recording	apiserver_request:burnrate1h		ok	2.15
+kube-apiserver-burnrate.rules	recording	apiserver_request:burnrate2h		ok	3.52
+kube-apiserver-burnrate.rules	recording	apiserver_request:burnrate2h		ok	1.84
+kube-apiserver-burnrate.rules	recording	apiserver_request:burnrate30m		ok	3.07
+kube-apiserver-burnrate.rules	recording	apiserver_request:burnrate30m		ok	1.7
+kube-apiserver-burnrate.rules	recording	apiserver_request:burnrate6h		ok	6.46
+kube-apiserver-burnrate.rules	recording	apiserver_request:burnrate6h		ok	4.27
+kube-apiserver-burnrate.rules	recording	apiserver_request:burnrate1d		ok	0.12
+kube-apiserver-burnrate.rules	recording	apiserver_request:burnrate3d		ok	0.07
+kube-apiserver-histogram.rules	recording	cluster_quantile:apiserver_request_sli_duration_seconds:histogram_quantile		ok	8.99
+kube-apiserver-histogram.rules	recording	cluster_quantile:apiserver_request_sli_duration_seconds:histogram_quantile		ok	4.1
+kube-apiserver-slos	alerting	KubeAPIErrorBudgetBurn	inactive	ok	0.28
+kube-apiserver-slos	alerting	KubeAPIErrorBudgetBurn	inactive	ok	0.15
+kube-apiserver-slos	alerting	KubeAPIErrorBudgetBurn	inactive	ok	0.1
+kube-apiserver-slos	alerting	KubeAPIErrorBudgetBurn	inactive	ok	0.07
+kube-prometheus-general.rules	recording	count:up1		ok	0.48
+kube-prometheus-general.rules	recording	count:up0		ok	0.09
+kube-prometheus-node-recording.rules	recording	instance:node_cpu:rate:sum		ok	0.46
+kube-prometheus-node-recording.rules	recording	instance:node_network_receive_bytes:rate:sum		ok	0.23
+kube-prometheus-node-recording.rules	recording	instance:node_network_transmit_bytes:rate:sum		ok	0.2
+kube-prometheus-node-recording.rules	recording	instance:node_cpu:ratio		ok	0.35
+kube-prometheus-node-recording.rules	recording	cluster:node_cpu:sum_rate5m		ok	0.13
+kube-prometheus-node-recording.rules	recording	cluster:node_cpu:ratio		ok	0.14
+kube-state-metrics	alerting	KubeStateMetricsListErrors	inactive	ok	0.24
+kube-state-metrics	alerting	KubeStateMetricsWatchErrors	inactive	ok	0.05
+kube-state-metrics	alerting	KubeStateMetricsShardingMismatch	inactive	ok	0.03
+kube-state-metrics	alerting	KubeStateMetricsShardsMissing	inactive	ok	0.09
+kubelet.rules	recording	node_quantile:kubelet_pleg_relist_duration_seconds:histogram_quantile		ok	0.54
+kubelet.rules	recording	node_quantile:kubelet_pleg_relist_duration_seconds:histogram_quantile		ok	0.18
+kubelet.rules	recording	node_quantile:kubelet_pleg_relist_duration_seconds:histogram_quantile		ok	0.14
+kubernetes-apps	alerting	KubePodCrashLooping	inactive	ok	0.26
+kubernetes-apps	alerting	KubePodNotReady	firing	ok	1.63
+kubernetes-apps	alerting	KubeDeploymentGenerationMismatch	inactive	ok	0.28
+kubernetes-apps	alerting	KubeDeploymentReplicasMismatch	firing	ok	0.56
+kubernetes-apps	alerting	KubeDeploymentRolloutStuck	inactive	ok	0.15
+kubernetes-apps	alerting	KubeStatefulSetReplicasMismatch	inactive	ok	0.19
+kubernetes-apps	alerting	KubeStatefulSetGenerationMismatch	inactive	ok	0.1
+kubernetes-apps	alerting	KubeStatefulSetUpdateNotRolledOut	inactive	ok	0.19
+kubernetes-apps	alerting	KubeDaemonSetRolloutStuck	inactive	ok	0.68
+kubernetes-apps	alerting	KubeContainerWaiting	pending	ok	0.36
+kubernetes-apps	alerting	KubeDaemonSetNotScheduled	inactive	ok	0.19
+kubernetes-apps	alerting	KubeDaemonSetMisScheduled	inactive	ok	0.09
+kubernetes-apps	alerting	KubeJobNotCompleted	inactive	ok	0.17
+kubernetes-apps	alerting	KubeJobFailed	inactive	ok	0.05
+kubernetes-apps	alerting	KubeHpaReplicasMismatch	inactive	ok	0.16
+kubernetes-apps	alerting	KubeHpaMaxedOut	inactive	ok	0.08
+kubernetes-apps	alerting	KubePdbNotEnoughHealthyPods	inactive	ok	0.13
+kubernetes-resources	alerting	KubeCPUOvercommit	firing	ok	0.57
+kubernetes-resources	alerting	KubeMemoryOvercommit	firing	ok	0.26
+kubernetes-resources	alerting	KubeCPUQuotaOvercommit	inactive	ok	0.17
+kubernetes-resources	alerting	KubeMemoryQuotaOvercommit	inactive	ok	0.07
+kubernetes-resources	alerting	KubeQuotaAlmostFull	inactive	ok	0.06
+kubernetes-resources	alerting	KubeQuotaFullyUsed	inactive	ok	0.05
+kubernetes-resources	alerting	KubeQuotaExceeded	inactive	ok	0.05
+kubernetes-resources	alerting	CPUThrottlingHigh	inactive	ok	0.62
+kubernetes-storage	alerting	KubePersistentVolumeFillingUp	inactive	ok	0.37
+kubernetes-storage	alerting	KubePersistentVolumeFillingUp	inactive	ok	0.25
+kubernetes-storage	alerting	KubePersistentVolumeInodesFillingUp	inactive	ok	0.11
+kubernetes-storage	alerting	KubePersistentVolumeInodesFillingUp	inactive	ok	0.16
+kubernetes-storage	alerting	KubePersistentVolumeErrors	inactive	ok	0.05
+kubernetes-system-apiserver	alerting	KubeClientCertificateExpiration	inactive	ok	0.34
+kubernetes-system-apiserver	alerting	KubeClientCertificateExpiration	inactive	ok	0.1
+kubernetes-system-apiserver	alerting	KubeAggregatedAPIErrors	inactive	ok	0.03
+kubernetes-system-apiserver	alerting	KubeAggregatedAPIDown	inactive	ok	0.22
+kubernetes-system-apiserver	alerting	KubeAPIDown	inactive	ok	0.04
+kubernetes-system-apiserver	alerting	KubeAPIInstanceUnreachable	inactive	ok	0.03
+kubernetes-system-apiserver	alerting	KubeAPITerminatedRequests	inactive	ok	1.74
+kubernetes-system	alerting	KubeVersionMismatch	inactive	ok	0.31
+kubernetes-system	alerting	KubeClientErrors	firing	ok	0.44
+kubernetes-system-kubelet	alerting	KubeNodeNotReady	inactive	ok	0.29
+kubernetes-system-kubelet	alerting	KubeNodePressure	inactive	ok	0.14
+kubernetes-system-kubelet	alerting	KubeNodeUnreachable	inactive	ok	0.11
+kubernetes-system-kubelet	alerting	KubeletTooManyPods	inactive	ok	0.19
+kubernetes-system-kubelet	alerting	KubeNodeReadinessFlapping	inactive	ok	0.09
+kubernetes-system-kubelet	alerting	KubeNodeEviction	inactive	ok	0.05
+kubernetes-system-kubelet	alerting	KubeletPlegDurationHigh	inactive	ok	0.04
+kubernetes-system-kubelet	alerting	KubeletPodStartUpLatencyHigh	inactive	ok	0.38
+kubernetes-system-kubelet	alerting	KubeletClientCertificateExpiration	inactive	ok	0.03
+kubernetes-system-kubelet	alerting	KubeletClientCertificateExpiration	inactive	ok	0.02
+kubernetes-system-kubelet	alerting	KubeletServerCertificateExpiration	inactive	ok	0.03
+kubernetes-system-kubelet	alerting	KubeletServerCertificateExpiration	inactive	ok	0.02
+kubernetes-system-kubelet	alerting	KubeletClientCertificateRenewalErrors	inactive	ok	0.04
+kubernetes-system-kubelet	alerting	KubeletServerCertificateRenewalErrors	inactive	ok	0.03
+kubernetes-system-kubelet	alerting	KubeletInstanceUnreachable	inactive	ok	0.04
+kubernetes-system-kubelet	alerting	KubeletDown	inactive	ok	0.05
+node-exporter	alerting	NodeFilesystemSpaceFillingUp	inactive	ok	1.09
+node-exporter	alerting	NodeFilesystemSpaceFillingUp	inactive	ok	0.65
+node-exporter	alerting	NodeFilesystemAlmostOutOfSpace	inactive	ok	0.28
+node-exporter	alerting	NodeFilesystemAlmostOutOfSpace	inactive	ok	0.28
+node-exporter	alerting	NodeFilesystemFilesFillingUp	inactive	ok	0.67
+node-exporter	alerting	NodeFilesystemFilesFillingUp	inactive	ok	0.61
+node-exporter	alerting	NodeFilesystemAlmostOutOfFiles	inactive	ok	0.26
+node-exporter	alerting	NodeFilesystemAlmostOutOfFiles	inactive	ok	0.23
+node-exporter	alerting	NodeNetworkReceiveErrs	inactive	ok	0.43
+node-exporter	alerting	NodeNetworkTransmitErrs	inactive	ok	0.42
+node-exporter	alerting	NodeHighNumberConntrackEntriesUsed	inactive	ok	0.06
+node-exporter	alerting	NodeTextFileCollectorScrapeError	inactive	ok	0.03
+node-exporter	alerting	NodeClockSkewDetected	inactive	ok	0.08
+node-exporter	alerting	NodeClockNotSynchronising	inactive	ok	0.05
+node-exporter	alerting	NodeRAIDDegraded	inactive	ok	0.19
+node-exporter	alerting	NodeRAIDDiskFailure	inactive	ok	0.08
+node-exporter	alerting	NodeFileDescriptorLimit	inactive	ok	0.05
+node-exporter	alerting	NodeFileDescriptorLimit	inactive	ok	0.04
+node-exporter	alerting	NodeCPUHighUsage	inactive	ok	0.21
+node-exporter	alerting	NodeSystemSaturation	inactive	ok	0.11
+node-exporter	alerting	NodeMemoryMajorPagesFaults	inactive	ok	0.06
+node-exporter	alerting	NodeMemoryHighUtilization	inactive	ok	0.08
+node-exporter	alerting	NodeDiskIOSaturation	inactive	ok	0.15
+node-exporter	alerting	NodeSystemdServiceFailed	inactive	ok	0.03
+node-exporter	alerting	NodeSystemdServiceCrashlooping	inactive	ok	0.05
+node-exporter	alerting	NodeBondingDegraded	inactive	ok	0.04
+node-exporter.rules	recording	instance:node_num_cpu:sum		ok	0.32
+node-exporter.rules	recording	instance:node_cpu_utilisation:rate5m		ok	0.21
+node-exporter.rules	recording	instance:node_load1_per_cpu:ratio		ok	0.07
+node-exporter.rules	recording	instance:node_memory_utilisation:ratio		ok	0.15
+node-exporter.rules	recording	instance:node_vmstat_pgmajfault:rate5m		ok	0.05
+node-exporter.rules	recording	instance_device:node_disk_io_time_seconds:rate5m		ok	0.21
+node-exporter.rules	recording	instance_device:node_disk_io_time_weighted_seconds:rate5m		ok	0.12
+node-exporter.rules	recording	instance:node_network_receive_bytes_excluding_lo:rate5m		ok	0.24
+node-exporter.rules	recording	instance:node_network_transmit_bytes_excluding_lo:rate5m		ok	0.22
+node-exporter.rules	recording	instance:node_network_receive_drop_excluding_lo:rate5m		ok	0.18
+node-exporter.rules	recording	instance:node_network_transmit_drop_excluding_lo:rate5m		ok	0.15
+node-exporter.rules	recording	instance:node_network_receive_bytes_physical:rate5m		ok	0.19
+node-exporter.rules	recording	instance:node_network_transmit_bytes_physical:rate5m		ok	0.18
+node-exporter.rules	recording	instance:node_network_receive_drop_physical:rate5m		ok	0.13
+node-exporter.rules	recording	instance:node_network_transmit_drop_physical:rate5m		ok	0.13
+node-network	alerting	NodeNetworkInterfaceFlapping	inactive	ok	0.64
+node.rules	recording	node_namespace_pod:kube_pod_info:		ok	0.94
+node.rules	recording	node:node_num_cpu:sum		ok	0.34
+node.rules	recording	:node_memory_MemAvailable_bytes:sum		ok	0.15
+node.rules	recording	node:node_cpu_utilization:ratio_rate5m		ok	0.21
+node.rules	recording	cluster:node_cpu:ratio_rate5m		ok	0.04
+prometheus	alerting	PrometheusBadConfig	inactive	ok	0.19
+prometheus	alerting	PrometheusSDRefreshFailure	inactive	ok	0.04
+prometheus	alerting	PrometheusKubernetesListWatchFailures	inactive	ok	0.05
+prometheus	alerting	PrometheusNotificationQueueRunningFull	inactive	ok	0.1
+prometheus	alerting	PrometheusErrorSendingAlertsToSomeAlertmanagers	inactive	ok	0.07
+prometheus	alerting	PrometheusNotConnectedToAlertmanagers	inactive	ok	0.03
+prometheus	alerting	PrometheusTSDBReloadsFailing	inactive	ok	0.05
+prometheus	alerting	PrometheusTSDBCompactionsFailing	inactive	ok	0.04
+prometheus	alerting	PrometheusNotIngestingSamples	inactive	ok	0.24
+prometheus	alerting	PrometheusDuplicateTimestamps	inactive	ok	0.03
+prometheus	alerting	PrometheusOutOfOrderTimestamps	inactive	ok	0.03
+prometheus	alerting	PrometheusRemoteStorageFailures	inactive	ok	0.11
+prometheus	alerting	PrometheusRemoteWriteBehind	inactive	ok	0.05
+prometheus	alerting	PrometheusRemoteWriteDesiredShards	inactive	ok	0.03
+prometheus	alerting	PrometheusRuleFailures	inactive	ok	0.13
+prometheus	alerting	PrometheusMissingRuleEvaluations	inactive	ok	0.12
+prometheus	alerting	PrometheusTargetLimitHit	inactive	ok	0.03
+prometheus	alerting	PrometheusLabelLimitHit	inactive	ok	0.03
+prometheus	alerting	PrometheusScrapeBodySizeLimitHit	inactive	ok	0.04
+prometheus	alerting	PrometheusScrapeSampleLimitHit	inactive	ok	0.07
+prometheus	alerting	PrometheusTargetSyncFailure	inactive	ok	0.15
+prometheus	alerting	PrometheusHighQueryLoad	inactive	ok	0.05
+prometheus	alerting	PrometheusErrorSendingAlertsToAnyAlertmanager	inactive	ok	0.07
+prometheus-operator	alerting	PrometheusOperatorListErrors	inactive	ok	0.37
+prometheus-operator	alerting	PrometheusOperatorWatchErrors	inactive	ok	0.1
+prometheus-operator	alerting	PrometheusOperatorSyncFailed	inactive	ok	0.07
+prometheus-operator	alerting	PrometheusOperatorReconcileErrors	inactive	ok	0.14
+prometheus-operator	alerting	PrometheusOperatorStatusUpdateErrors	inactive	ok	0.12
+prometheus-operator	alerting	PrometheusOperatorNodeLookupErrors	inactive	ok	0.05
+prometheus-operator	alerting	PrometheusOperatorNotReady	inactive	ok	0.05
+prometheus-operator	alerting	PrometheusOperatorRejectedResources	inactive	ok	0.06
+lab.gpu	alerting	LabGPUXidError	inactive	ok	0.17
+lab.gpu	alerting	LabGPUTemperatureHigh	inactive	ok	0.05
+lab.gpu	alerting	LabGPUThrottling	inactive	ok	0.03
+lab.gpu	alerting	LabGPUThermalMarginLow	inactive	ok	0.03
+lab.gpu	alerting	LabGPUEccUncorrectable	inactive	ok	0.05
+lab.gpu	alerting	LabGPUPageRetirementPending	inactive	ok	0.03
+lab.gpu	alerting	LabGPUPcieReplays	inactive	ok	0.06
+lab.gpu	alerting	LabGPUMissing	inactive	ok	0.08
+lab.gpu	alerting	LabGPUMemoryHigh	inactive	ok	0.06
+lab.gpu	alerting	LabGPUIdleCost	inactive	ok	0.04
+lab.gpu	alerting	LabGPULowUtilWithQueue	inactive	ok	0.04
+lab.platform	alerting	LabVLLMRestarting	inactive	ok	0.18
+lab.platform	alerting	LabVLLMOOMKilled	inactive	ok	0.04
+lab.platform	alerting	LabScrapeTargetMissing	inactive	ok	0.17
+lab.platform	alerting	LabLiteLLMDown	inactive	ok	0.03
+lab.platform	alerting	LabLiteLLMBudgetNearlyExhausted	inactive	ok	0.04
+lab.platform	alerting	LabArgoAppUnhealthy	firing	ok	0.3
+lab.platform	alerting	LabCorruptedRequests	inactive	ok	0.03
+lab.platform	alerting	LabTestAlert	inactive	ok	0.03
+lab.saturation	alerting	LabRequestsWaiting	inactive	ok	0.19
+lab.saturation	alerting	LabKVCacheSaturated	inactive	ok	0.03
+lab.saturation	alerting	LabPreemptions	inactive	ok	0.03
+lab.saturation	alerting	LabKedaAtMaxWithQueue	inactive	ok	0.17
+lab.slo	alerting	LabQueueTimeHigh	inactive	ok	0.2
+epp.availability	alerting	EPPHighErrorRatio	inactive	ok	0.22
+epp.availability	alerting	EPPCriticalErrorRatio	inactive	ok	0.04
+epp.availability	alerting	EPPNoReadyEndpoints	inactive	ok	0.05
+epp.availability	alerting	EPPMetricsAbsent	inactive	ok	0.03
+epp.selfhealth	alerting	EPPDataLayerPollErrors	inactive	ok	0.26
+epp.selfhealth	alerting	EPPDataLayerExtractErrors	inactive	ok	0.04
+epp.selfhealth	alerting	EPPExtProcStreamErrors	inactive	ok	0.04
+lab.cpu_gpu	recording	lab:vllm_cpu_cores		ok	0.37
+lab.cpu_gpu	recording	lab:vllm_cpu_throttled_ratio		ok	0.14
+lab.cpu_gpu	recording	lab:gpu_capacity		ok	0.05
+lab.cpu_gpu	recording	lab:gpu_allocatable		ok	0.03
+lab.cpu_gpu	recording	lab:gpu_allocated		ok	0.3
+lab.cpu_gpu	recording	lab:gpu_used		ok	0.04
+lab.efficiency	recording	lab:gpu_hourly_price_usd		ok	0.24
+lab.efficiency	recording	lab:gpu_count		ok	0.1
+lab.efficiency	recording	lab:gpu_idle_ratio		ok	0.05
+lab.efficiency	recording	lab:tokens_per_second_per_gpu		ok	0.08
+lab.efficiency	recording	lab:tokens_per_joule		ok	0.07
+lab.efficiency	recording	lab:cost_per_million_tokens_usd		ok	0.06
+lab.gateway	recording	lab:epp_decision_seconds:p95		ok	0.25
+lab.gateway	recording	lab:litellm_overhead_seconds:p95		ok	0.04
+lab.gpu_health	recording	lab:gpu_thermal_headroom_celsius		ok	0.18
+lab.gpu_health	recording	lab:gpu_power_headroom_watts		ok	0.05
+lab.gpu_health	recording	lab:gpu_clock_ratio		ok	0.04
+lab.gpu_health	recording	lab:gpu_dram_active_vs_practical_max		ok	0.03
+lab.gpu_health	recording	lab:gpu_throttle_sw_power_cap		ok	0.06
+lab.gpu_health	recording	lab:gpu_throttle_hw_slowdown		ok	0.12
+lab.gpu_health	recording	lab:gpu_visible		ok	0.04
+lab.gpu_health	recording	lab:gpu_allocated_idle		ok	0.04
+lab.gpu_health	recording	lab:gpu_idle_cost_usd_per_hour		ok	0.03
+lab.gpu_health	recording	lab:gpu_energy_per_request_joules		ok	0.09
+lab.gpu_health	recording	lab:gpu_kwh_per_million_tokens		ok	0.03
+lab.gpu_health	recording	lab:gpu_temp_spread_celsius		ok	0.03
+lab.gpu_health	recording	lab:gpu_mfu		ok	0.06
+lab.gpu_health	recording	lab:gpu_mbu		ok	0.07
+lab.latency	recording	lab:ttft_seconds:p50		ok	0.27
+lab.latency	recording	lab:ttft_seconds:p95		ok	0.11
+lab.latency	recording	lab:ttft_seconds:p99		ok	0.09
+lab.latency	recording	lab:itl_seconds:p50		ok	0.14
+lab.latency	recording	lab:itl_seconds:p95		ok	0.11
+lab.latency	recording	lab:decode_seconds:p95		ok	0.1
+lab.latency	recording	lab:e2e_seconds:p95		ok	0.11
+lab.latency	recording	lab:prefill_seconds:p95		ok	0.11
+lab.latency	recording	lab:queue_seconds:p95		ok	0.1
+lab.latency	recording	lab:ttft_seconds:p95_by_pod		ok	0.1
+lab.routing	recording	lab:replica_load_gap		ok	0.29
+lab.saturation	recording	lab:requests_running		ok	0.27
+lab.saturation	recording	lab:requests_waiting		ok	0.04
+lab.saturation	recording	lab:kv_cache_usage:max		ok	0.03
+lab.saturation	recording	lab:preemptions:rate5m		ok	0.06
+lab.saturation	recording	lab:prefix_cache_hit_ratio		ok	0.08
+lab.throughput	recording	lab:generation_tokens:rate1m		ok	0.2
+lab.throughput	recording	lab:prompt_tokens:rate1m		ok	0.05
+lab.throughput	recording	lab:requests:rate1m		ok	0.05
+lab.slo.alerts	alerting	LabSLOBurnFast	inactive	ok	0.21
+lab.slo.alerts	alerting	LabSLOBurnSlow	inactive	ok	0.07
+lab.slo.budget	recording	slo:error_budget		ok	0.17
+lab.slo.budget	recording	slo:error_budget		ok	0.03
+lab.slo.budget	recording	slo:error_budget		ok	0.02
+lab.slo.budget	recording	slo:error_budget		ok	0.03
+lab.slo.budget	recording	slo:error_budget		ok	0.02
+lab.slo.budget	recording	slo:error_budget		ok	0.03
+lab.slo.budget	recording	slo:error_budget		ok	0.02
+lab.slo.budget	recording	slo:error_budget		ok	0.02
+lab.slo.budget	recording	slo:error_budget		ok	0.02
+lab.slo.budget	recording	slo:error_budget		ok	0.03
+lab.slo.budget	recording	slo:error_budget		ok	0.02
+lab.slo.budget	recording	slo:burn_rate:1h		ok	0.09
+lab.slo.budget	recording	slo:burn_rate:6h		ok	0.04
+lab.slo.budget	recording	slo:burn_rate:5m		ok	0.04
+lab.slo.budget	recording	slo:burn_rate:30m		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate5m		ok	0.37
+lab.slo.sli	recording	slo:error_ratio:rate5m		ok	0.06
+lab.slo.sli	recording	slo:error_ratio:rate30m		ok	0.07
+lab.slo.sli	recording	slo:error_ratio:rate30m		ok	0.04
+lab.slo.sli	recording	slo:error_ratio:rate1h		ok	0.07
+lab.slo.sli	recording	slo:error_ratio:rate1h		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate6h		ok	0.05
+lab.slo.sli	recording	slo:error_ratio:rate6h		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate5m		ok	0.1
+lab.slo.sli	recording	slo:error_ratio:rate5m		ok	0.04
+lab.slo.sli	recording	slo:error_ratio:rate5m		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate30m		ok	0.05
+lab.slo.sli	recording	slo:error_ratio:rate30m		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate30m		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate1h		ok	0.05
+lab.slo.sli	recording	slo:error_ratio:rate1h		ok	0.05
+lab.slo.sli	recording	slo:error_ratio:rate1h		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate6h		ok	0.04
+lab.slo.sli	recording	slo:error_ratio:rate6h		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate6h		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate5m		ok	0.04
+lab.slo.sli	recording	slo:error_ratio:rate5m		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate5m		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate30m		ok	0.04
+lab.slo.sli	recording	slo:error_ratio:rate30m		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate30m		ok	0.04
+lab.slo.sli	recording	slo:error_ratio:rate1h		ok	0.05
+lab.slo.sli	recording	slo:error_ratio:rate1h		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate1h		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate6h		ok	0.06
+lab.slo.sli	recording	slo:error_ratio:rate6h		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate6h		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate5m		ok	0.05
+lab.slo.sli	recording	slo:error_ratio:rate5m		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate5m		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate30m		ok	0.04
+lab.slo.sli	recording	slo:error_ratio:rate30m		ok	0.04
+lab.slo.sli	recording	slo:error_ratio:rate30m		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate1h		ok	0.04
+lab.slo.sli	recording	slo:error_ratio:rate1h		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate1h		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate6h		ok	0.05
+lab.slo.sli	recording	slo:error_ratio:rate6h		ok	0.03
+lab.slo.sli	recording	slo:error_ratio:rate6h		ok	0.03

@@ -1,0 +1,24 @@
+$ dcgmi group -l
++-------------------+----------------------------------------------------------+
+| GROUPS                                                                       |
+| 4 groups found.                                                              |
++===================+==========================================================+
+| Groups            |                                                          |
+| -> 0              |                                                          |
+|    -> Group ID    | 0                                                        |
+|    -> Group Name  | DCGM_ALL_SUPPORTED_GPUS                                  |
+|    -> Entities    | GPU 0                                                    |
+| -> 1              |                                                          |
+|    -> Group ID    | 1                                                        |
+|    -> Group Name  | DCGM_ALL_SUPPORTED_NVSWITCHES                            |
+|    -> Entities    | None                                                     |
+| -> 8              |                                                          |
+|    -> Group ID    | 8                                                        |
+|    -> Group Name  | gpu-collector-group-10855303672813594151                 |
+|    -> Entities    | GPU 0                                                    |
+| -> 9              |                                                          |
+|    -> Group ID    | 9                                                        |
+|    -> Group Name  | gpu-collector-group-16555611949135250956                 |
+|    -> Entities    | GPU 0                                                    |
++-------------------+----------------------------------------------------------+
+[exit 0 ; durée 2 s]
