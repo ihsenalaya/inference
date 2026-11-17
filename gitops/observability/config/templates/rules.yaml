@@ -61,6 +61,25 @@ spec:
           expr: sum(rate(vllm:generation_tokens_total[5m])) / (sum(rate(DCGM_FI_DEV_TOTAL_ENERGY_CONSUMPTION[5m])) / 1000)
         - record: lab:cost_per_million_tokens_usd
           expr: (count(DCGM_FI_DEV_GPU_UTIL) * lab:gpu_hourly_price_usd) / (sum(rate(vllm:generation_tokens_total[5m])) * 3600) * 1e6
+    - name: lab.cpu_gpu
+      interval: 30s
+      rules:
+        # CPU réellement consommé par le conteneur vLLM (cœurs) et part de périodes CFS bridées (0 si aucune limite CPU)
+        - record: lab:vllm_cpu_cores
+          expr: sum by (pod) (rate(container_cpu_usage_seconds_total{namespace="{{ .Values.namespace }}",container="main"}[2m]))
+        - record: lab:vllm_cpu_throttled_ratio
+          expr: |
+            sum by (pod) (rate(container_cpu_cfs_throttled_periods_total{namespace="{{ .Values.namespace }}",container="main"}[2m]))
+            / sum by (pod) (rate(container_cpu_cfs_periods_total{namespace="{{ .Values.namespace }}",container="main"}[2m]))
+        # GPU : quatre chiffres (capacité, allouable, alloué, réellement utilisé)
+        - record: lab:gpu_capacity
+          expr: sum(kube_node_status_capacity{resource="nvidia_com_gpu"})
+        - record: lab:gpu_allocatable
+          expr: sum(kube_node_status_allocatable{resource="nvidia_com_gpu"})
+        - record: lab:gpu_allocated
+          expr: sum(kube_pod_container_resource_requests{resource="nvidia_com_gpu"} and on (namespace, pod) (kube_pod_status_phase{phase="Running"} == 1)) or vector(0)
+        - record: lab:gpu_used
+          expr: count(DCGM_FI_DEV_GPU_UTIL > 5) or vector(0)
     - name: lab.routing
       interval: 30s
       rules:

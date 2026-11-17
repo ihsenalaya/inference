@@ -612,7 +612,7 @@
   {
    "id": 15,
    "type": "row",
-   "title": "Corrélation",
+   "title": "CPU, allocation et utilisation",
    "collapsed": false,
    "gridPos": {
     "h": 1,
@@ -625,6 +625,203 @@
   {
    "id": 16,
    "type": "timeseries",
+   "title": "CPU du pod vLLM vs activité GPU",
+   "description": "Le CPU limite-t-il le GPU ? Un pod proche de ses cœurs disponibles avec un moteur graphique peu actif = goulot CPU (tokenisation, serveur d'API, streaming). Un T4 NC4as n'a que 4 cœurs.",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 0,
+    "y": 33
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "lab:vllm_cpu_cores",
+     "legendFormat": "CPU vLLM (cœurs) {{pod}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "DCGM_FI_PROF_GR_ENGINE_ACTIVE * 4",
+     "legendFormat": "activité moteur x4 (échelle comparable)",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 17,
+   "type": "timeseries",
+   "title": "Périodes CFS bridées (CPU throttling)",
+   "description": "Part des périodes où le conteneur vLLM a été bridé par sa limite CPU (0 si aucune limite : voir requests/limits).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 12,
+    "x": 12,
+    "y": 33
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "lab:vllm_cpu_throttled_ratio or on() vector(0)",
+     "legendFormat": "{{pod}}",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "percentunit",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     },
+     "min": 0
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 18,
+   "type": "timeseries",
+   "title": "GPU : capacité / allouable / alloué / utilisé",
+   "description": "Quatre chiffres à distinguer. Alloué sans être utilisé = coût sans service (voir alerte LabGPUIdleCost).",
+   "datasource": {
+    "type": "prometheus",
+    "uid": "prometheus"
+   },
+   "gridPos": {
+    "h": 7,
+    "w": 24,
+    "x": 0,
+    "y": 40
+   },
+   "targets": [
+    {
+     "refId": "A",
+     "expr": "lab:gpu_capacity",
+     "legendFormat": "capacité",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    },
+    {
+     "refId": "B",
+     "expr": "lab:gpu_allocatable",
+     "legendFormat": "allouable",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    },
+    {
+     "refId": "C",
+     "expr": "lab:gpu_allocated",
+     "legendFormat": "alloué (pods)",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    },
+    {
+     "refId": "D",
+     "expr": "lab:gpu_used",
+     "legendFormat": "utilisé (>5 % d'utilisation)",
+     "datasource": {
+      "type": "prometheus",
+      "uid": "prometheus"
+     }
+    }
+   ],
+   "fieldConfig": {
+    "defaults": {
+     "unit": "short",
+     "custom": {
+      "fillOpacity": 8,
+      "lineWidth": 1,
+      "stacking": {
+       "mode": "none"
+      }
+     }
+    },
+    "overrides": []
+   },
+   "options": {
+    "legend": {
+     "displayMode": "list",
+     "placement": "bottom"
+    },
+    "tooltip": {
+     "mode": "multi"
+    }
+   }
+  },
+  {
+   "id": 19,
+   "type": "row",
+   "title": "Corrélation",
+   "collapsed": false,
+   "gridPos": {
+    "h": 1,
+    "w": 24,
+    "x": 0,
+    "y": 47
+   },
+   "panels": []
+  },
+  {
+   "id": 20,
+   "type": "timeseries",
    "title": "Utilisation GPU vs tokens/s",
    "description": "Si les tokens/s montent sans que l'utilisation GPU suive, le goulot n'est pas le GPU.",
    "datasource": {
@@ -635,7 +832,7 @@
     "h": 7,
     "w": 24,
     "x": 0,
-    "y": 33
+    "y": 48
    },
    "targets": [
     {
