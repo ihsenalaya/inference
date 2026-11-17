@@ -25,7 +25,8 @@ while kill -0 $BP 2>/dev/null || [ -z "$served" ]; do
     n=$(curl -s -m 10 -G http://127.0.0.1:19091/api/v1/query --data-urlencode 'query=count(vllm:request_success_total{namespace="inference"} > 0)' | python3 -c "import sys,json;r=json.load(sys.stdin)['data']['result'];print(int(float(r[0]['value'][1])) if r else 0)" 2>/dev/null)
     [ "${n:-0}" -ge 2 ] && { served=1; log "premier token servi par le nouveau réplica"; }
   fi
-  kill -0 $BP 2>/dev/null || [ -n "$served" ] || [ $(( $(date +%s) - t0 )) -gt 1500 ] && break
+  if ! kill -0 $BP 2>/dev/null && [ -n "$served" ]; then break; fi
+  [ $(( $(date +%s) - t0 )) -gt 1500 ] && break
   sleep 5
 done
 wait $BP 2>/dev/null

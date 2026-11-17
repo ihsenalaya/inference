@@ -1,0 +1,83 @@
+{
+  "global": {
+    "warnings": [
+      {
+        "check": "cross_report.stage_rates",
+        "severity": "warning",
+        "message": "stage requested rates are not monotonically increasing: stage 2 requested_rate 1 < stage 1 requested_rate 4",
+        "report": null
+      }
+    ],
+    "errors": []
+  },
+  "reports": {
+    "summary_lifecycle_metrics.json": {
+      "warnings": [
+        {
+          "check": "summary.distributions",
+          "severity": "warning",
+          "message": "load_summary.schedule_delay: negative minimum -0.001179099212095025",
+          "report": "summary_lifecycle_metrics.json"
+        },
+        {
+          "check": "summary.token_mismatches",
+          "severity": "warning",
+          "message": "1 request(s) where the client-side token count disagrees with the server-reported completion_tokens",
+          "report": "summary_lifecycle_metrics.json"
+        }
+      ],
+      "errors": []
+    },
+    "stage_0_lifecycle_metrics.json": {
+      "warnings": [
+        {
+          "check": "per_stage.distributions",
+          "severity": "warning",
+          "message": "load_summary.schedule_delay: negative minimum -0.0006790426614315948",
+          "report": "stage_0_lifecycle_metrics.json"
+        }
+      ],
+      "errors": []
+    },
+    "stage_1_lifecycle_metrics.json": {
+      "warnings": [
+        {
+          "check": "per_stage.distributions",
+          "severity": "warning",
+          "message": "load_summary.schedule_delay: negative minimum -0.001179099212095025",
+          "report": "stage_1_lifecycle_metrics.json"
+        }
+      ],
+      "errors": []
+    },
+    "stage_2_lifecycle_metrics.json": {
+      "warnings": [
+        {
+          "check": "per_stage.distributions",
+          "severity": "warning",
+          "message": "load_summary.schedule_delay: negative minimum -0.0008672822059452301",
+          "report": "stage_2_lifecycle_metrics.json"
+        },
+        {
+          "check": "per_stage.token_mismatches",
+          "severity": "warning",
+          "message": "1 request(s) where the client-side token count disagrees with the server-reported completion_tokens",
+          "report": "stage_2_lifecycle_metrics.json"
+        }
+      ],
+      "errors": []
+    },
+    "inference-perf.partial.stage_0.yaml": {
+      "warnings": [],
+      "errors": []
+    },
+    "inference-perf.partial.stage_1.yaml": {
+      "warnings": [],
+      "errors": []
+    },
+    "inference-perf.partial.stage_2.yaml": {
+      "warnings": [],
+      "errors": []
+    }
+  }
+}
