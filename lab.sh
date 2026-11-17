@@ -248,8 +248,8 @@ litellm_key() { kubectl -n gateway get secret litellm-keys -o jsonpath="{.data.$
 with_pf() { # port-forward temporaire : with_pf ns svc local remote -- commande...
   local ns="$1" svc="$2" lp="$3" rp="$4"; shift 5
   kubectl -n "$ns" port-forward "svc/$svc" "$lp:$rp" >/dev/null 2>&1 &
-  local pid=$! i
-  for i in $(seq 1 20); do (echo >"/dev/tcp/127.0.0.1/$lp") 2>/dev/null && break; sleep 1; done   # attend le port (évite la course au démarrage)
+  local pid=$!
+  for _ in $(seq 1 20); do (echo >"/dev/tcp/127.0.0.1/$lp") 2>/dev/null && break; sleep 1; done   # attend le port (évite la course au démarrage)
   local rc=0; "$@" || rc=$?
   kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true
   return $rc
