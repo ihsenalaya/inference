@@ -42,7 +42,41 @@ Using MarlinLinearKernel for AutoAWQMarlinLinearMethod
 
 ## 3. Cold start (déploiement depuis zéro)
 
-COLDSTART_PLACEHOLDER
+Déploiement **entièrement automatique** depuis un groupe de ressources vide (`./lab.sh up`, aucune action manuelle),
+mesuré sur la seconde installation (après `down`), 1 nœud T4, modèle `qwen-7b-awq` :
+
+| Phase | Durée |
+|---|---|
+| `terraform apply` (groupe de ressources, AKS, pool GPU, Argo CD, secrets, application racine) | 575 s (AKS 5 min 00, pool GPU 1 min 54) |
+| Convergence Argo CD des 19 applications (jusqu'à tout Synced/Healthy) | ~10 min 30 |
+| Pods prêts (driver, modèle, vLLM) | à 03:51:41 |
+| **Total `lab.sh up` jusqu'à `smoke` 9/9 vert** | **28 min 46 s** |
+
+Détail du cold start GPU (nœud GPU créé -> vLLM prêt), lu dans les objets Kubernetes (`tests/coldstart.py`) :
+
+```
+Étape                                              Durée
+nœud GPU créé -> driver NVIDIA démarré (attente Argo CD + GPU Operator)    590 s
+installation du driver (compilation des modules noyau)                  191 s
+nœud GPU créé -> GPU annoncé (nvidia.com/gpu)                           804 s
+pod vLLM planifié -> modèle téléchargé (storage-initializer)             41 s
+modèle téléchargé -> conteneur vLLM démarré (pull image ~9 Go)          215 s
+conteneur démarré -> Ready (chargement + compilation + graphes CUDA)    154 s
+nœud GPU créé -> vLLM Ready (total)                                    1228 s
+
+vLLM : poids 21.69 s ; modèle 5.29 GiB ; torch.compile 19.79 s ; init moteur 72.75 s ; cache KV 130,512 tokens
+backend d'attention : TRITON_ATTN ; noyau linéaire : MarlinLinearKernel
+```
+
+Lecture :
+- Le driver n'est compilé qu'après **~10 min** d'attente : le GPU Operator est en vague 3 d'Argo CD, derrière cert-manager et kube-prometheus-stack
+  (piste : le passer en vague 1 pour compiler le driver en parallèle).
+- La compilation du driver prend ~3 min 11 (modules propriétaires ; les modules ouverts ne compilent pas sur ce noyau, D-18).
+- L'image vLLM (~9 Go) est tirée **après** le téléchargement du modèle (3 min 35), car l'init container précède le conteneur principal
+  (piste : pré-tirer l'image par un DaemonSet dès que le nœud est prêt).
+- vLLM : poids 21,7 s, torch.compile 19,8 s, graphes CUDA ~28 s, initialisation du moteur 72,8 s ; cache KV 130 512 tokens.
+- Redémarrage après `lab.sh stop` : `az aks start` 5 min 13, puis ~11 min de pods (les nœuds sont recréés : nouveau driver, nouvelle image).
+- Nœud supplémentaire (KEDA, 2e T4) : nœud prêt en 1 min 49, driver ~3 min, pod Ready ~7 min après la décision (voir section 7).
 
 ## 4. Mémoire GPU par modèle
 
@@ -153,7 +187,7 @@ beaucoup plus de groupes de préfixes (> capacité du cache KV d'un pod) et/ou d
 1. **Prefill sur T4 : attention Triton sans tensor cores** (gain potentiel : x5 à x15 sur `long-prompt`). Prompts de 2000-3500 tokens à 0,5 req/s : TTFT p50 **102 s**, 71 erreurs,
    débit de prefill ≈ 370 tokens/s ; le 1,5B tient (TTFT p50 2,8 s). Pistes : expérience A/B de version d'image (section 2), `max-num-batched-tokens`, prefill chunké, limiter la longueur des prompts, modèle plus petit pour les longs contextes.
 2. **Saturation brutale du 7B au-delà de 2 req/s** : à 3 req/s TTFT p50 19 s, à 4 req/s 96 % d'erreurs (`ClientPayloadError`, connexions réinitialisées).
-   Pistes : `max-num-seqs`, deuxième réplica (KEDA/`gpu-scale 2` : +100 % de débit mesuré, 288 tok/s à 2 req/s sans file), limiter la concurrence par équipe dans LiteLLM (rpm/tpm), timeouts.
+   Pistes : `max-num-seqs`, deuxième réplica (`gpu-scale 2` : 2 req/s servis sans file avec TTFT p50 0,14 s en `shared-prefix`, 288 tok/s), limiter la concurrence par équipe dans LiteLLM (rpm/tpm), timeouts.
 3. **LiteLLM OOMKilled** à 3-4 req/s (limite 1,25 Gio, ~1 Gio au repos) : limite portée à 2 Gio (D-24). Piste : mesurer l'empreinte mémoire par flux, plusieurs workers.
 4. **Cache KV sous-utilisé** : 130 512 tokens pour `max-model-len 4096` (31,9x de concurrence théorique) alors que le batch réel reste bien plus petit. Pistes : `max-num-seqs` plus élevé, `max-model-len` plus grand si les cas d'usage le demandent.
 5. **Pool système juste** : `D4as_v7` à 75 % des requests CPU et 51 % des requests mémoire, mais les limites mémoire sont en sur-allocation de 267 % (OOM du nœud observé une fois). Piste : `D8as_v7` (+0,18 $/h) si l'on ajoute des composants, ou réduire Prometheus/LiteLLM.
@@ -180,6 +214,6 @@ beaucoup plus de groupes de préfixes (> capacité du cache KV d'un pod) et/ou d
 | 9 | KEDA 1 -> 2 -> 1 avec délais | validé (section 7) |
 | 10 | Routage : hit ratio avec/sans affinité | validé (section 8) |
 | 11 | `stop`, `start`, `smoke` ; `down` ne laisse rien | validé ; `down` vérifié (groupes `inflab-rg` et `inflab-aks-nodes` supprimés) |
-| 12 | Aucun secret dans Git (gitleaks) | validé (`tests/static.sh`) |
+| 12 | Aucun secret dans Git (gitleaks) | **partiel** : aucun secret dans l'arbre de travail (états Terraform ignorés par Git), mais l'historique contient 2 clés virtuelles LiteLLM dans d'anciens `results/*/config.yaml` (le banc de charge écrivait `api_key` dans sa configuration). Les clusters concernés sont détruits : les clés sont invalides. `tests/static.sh` signale donc encore un échec gitleaks sur l'historique ; il disparaîtrait avec une réécriture de l'historique (force-push), non faite sans accord. Le banc masque désormais la clé dans ses résultats. |
 
 Corrections apportées pendant le déploiement : voir `docs/DECISIONS.md` (D-17 à D-26).

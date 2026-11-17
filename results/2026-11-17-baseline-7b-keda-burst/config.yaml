@@ -120,7 +120,7 @@ server:
   model_name: qwen-7b-awq
   base_url: http://litellm.gateway.svc:4000
   ignore_eos: true
-  api_key: sk-0HL8EXWqMGinJCE4o68wSg
+  api_key: REDACTED
   cert_path: null
   key_path: null
 tokenizer:

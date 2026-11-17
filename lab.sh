@@ -371,6 +371,8 @@ if m:
         elif cur is not None:
             with cur.open("a") as f: f.write(line)
 PY
+  # la clé virtuelle ne doit jamais atterrir dans Git : masquage dans tous les fichiers du run
+  [[ -z "$key" ]] || grep -rlF -- "$key" "$out" 2>/dev/null | xargs -r sed -i "s/${key//\//\\/}/REDACTED/g"
   grafana_annotation "bench $profile fin" '"bench","end"'
   printf '{"profile":"%s","scenario":"%s","git":"%s","target":"%s","model":"%s","date":"%s"}\n' "$profile" "$scen" "$sha" "$target" "$model" "$(date -Is)" >"$out/meta.json"
   bench_summary "$out"
