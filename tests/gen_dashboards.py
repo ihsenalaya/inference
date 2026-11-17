@@ -106,7 +106,7 @@ d.ts("Latence de bout en bout (p50 / p95 / p99)", "Durée totale d'une requête.
      [(hq(0.5, "vllm:e2e_request_latency_seconds"), "p50 {{model_name}}"), (hq(0.95, "vllm:e2e_request_latency_seconds"), "p95 {{model_name}}"),
       (hq(0.99, "vllm:e2e_request_latency_seconds"), "p99 {{model_name}}")], "s")
 d.ts("Taux d'erreur (LiteLLM)", "Part des requêtes en échec vu de la passerelle. Levier : timeouts, OOM, saturation, fallback LiteLLM.",
-     [('sum(rate(litellm_proxy_failed_requests_metric_total[$__rate_interval])) / sum(rate(litellm_proxy_total_requests_metric_total[$__rate_interval]))', "erreurs")], "percentunit")
+     [('(sum(rate(litellm_proxy_failed_requests_metric_total[$__rate_interval])) or vector(0)) / sum(rate(litellm_proxy_total_requests_metric_total[$__rate_interval]))', "erreurs")], "percentunit")
 d.ts("Requêtes par seconde", "Débit de requêtes terminées avec succès par modèle.", [(f'sum by (model_name) (rate(vllm:request_success_total{M}[$__rate_interval]))', "{{model_name}}")], "reqps")
 d.ts("Requêtes LiteLLM par équipe", "Trafic par équipe (lab-bench / lab-user) : quotas et budgets.", [('sum by (team_alias) (rate(litellm_requests_metric_total[$__rate_interval]))', "{{team_alias}}")], "reqps")
 d.row("2. Le système sature-t-il ?")
