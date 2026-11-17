@@ -4,8 +4,8 @@
 charts:
   certManager:      { repo: https://charts.jetstack.io, chart: cert-manager, version: v1.17.4, source: "https://github.com/cert-manager/cert-manager (mineure 1.17 imposée par KServe v0.21.0)" }
   kubePrometheus:   { repo: https://prometheus-community.github.io/helm-charts, chart: kube-prometheus-stack, version: 93.3.0, source: "https://github.com/prometheus-community/helm-charts" }
-  istioBase:        { repo: https://istio-release.storage.googleapis.com/charts, chart: base, version: 1.30.8, source: "https://istio.io (chart 1.31/1.32 non publié dans le dépôt Helm au 16/11/2026)" }
-  istiod:           { repo: https://istio-release.storage.googleapis.com/charts, chart: istiod, version: 1.30.8, source: "https://istio.io" }
+  istioBase:        { repo: https://blob.istio.io/istio-release/charts, chart: base, version: 1.30.8, source: "https://istio.io (1.30 = dernière version avec charts Helm ; dépôt déplacé vers blob.istio.io, D-41)" }
+  istiod:           { repo: https://blob.istio.io/istio-release/charts, chart: istiod, version: 1.30.8, source: "https://istio.io" }
   gpuOperator:      { repo: https://helm.ngc.nvidia.com/nvidia, chart: gpu-operator, version: v26.7.2, source: "https://github.com/NVIDIA/gpu-operator (2026-10-14)" }
   keda:             { repo: https://kedacore.github.io/charts, chart: keda, version: 2.21.1, source: "https://github.com/kedacore/keda (2026-11-15)" }
   lws:              { repo: registry.k8s.io/lws/charts, chart: lws, version: 0.8.0, source: "https://github.com/kubernetes-sigs/lws (version imposée par KServe v0.21.0)" }

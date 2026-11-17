@@ -1,9 +1,8 @@
 # Istio upstream en passerelle seulement (istiod seul, pas de passerelle Istio ni de sidecar : le Helm chart n'a pas de profil "minimal", c'est un profil istioctl).
 autoscaleEnabled: false
 replicaCount: 1
-# Images Istio tirées de Docker Hub plutôt que du registre par défaut du chart 1.30 (registry.istio.io).
-# Le 17/11/2026, registry.istio.io refusait le jeton anonyme (HTTP 403) depuis les nœuds AKS comme depuis un poste : istiod et la Gateway restaient en ImagePullBackOff
-# (docs/DECISIONS.md D-41). docker.io/istio/pilot et proxyv2 en 1.30.8 existent (vérifié).
+# Images Istio tirées de Docker Hub plutôt que du registre par défaut du chart 1.30 (registry.istio.io), que le projet Istio arrête le 16/12/2026
+# (coupures de test annoncées, dont le 17/11/2026 de 15 h à 21 h UTC : HTTP 403, istiod et la Gateway en ImagePullBackOff). Voir docs/DECISIONS.md D-41.
 global:
   hub: docker.io/istio
 resources:
