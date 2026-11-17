@@ -1,0 +1,38 @@
+{
+  "global": {
+    "warnings": [],
+    "errors": []
+  },
+  "reports": {
+    "summary_lifecycle_metrics.json": {
+      "warnings": [
+        {
+          "check": "summary.distributions",
+          "severity": "warning",
+          "message": "load_summary.schedule_delay: negative minimum -0.0012085838425264228",
+          "report": "summary_lifecycle_metrics.json"
+        }
+      ],
+      "errors": []
+    },
+    "stage_0_lifecycle_metrics.json": {
+      "warnings": [
+        {
+          "check": "per_stage.distributions",
+          "severity": "warning",
+          "message": "load_summary.schedule_delay: negative minimum -0.0012085838425264228",
+          "report": "stage_0_lifecycle_metrics.json"
+        }
+      ],
+      "errors": []
+    },
+    "per_request_lifecycle_metrics.json": {
+      "warnings": [],
+      "errors": []
+    },
+    "inference-perf.partial.stage_0.yaml": {
+      "warnings": [],
+      "errors": []
+    }
+  }
+}

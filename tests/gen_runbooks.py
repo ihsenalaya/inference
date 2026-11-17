@@ -4,18 +4,6 @@ import pathlib
 OUT = pathlib.Path(__file__).resolve().parent.parent / "docs/runbooks"
 OUT.mkdir(parents=True, exist_ok=True)
 R = {
- "LabTTFTHigh": ("Le délai avant le premier token (p95) dépasse le seuil.",
-   ["Dashboard 00 > ligne 1 : TTFT, puis ligne 2 : file d'attente et cache KV.", "Dashboard 01 : le temps est-il dans la file (queue), le prefill ou LiteLLM/Gateway ?",
-    "`kubectl -n inference logs <pod vLLM>` : backend d'attention retenu, préemptions."],
-   ["Prefill lent : `max-num-batched-tokens`, cache de préfixes (`--enable-prefix-caching`), longueur des prompts (`max-model-len`).",
-    "Backend d'attention sur T4 (Triton, sans tensor cores) : tester une autre version d'image vLLM (expérience A/B de BASELINE.md).",
-    "File d'attente : ajouter un réplica / activer KEDA."]),
- "LabInterTokenLatencyHigh": ("La latence entre deux tokens (p95) est élevée : le decode est lent.",
-   ["Dashboard 02 : activité DRAM (bande passante mémoire) et puissance du GPU.", "Taille du batch (`vllm:num_requests_running`)."],
-   ["Réduire `max-num-seqs` si le batch est trop grand.", "Quantization (AWQ) : moins d'octets lus par token.", "Vérifier le throttling GPU (LabGPUThrottling)."]),
- "LabErrorRateHigh": ("Part élevée de requêtes en échec vue par LiteLLM.",
-   ["`kubectl -n gateway logs deploy/litellm`", "Logs Loki (dashboard 05) : OOM, CUDA, timeouts.", "`kubectl -n inference get llminferenceservices` : prêt ?"],
-   ["Saturation : augmenter les réplicas ou réduire `max-model-len`.", "Fallback LiteLLM vers un autre modèle (scénario multi-model).", "Timeouts LiteLLM / vLLM."]),
  "LabQueueTimeHigh": ("Le temps passé en file avant prefill (p95) est élevé.",
    ["Dashboard 00 ligne 2 : requêtes en attente, usage du cache KV."],
    ["Plus de capacité : réplicas, KEDA (seuil du trigger).", "`max-num-seqs` plus grand si le cache KV le permet.", "Routage EPP : charge par pod (dashboard 00 ligne 5)."]),

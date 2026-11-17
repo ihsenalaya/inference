@@ -1,0 +1,27 @@
+{
+ "run": "2026-11-17-baseline-7b-multi-turn-class",
+ "class": "multiturn",
+ "window_s": 300,
+ "requests": 150,
+ "errors": 6,
+ "good": 128,
+ "good_ratio": 0.8533,
+ "bad_ttft": 7,
+ "bad_e2e": 9,
+ "goodput_req_s": 0.427,
+ "goodput_tok_s": 54.5,
+ "raw_tok_s": 61.3,
+ "ttft_p50": 1.031684363999375,
+ "ttft_p95": 4.26156519000142,
+ "tpot_p50": 0.0703441026299107,
+ "tpot_p95": 0.2254942764488164,
+ "e2e_p50": 10.302503979000903,
+ "e2e_p95": 30.131824048999988,
+ "slo": {
+  "ttft_le": 5.0,
+  "e2e_le": 30.0,
+  "ttft_objective": 0.95,
+  "e2e_objective": 0.95,
+  "availability": 0.99
+ }
+}

@@ -10,7 +10,7 @@ Aval de Prometheus (règles `PrometheusRule`). Le récepteur par défaut est `al
 - Route : récepteur `webhook`, regroupement par `alertname` et `model`, `group_wait 30s`, `group_interval 5m`, `repeat_interval 4h` ; `Watchdog` envoyée à un récepteur nul.
 - **Inhibitions** : une alerte `LabScrapeTargetMissing` inhibe les alertes de catégorie `slo` du même `component` ; une alerte `critical` inhibe la `warning` de même nom et modèle.
 - Récepteur `webhook` : `url_file` pointe vers le secret `alert-webhook` (monté dans le pod). Sans `ALERT_WEBHOOK_URL`, l'URL est celle d'`alert-sink`.
-- Tests : `tests/promtool/lab_rules_test.yml` (promtool, 5 cas). Test de bout en bout sur Azure : `LabTTFTHigh`, `LabInterTokenLatencyHigh`, `LabRequestsWaiting`, `LabGPUIdleCost`, `EPPNoReadyEndpoints` sont arrivées dans les logs d'`alert-sink`.
+- Tests : `tests/promtool/lab_rules_test.yml` (promtool, 10 cas dont 5 de burn rate SLO). Test de bout en bout sur Azure : `LabRequestsWaiting`, `LabGPUIdleCost`, `EPPNoReadyEndpoints` et, le 17/11, `LabSLOBurnSlow` (classe `rag`) sont arrivées dans les logs d'`alert-sink` (les alertes `LabTTFTHigh` et `LabInterTokenLatencyHigh`, arrivées le 16/11, ont depuis été remplacées par les burn rates).
 
 ## Authentification
 Aucune entre Prometheus et Alertmanager (interne). L'URL du webhook externe (Teams, Slack, ntfy) est un secret : elle contient souvent un jeton.

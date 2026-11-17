@@ -103,28 +103,8 @@ spec:
   groups:
     - name: lab.slo
       rules:
-        - alert: LabTTFTHigh
-          expr: lab:ttft_seconds:p95 > {{ $t.ttftP95Seconds }}
-          for: 5m
-          labels: { severity: warning, category: slo, component: vllm }
-          annotations:
-            summary: "TTFT p95 élevé ({{ "{{ $value | humanizeDuration }}" }}) pour {{ "{{ $labels.model_name }}" }}"
-            runbook_url: {{ $.Values.runbookBase }}/LabTTFTHigh.md
-        - alert: LabInterTokenLatencyHigh
-          expr: lab:itl_seconds:p95 > {{ $t.itlP95Seconds }}
-          for: 5m
-          labels: { severity: warning, category: slo, component: vllm }
-          annotations:
-            summary: "Latence inter-token p95 élevée pour {{ "{{ $labels.model_name }}" }}"
-            runbook_url: {{ $.Values.runbookBase }}/LabInterTokenLatencyHigh.md
-        - alert: LabErrorRateHigh
-          expr: |
-            (sum(rate(litellm_proxy_failed_requests_metric_total[5m])) / sum(rate(litellm_proxy_total_requests_metric_total[5m]))) > {{ $t.errorRatio }}
-          for: 5m
-          labels: { severity: critical, category: slo, component: litellm }
-          annotations:
-            summary: "Taux d'erreur LiteLLM élevé"
-            runbook_url: {{ $.Values.runbookBase }}/LabErrorRateHigh.md
+        # Les alertes à seuil fixe sur la latence (TTFT, inter-token) et le taux d'erreur global sont REMPLACÉES par les alertes de burn rate
+        # par classe (templates/slo.yaml : LabSLOBurnFast, LabSLOBurnSlow). Les enregistrements lab:ttft_seconds:* restent pour les dashboards.
         - alert: LabQueueTimeHigh
           expr: lab:queue_seconds:p95 > {{ $t.queueP95Seconds }}
           for: 5m

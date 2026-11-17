@@ -64,7 +64,16 @@ difficile à atteindre.** C'est une limite connue de la méthode, à garder en t
 
 ## 5. Essai sur le cluster
 
-Voir la section « Alerte réelle » du [document SLO](../sre/SLO.md) (résultat de l'essai de charge qui fait partir l'alerte de bout en bout jusqu'au récepteur).
+Surcharge de la classe RAG sur le 7B (détail : section 6 du [document SLO](../sre/SLO.md)) :
+
+| Essai | burn 5 min | burn 1 h | burn 6 h | Alerte |
+|---|---|---|---|---|
+| 10 min à 0,5 req/s | 20 (maximum) | 11,3 (page à 14,4) | 5,3 (ticket à 6) | **aucune** |
+| 4 min de plus | 20 | 12,4 | > 6 | **`LabSLOBurnSlow` FIRING**, reçue par le récepteur |
+
+Trois leçons : (1) le burn 5 min atteint 20 tout de suite, la fenêtre longue est celle qui filtre ; (2) **dix minutes d'incident franc** n'atteignent
+pas le seuil de page, car il représente environ 2 % du budget **mensuel** ; (3) l'alerte lente a mis environ vingt minutes de surcharge cumulée à partir.
+L'alerte rapide n'a **pas** été déclenchée sur le cluster (seulement par `promtool`).
 
 ## 6. À retenir
 

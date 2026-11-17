@@ -1,0 +1,21 @@
+{
+ "run": "2026-11-17-baseline-7b-interactive-class",
+ "window_s": 270,
+ "gpu_util": 94.4444,
+ "gr_engine": 0.9436,
+ "sm_active": 0.8872,
+ "sm_occupancy": 0.2197,
+ "tensor": 0.2815,
+ "fp16": 0.081,
+ "dram": 0.5105,
+ "power_w": 65.9243,
+ "sm_clock_mhz": 1011.6667,
+ "temp_c": 65.6667,
+ "running": 4.7778,
+ "waiting": 0.0,
+ "kv_usage": 0.0353,
+ "vllm_cpu_cores": 0.2743,
+ "vllm_ttft_p50": 0.3114,
+ "vllm_ttft_p95": 0.6597,
+ "vllm_e2e_p95": 11.125
+}

@@ -1,0 +1,27 @@
+{
+ "run": "2026-11-17-baseline-7b-batch-class",
+ "class": "batch",
+ "window_s": 300,
+ "requests": 431,
+ "errors": 238,
+ "good": 191,
+ "good_ratio": 0.4432,
+ "bad_ttft": 0,
+ "bad_e2e": 2,
+ "goodput_req_s": 0.637,
+ "goodput_tok_s": 146.9,
+ "raw_tok_s": 147.8,
+ "ttft_p50": 146.14535957499902,
+ "ttft_p95": 173.48849891099962,
+ "tpot_p50": 0.42418551987725467,
+ "tpot_p95": 0.8679484012362253,
+ "e2e_p50": 241.29010981700048,
+ "e2e_p95": 293.130834511001,
+ "slo": {
+  "ttft_le": null,
+  "e2e_le": 300.0,
+  "ttft_objective": null,
+  "e2e_objective": 0.95,
+  "availability": 0.99
+ }
+}

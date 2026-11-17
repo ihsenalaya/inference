@@ -123,9 +123,9 @@ Labels utiles (observé) : `pod`, `namespace`, `container`, `modelName`, `gpu`, 
 
 33 règles d'enregistrement (26 déployées sur Azure + 7 ajoutées ensuite) et 29 alertes (22 `lab-alerts` + 7 `lab-epp-alerts` importées de llm-d), dans `rules.yaml` et `files/epp-rules.yaml`. Chaque alerte porte `severity`, `category` (`slo`, `saturation`, `gpu`, `cost`, `platform`), `component` et une `runbook_url` vers `docs/runbooks/<Alerte>.md` (symptôme, vérifications, leviers).
 Les seuils sont **larges par défaut** et à resserrer après mesure (`alertThresholds` dans les scénarios). Inhibition : une cible de scrape absente (`LabScrapeTargetMissing`) masque les alertes SLO du même `component`.
-Des alertes sont réellement arrivées au récepteur pendant les tests Azure : `LabTTFTHigh`, `LabInterTokenLatencyHigh`, `LabRequestsWaiting`, `LabGPUIdleCost`, `EPPNoReadyEndpoints` (au démarrage, avant que le modèle soit prêt : normal).
+Des alertes sont réellement arrivées au récepteur pendant les tests Azure : `LabRequestsWaiting`, `LabGPUIdleCost`, `EPPNoReadyEndpoints` (au démarrage, avant que le modèle soit prêt : normal), et le 17/11 `LabSLOBurnSlow` (classe `rag`). Les anciennes alertes à seuil fixe `LabTTFTHigh`, `LabInterTokenLatencyHigh` et `LabErrorRateHigh` (arrivées au récepteur le 16/11) ont été **remplacées** par les alertes de burn rate par classe.
 
-Les **alertes de burn rate** (budget d'erreur SLO) ne sont pas encore écrites : elles font partie de la phase SLO du plan de campagne.
+Les **alertes de burn rate** (budget d'erreur SLO par classe de charge) sont en place : `LabSLOBurnFast` (page, 14,4x sur 1 h confirmé sur 5 min) et `LabSLOBurnSlow` (ticket, 6x sur 6 h confirmé sur 30 min) ; voir [module 4 de la formation](../formation/04-burn-rate-et-alertes.md) et [SLO.md](../sre/SLO.md).
 
 ## 8. Les logs (Loki) : requêtes utiles
 

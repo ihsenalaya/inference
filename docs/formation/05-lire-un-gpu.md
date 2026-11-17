@@ -35,6 +35,20 @@ installé avec la liste actuelle, **les compteurs sont exposés et non nuls** (v
 
 Runs : `results/2026-11-17-small-fp16-{interactive,long-prompt,batch,multi-turn}-class`, `...-steady-noise-r{1,2,3}`. Fichier par run : `server_window.json`.
 
+## 3 bis. Le même GPU avec le 7B AWQ (observé, vLLM v0.32.0, noyau AWQ `MarlinLinearKernel`)
+
+| Situation (7B AWQ) | SM_ACTIVE | TENSOR | DRAM | Puissance | Horloge SM | KV | En cours / en attente |
+|---|---|---|---|---|---|---|---|
+| Interactif, 1 req/s | 0,89 | **0,28** | 0,51 | 65,9 W | 1 012 MHz | 3,5 % | 4,8 / 0 |
+| RAG, 0,1 req/s (prefill dominant) | **0,48** | 0,10 | **0,08** | 50,4 W | 1 006 MHz | 14 % | 0,8 / 0,05 |
+| Multi-tour, 0,5 req/s | 0,78 | 0,12 | 0,20 | 58,5 W | 1 162 MHz | 43 % | 6,3 / 0 |
+| Lot, 2,5 req/s (effondrement) | **0,97** | **0,32** | 0,27 | 67,7 W | 1 110 MHz | **99,9 %** | **153 / 93** |
+
+À comparer avec le 1,5B FP16 (§3) : **le 7B AWQ sollicite beaucoup plus les tensor cores** (0,28 à 0,32 contre 0,04 à 0,14). Hypothèse (**non vérifiée**) : les noyaux Marlin de l'AWQ utilisent les
+tensor cores, alors que les opérations du 1,5B en FP16 passent surtout par d'autres noyaux. Les données ne le prouvent pas ; elles montrent que **la quantization change quels
+circuits du GPU travaillent**. Autre lecture : à l'effondrement du lot, `SM_ACTIVE` vaut 0,97 et le cache KV 99,9 % : cette fois le GPU **est** saturé, et c'est la file (93 en attente) et le KV qui le disent,
+pas `GPU_UTIL`.
+
 ## 4. Lecture guidée
 
 ### a. « 100 % utilisé » ne veut pas dire « saturé »
