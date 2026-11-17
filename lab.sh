@@ -332,7 +332,7 @@ cmd_bench() {
   grafana_annotation "bench $profile début | scénario $scen | git $sha | cible $target" '"bench","start"'
   helm template bench "$ROOT/gitops/bench" --set profile="$profile" --set name="$name" --set baseUrl="$base" --set apiPath="$apipath" \
     --set apiKey="$key" --set model="$model" --set prometheusUrl="${BENCH_PROM_URL-http://kps-prometheus.monitoring.svc:9090}" --set tokenizerModel="${hf_name:-$model}" "${extra[@]}" | kubectl apply -f - >/dev/null
-  local out; out="$ROOT/results/$(date +%Y-%m-%d)-${scen}-${profile}"; [[ "$target" == litellm ]] || out="${out}-${target}"; mkdir -p "$out"
+  local out; out="$ROOT/results/$(date +%Y-%m-%d)-${scen}-${profile}"; [[ "$target" == litellm ]] || out="${out}-${target}"; [[ -z "${RESULT_TAG:-}" ]] || out="${out}-${RESULT_TAG}"; mkdir -p "$out"
   kubectl -n inference wait --for=condition=complete "job/$name" --timeout="${BENCH_TIMEOUT:-3600}s" >/dev/null 2>&1 || \
     kubectl -n inference wait --for=condition=failed "job/$name" --timeout=5s >/dev/null 2>&1 || true
   kubectl -n inference logs "job/$name" >"$out/run.log" 2>&1 || true
