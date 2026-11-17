@@ -48,6 +48,10 @@ dcgmExporter:
       DCGM_FI_DEV_ECC_SBE_VOL_TOTAL, counter, Erreurs ECC simples.
       DCGM_FI_DEV_ECC_DBE_VOL_TOTAL, counter, Erreurs ECC doubles.
       DCGM_FI_PROF_GR_ENGINE_ACTIVE, gauge, Activité du moteur graphique (ratio).
+      DCGM_FI_PROF_SM_ACTIVE, gauge, Fraction du temps où au moins un warp est actif sur un SM (ratio).
+      DCGM_FI_PROF_SM_OCCUPANCY, gauge, Fraction des warps résidents par rapport au maximum (ratio).
+      DCGM_FI_PROF_PIPE_TENSOR_ACTIVE, gauge, Activité du pipeline des tensor cores (ratio).
+      DCGM_FI_PROF_PIPE_FP16_ACTIVE, gauge, Activité du pipeline FP16 (ratio).
       DCGM_FI_PROF_DRAM_ACTIVE, gauge, Activité de la mémoire (ratio).
       DCGM_FI_PROF_PCIE_TX_BYTES, counter, Octets PCIe émis.
       DCGM_FI_PROF_PCIE_RX_BYTES, counter, Octets PCIe reçus.
