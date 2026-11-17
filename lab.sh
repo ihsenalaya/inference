@@ -326,6 +326,8 @@ cmd_bench() {
   local extra=()
   [[ -n "${RATE:-}" ]] && extra+=(--set "rate=$RATE")
   [[ -n "${DURATION:-}" ]] && extra+=(--set "duration=$DURATION")
+  [[ -n "${SWEEP_RATES:-}" ]] && extra+=(--set "sweepRates={${SWEEP_RATES}}")
+  [[ -n "${STAGE_DURATION:-}" ]] && extra+=(--set "stageDuration=$STAGE_DURATION")
   log INFO "bench $profile sur $scen (cible $target, modèle $model)"
   grafana_annotation "bench $profile début | scénario $scen | git $sha | cible $target" '"bench","start"'
   helm template bench "$ROOT/gitops/bench" --set profile="$profile" --set name="$name" --set baseUrl="$base" --set apiPath="$apipath" \
