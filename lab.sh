@@ -404,6 +404,63 @@ PY
 }
 
 # ----------------------------------------------------------------------------- ui, gpu, stop/start, down
+# Minutes d'inactivité GPU : le GPU est « inactif » s'il n'y a ni requête vLLM en cours ni utilisation GPU > 1 %.
+gpu_idle_minutes() {
+  with_pf monitoring kps-prometheus 19092 9090 -- python3 - <<'PY'
+import json, urllib.parse, urllib.request
+def q(e):
+    u = "http://127.0.0.1:19092/api/v1/query?" + urllib.parse.urlencode({"query": e})
+    r = json.load(urllib.request.urlopen(u, timeout=20))["data"]["result"]
+    return float(r[0]["value"][1]) if r else None
+# plus grand m (minutes) tel que max(utilisation GPU) sur m minutes reste < 1 % : recherche par paliers
+for m in (240, 120, 60, 30, 15, 10, 5, 0):
+    if m == 0:
+        print(0); break
+    v = q(f"max_over_time(max(DCGM_FI_DEV_GPU_UTIL)[{m}m:1m])")
+    w = q(f"max_over_time(sum(vllm:num_requests_running)[{m}m:1m])")
+    if v is not None and v < 1 and (w or 0) == 0:
+        print(m); break
+PY
+}
+
+# lab.sh idle [--stop-after MINUTES] : affiche l'inactivité du GPU ; avec --stop-after, arrête le cluster au-delà du seuil.
+# À lancer à la main ou par cron : rien ne s'arrête tout seul sans que vous l'ayez demandé.
+cmd_idle() {
+  local stop_after=""
+  [[ "${1:-}" == "--stop-after" ]] && stop_after="${2:?minutes}"
+  use_cluster
+  local m; m="$(gpu_idle_minutes || echo 0)"
+  log INFO "GPU inactif depuis au moins ${m} min (paliers testés : 5, 10, 15, 30, 60, 120, 240)"
+  if [[ -n "$stop_after" && "${m:-0}" -ge "$stop_after" ]]; then
+    log WARN "inactivité >= ${stop_after} min : arrêt du cluster"
+    cmd_stop
+  fi
+}
+
+# lab.sh snapshot-metrics [heures] : sauvegarde dans results/ l'historique des règles lab:* et de quelques métriques DCGM.
+# Prometheus vit sur un disque du cluster : sans cet export, les courbes disparaissent avec `down`.
+cmd_snapshot_metrics() {
+  local hours="${1:-12}"
+  use_cluster
+  local out; out="$ROOT/results/metrics-$(date +%Y%m%d-%H%M%S)"; mkdir -p "$out"
+  with_pf monitoring kps-prometheus 19093 9090 -- python3 - "$out" "$hours" <<'PY'
+import json, pathlib, sys, time, urllib.parse, urllib.request
+out, hours = pathlib.Path(sys.argv[1]), float(sys.argv[2])
+B = "http://127.0.0.1:19093/api/v1"
+def get(path, **p):
+    return json.load(urllib.request.urlopen(f"{B}/{path}?" + urllib.parse.urlencode(p), timeout=60))["data"]
+names = [n for n in get("label/__name__/values") if n.startswith(("lab:", "DCGM_FI_DEV_GPU_UTIL", "DCGM_FI_DEV_POWER_USAGE", "DCGM_FI_DEV_FB_USED", "DCGM_FI_PROF_"))]
+end = time.time(); start = end - hours * 3600
+saved = 0
+for n in names:
+    r = get("query_range", query=n, start=start, end=end, step=60)["result"]
+    if r:
+        (out / (n.replace(":", "_") + ".json")).write_text(json.dumps(r))
+        saved += 1
+print(f"{saved} séries sauvegardées dans {out}")
+PY
+}
+
 cmd_ui() {
   use_cluster
   local gp ap lk
@@ -512,6 +569,8 @@ usage : $0 <commande>
   stop | start         az aks stop / start (avec revérification)
   down [--yes]         destruction complète
   cost                 estimation du coût horaire
+  idle [--stop-after M]  inactivité du GPU ; arrête le cluster au-delà de M minutes
+  snapshot-metrics [h] sauvegarde l'historique des règles lab:* (avant down)
   versions             versions épinglées et déployées
   kind-up | kind-down  cluster kind local (KIND_DISABLE=a,b pour alléger ; SCENARIO=kind-mock)
 EOF
@@ -532,6 +591,8 @@ main() {
     start) cmd_start "$@" ;;
     down) cmd_down "$@" ;;
     cost) cmd_cost "$@" ;;
+    idle) cmd_idle "$@" ;;
+    snapshot-metrics) cmd_snapshot_metrics "$@" ;;
     versions) cmd_versions "$@" ;;
     kind-up) cmd_kind_up "$@" ;;
     kind-down) cmd_kind_down "$@" ;;

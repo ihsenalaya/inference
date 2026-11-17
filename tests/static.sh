@@ -47,6 +47,11 @@ while IFS=$'\t' read -r typ name a b c d envs ns; do
   done
 done </tmp/components.tsv
 
+echo "== cohérence des images"
+a="$(grep -oE 'vllm/vllm-openai@sha256:[0-9a-f]+' gitops/serving/chart/values.yaml | head -1)"
+b="$(grep -oE 'vllm/vllm-openai@sha256:[0-9a-f]+' gitops/platform/image-prepull/prepull.yaml | head -1)"
+if [[ -n "$a" && "$a" == "$b" ]]; then ok "image vLLM identique (serving = pré-tirage)"; else ko "image vLLM différente : serving=$a prepull=$b"; fi
+
 echo "== promtool"
 python3 - <<'PY'
 import yaml, subprocess

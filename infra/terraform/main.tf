@@ -106,3 +106,32 @@ resource "azurerm_kubernetes_cluster_node_pool" "gpu" {
     max_unavailable = "1"
   }
 }
+
+# Garde-fou de coût : alerte (e-mail aux propriétaires de l'abonnement) quand le groupe de ressources du lab dépasse le budget.
+# Un budget n'arrête rien : il prévient. L'arrêt se fait par `lab.sh idle --stop-after` ou `lab.sh stop`.
+resource "azurerm_consumption_budget_resource_group" "lab" {
+  count             = var.budget_amount > 0 ? 1 : 0
+  name              = "${var.prefix}-budget"
+  resource_group_id = azurerm_resource_group.this.id
+  amount            = var.budget_amount
+  time_grain        = "Monthly"
+
+  time_period {
+    start_date = formatdate("YYYY-MM-01'T'00:00:00'Z'", timestamp())
+  }
+
+  dynamic "notification" {
+    for_each = { actual_50 = [50, "Actual"], actual_80 = [80, "Actual"], actual_100 = [100, "Actual"], forecast_100 = [100, "Forecasted"] }
+    content {
+      enabled        = true
+      threshold      = notification.value[0]
+      threshold_type = notification.value[1]
+      operator       = "GreaterThan"
+      contact_roles  = ["Owner"]
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [time_period]
+  }
+}

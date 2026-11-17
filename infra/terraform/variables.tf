@@ -96,3 +96,10 @@ variable "gpu_hourly_price" {
   default     = 0.526
   description = "Prix horaire d'un nœud GPU (Azure Retail Prices, eastus, Linux), exposé en métrique."
 }
+
+# ---- Garde-fou de coût ------------------------------------------------------
+variable "budget_amount" {
+  type        = number
+  default     = 40
+  description = "Budget mensuel du groupe de ressources du lab (devise de l'abonnement). 0 = pas de budget. Alertes à 50 %, 80 %, 100 % (réel) et 100 % (prévision)."
+}

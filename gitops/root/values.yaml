@@ -13,6 +13,7 @@ disable: ""            # composants à ne pas déployer (liste séparée par des
 components:
   - { name: crds-gateway-api, wave: 0, type: path, path: gitops/platform/crds-gateway-api, namespace: kube-system, serverSide: true }
   - { name: crds-gie,         wave: 0, type: path, path: gitops/platform/crds-gie,         namespace: kube-system, serverSide: true }
+  - { name: image-prepull,    wave: 1, type: path, path: gitops/platform/image-prepull, namespace: inference, envs: [azure] }
   - { name: cert-manager,     wave: 1, type: helm, chartKey: certManager,    namespace: cert-manager,  valuesDir: gitops/platform/cert-manager,
       ignoreDifferences: [{ group: admissionregistration.k8s.io, kind: ValidatingWebhookConfiguration, jsonPointers: ["/webhooks"] }] }
   - { name: kube-prometheus-stack, wave: 1, type: helm, chartKey: kubePrometheus, namespace: monitoring, valuesDir: gitops/observability/kube-prometheus-stack }
@@ -26,7 +27,7 @@ components:
     ignoreDifferences:
       - { group: admissionregistration.k8s.io, kind: ValidatingWebhookConfiguration, jsonPointers: ["/webhooks"] }
       - { group: admissionregistration.k8s.io, kind: MutatingWebhookConfiguration, jsonPointers: ["/webhooks"] }
-  - { name: gpu-operator,     wave: 3, type: helm, chartKey: gpuOperator,    namespace: gpu-operator,  valuesDir: gitops/platform/gpu-operator, envs: [azure] }
+  - { name: gpu-operator,     wave: 1, type: helm, chartKey: gpuOperator,    namespace: gpu-operator,  valuesDir: gitops/platform/gpu-operator, envs: [azure] }
   - { name: keda,             wave: 3, type: helm, chartKey: keda,           namespace: keda,          valuesDir: gitops/platform/keda,
       ignoreDifferences: [{ group: admissionregistration.k8s.io, kind: ValidatingWebhookConfiguration, jsonPointers: ["/webhooks"] }] }
   - { name: lws,              wave: 3, type: helm, chartKey: lws,            namespace: lws-system,    valuesDir: gitops/platform/lws }
