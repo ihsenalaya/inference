@@ -15,8 +15,8 @@ Ce chapitre propose une vingtaine d'indicateurs, rangés en quatre familles, ave
 > - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
 <!-- /mots -->
 
-Statuts : **existe** (déjà dans le dépôt avant ce dossier) · **nouveau** (ajouté, validé par des tests statiques, pas encore lu sur un cluster) · **nouveau + drapeau** (exige `--enable-mfu-metrics`, scénario `gpu-health`).
-Les **seuils sont des valeurs de départ** : ils seront confirmés ou corrigés par la séance de mesures ([05](05-simulations.md)).
+Statuts : **existe** (déjà dans le dépôt avant ce dossier) · **nouveau** (ajouté le 17/11/2026 ; les règles ont été **lues sur le cluster** pendant la séance GPU : voir [07](07-resultats-seance.md)) · **nouveau + drapeau** (exige `--enable-mfu-metrics`, scénario `gpu-health`).
+Les **seuils sont des valeurs de départ** ; la séance GPU du 17/11/2026 a **confirmé** les limites du matériel ([07](07-resultats-seance.md#2-les-vraies-limites-du-t4-confirmées)).
 
 ## 1. L'arbre des indicateurs
 
@@ -46,8 +46,8 @@ flowchart TD
 
 | KPI | Formule (règle du dépôt) | Seuil de départ | Décision qu'il guide | Statut |
 |---|---|---|---|---|
-| **Marge thermique** | limite de fonctionnement (85 °C **(forum)**) − température : `lab:gpu_thermal_headroom_celsius` | alerte sous **5 °C** pendant 5 min (`LabGPUThermalMarginLow`) ; l'alerte existante `LabGPUTemperatureHigh` reste à 85 °C | réduire la charge, répartir sur un 2e GPU, remplacer le nœud | nouveau |
-| **Marge de puissance** | 70 W − puissance : `lab:gpu_power_headroom_watts` | information | savoir si l'on touche le plafond | nouveau |
+| **Marge thermique** | limite de fonctionnement (85 °C, **confirmé** par `nvidia-smi -q`) − température : `lab:gpu_thermal_headroom_celsius` | alerte sous **5 °C** pendant 5 min (`LabGPUThermalMarginLow`) ; l'alerte existante `LabGPUTemperatureHigh` reste à 85 °C | réduire la charge, répartir sur un 2e GPU, remplacer le nœud | nouveau |
+| **Marge de puissance** | 70 W − puissance : `lab:gpu_power_headroom_watts` | information ; **peut être négative** (−17 W vu) : la puissance instantanée dépasse 70 W, la limite s'applique à une moyenne | savoir si l'on touche le plafond | nouveau |
 | **Bridage matériel ou thermique** | 1 si un des bits 0x8, 0x20, 0x40, 0x80 est actif : `lab:gpu_throttle_hw_slowdown` | alerte après 5 min (`LabGPUThrottling`, comme AKS) | un nœud qui ralentit sans raison logicielle est suspect | nouveau (alerte refondue) |
 | **Plafond de puissance logiciel** | bit 0x4 : `lab:gpu_throttle_sw_power_cap` | **aucune alerte** : fréquent sous forte charge, normal | comprendre pourquoi l'horloge est sous son maximum | nouveau |
 | **Erreur ECC double** | `DCGM_FI_DEV_ECC_DBE_VOL_TOTAL` > 0 | alerte **critique** immédiate (`LabGPUEccUncorrectable`) | vider puis remplacer le nœud | nouveau |
@@ -128,15 +128,16 @@ Tableau équivalent de la figure (une mesure par ligne, puissance du GPU seule) 
 | **Coût d'inactivité** | GPU alloués inactifs × 0,526 $/h : `lab:gpu_idle_cost_usd_per_hour` | arrêter ou réduire (alerte `LabGPUIdleCost` à 30 min ; 5 min dans le scénario `gpu-health`) | nouveau |
 | **Écart entre GPU** | température maximale − minimale : `lab:gpu_temp_spread_celsius` | un GPU nettement plus chaud sous la même charge est suspect | nouveau |
 
-## 6. Valeurs de référence sur ce T4 (à confirmer en séance)
+## 6. Valeurs de référence sur ce T4 (confirmées le 17/11/2026)
 
 | Grandeur | À vide (observé) | En charge (observé, 8 runs) | Limite |
 |---|---|---|---|
-| Puissance | 30,6 W | 50 à 68 W | 70 W (doc) |
-| Horloge SM | 585 MHz | 1 006 à 1 383 MHz | 1 590 MHz (forum) |
-| Température | 50 °C | 54 à 69 °C | 85 °C de fonctionnement (forum) |
+| Puissance | 31 W (16 W en repos profond) | 42 à 69 W (pointes instantanées à 103 W) | 70 W, réglable de 60 à 70 W (**observé**) |
+| Horloge SM | 585 MHz | 1 006 à 1 383 MHz (pointes à 1 590) | 1 590 MHz (**observé**) |
+| Température | 46-47 °C | 54 à 69 °C | 85 °C de fonctionnement, 93 °C ralentissement, 96 °C arrêt (**observé**) |
 | `SM_ACTIVE` | 0 | 0,48 à 0,97 | - |
-| `DRAM_ACTIVE` | ≈ 0 | 0,08 à 0,70 | ≈ 0,8 pratique (doc) |
+| `DRAM_ACTIVE` | ≈ 0 | 0,05 à 0,70 | ≈ 0,8 pratique (doc) |
+| Énergie par token | - | 1,0 à 3,1 tokens par joule en sortie (7B AWQ, [07](07-resultats-seance.md#5-escalier-de-charge)) | - |
 
 ## 7. Les pièges de KPI
 

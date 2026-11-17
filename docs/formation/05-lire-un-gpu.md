@@ -13,7 +13,7 @@ Suite et approfondissement : [dossier docs/gpu](../gpu/README.md) (santé, KPI, 
 > - **NVIDIA T4** : Le GPU du lab : architecture Turing, 16 Go, 70 W maximum, pas de bf16 ni FP8. Peu cher, peu puissant.
 > - **Tensor core** : Unité du GPU spécialisée en multiplications de matrices, très rapide pour l'IA.
 > - **DCGM** : Outil NVIDIA qui mesure le GPU ; `dcgm-exporter` publie ces mesures pour Prometheus.
-> - **Throttling / limite de puissance** : Le GPU baisse sa fréquence quand il atteint sa limite (70 W sur T4).
+> - **Throttling / limite de puissance** : Watts maximum que le GPU peut consommer : 70 W par défaut sur notre T4, réglable de 60 à 70 W (`nvidia-smi -pl`). Quand il l'atteint, le GPU baisse sa fréquence (throttling).
 > - **GPU / VRAM** : Le processeur de calcul (ici un NVIDIA T4) et sa mémoire (16 Go). Le modèle et le cache KV doivent y tenir.
 > - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
 <!-- /mots -->
@@ -62,8 +62,8 @@ Runs : `results/2026-11-17-small-fp16-{interactive,long-prompt,batch,multi-turn}
 | Multi-tour, 0,5 req/s | 0,78 | 0,12 | 0,20 | 58,5 W | 1 162 MHz | 43 % | 6,3 / 0 |
 | Lot, 2,5 req/s (effondrement) | **0,97** | **0,32** | 0,27 | 67,7 W | 1 110 MHz | **99,9 %** | **153 / 93** |
 
-À comparer avec le 1,5B FP16 (§3) : **le 7B AWQ sollicite beaucoup plus les tensor cores** (0,28 à 0,32 contre 0,04 à 0,14). Hypothèse (**non vérifiée**) : les noyaux Marlin de l'AWQ utilisent les
-tensor cores, alors que les opérations du 1,5B en FP16 passent surtout par d'autres noyaux. Les données ne le prouvent pas ; elles montrent que **la quantization change quels
+À comparer avec le 1,5B FP16 (§3) : **le 7B AWQ sollicite beaucoup plus les tensor cores** (0,28 à 0,32 contre 0,04 à 0,14). Le journal de vLLM confirme que l'AWQ passe par le noyau **`MarlinLinearKernel`** (**observé**) ; que ce noyau exploite les
+tensor cores, alors que le 1,5B en FP16 passe surtout par d'autres noyaux, reste l'explication probable mais **non vérifiée** ici. Les données montrent que **la quantization change quels
 circuits du GPU travaillent**. Autre lecture : à l'effondrement du lot, `SM_ACTIVE` vaut 0,97 et le cache KV 99,9 % : cette fois le GPU **est** saturé, et c'est la file (93 en attente) et le KV qui le disent,
 pas `GPU_UTIL`.
 
@@ -85,12 +85,14 @@ demandé**, puis `SM_ACTIVE` et `DRAM_ACTIVE` pour savoir de quelle ressource le
 Hypothèse de départ de la campagne : « l'attention Triton sur Turing n'utilise pas les tensor cores, donc le prefill est lent ». Observation : `PIPE_TENSOR_ACTIVE`
 n'est **pas nul** (0,04 à 0,14), donc des opérations passent bien par les tensor cores (probablement les multiplications de matrices ; **cause non vérifiée**). Il est **le plus bas
 pendant le prefill long** (0,07), ce qui est **cohérent** avec un noyau d'attention sans tensor cores qui domine ce régime, **sans le démontrer** : ce sont des
-moyennes sur 5 minutes de charges mixtes, pas une mesure isolée du prefill. Le test propre (V1) reste à faire avec une charge de prefill pur.
+moyennes sur 5 minutes de charges mixtes, pas une mesure isolée du prefill. Le test propre a été fait ensuite avec une charge de prefill pur : `TENSOR` 0,07 et `DRAM_ACTIVE` 0,05 ([chapitre 07](../gpu/07-resultats-seance.md#4-decode-pur-contre-prefill-pur)).
 
 ### d. Le T4 est limité par sa puissance, pas par sa température
-À vide : 30,6 W et 585 MHz (horloge de repos). En charge interactive : **68 W sur 70 W** et **1 142 MHz** (le T4 monte à 1 590 MHz au maximum d'après un relevé publié sur le forum NVIDIA, **forum**, à confirmer sur notre GPU : 72 %).
+À vide : 31 W et 585 MHz (horloge de repos). En charge interactive : **68 W sur 70 W** et **1 142 MHz**, soit 72 % du maximum de **1 590 MHz** (relevé par `nvidia-smi -q` sur notre GPU le 17/11/2026).
 Pendant le RAG (58 W), l'horloge reste plus haute (1 383 MHz). Température en charge : 52 à 68 degrés Celsius, loin des 85 de l'alerte. **Le plafond de puissance de 70 W
 borne le débit** : c'est un autre rappel que le T4 n'est pas un GPU de performance.
+**Confirmé par le masque de bridage** (séance GPU, [chapitre 07](../gpu/07-resultats-seance.md)) : pendant toutes les charges le masque vaut **4** (plafond de puissance logiciel, normal), jamais de ralentissement thermique ou matériel ; à 1,5 req/s le GPU passe 100 % du temps au plafond alors que la file est encore vide.
+Deux nuances apprises : la puissance **instantanée** monte jusqu'à **103 W** (la limite de 70 W s'applique à une moyenne), et l'énergie par token baisse quand la charge monte (1,0 à 3,1 tokens par joule sur le 7B AWQ).
 
 ### e. Le CPU n'est pas le goulot
 `vllm_cpu_cores` : 0,18 à 0,36 coeur moyen, y compris en saturation, pour un nœud de 4 coeurs. La contention CPU, suspecte n° 1 du plan, **n'est pas observée** dans ces

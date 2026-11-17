@@ -75,11 +75,15 @@ Retour : [README du dépôt](../../README.md) · [guide](../guide/README.md) · 
 | **DCGM** | Outil NVIDIA qui mesure le GPU ; `dcgm-exporter` publie ces mesures pour Prometheus. |
 | **GPU_UTIL** | Part du temps où *au moins un* calcul tournait. **100 % ne veut pas dire saturé** (observé : le même GPU passe de 284 à 933 tokens/s à `GPU_UTIL` constant ou plus bas). |
 | **SM_ACTIVE / TENSOR / DRAM_ACTIVE** | Compteurs plus fins : unités de calcul actives / tensor cores actifs / mémoire du GPU active. |
-| **Throttling / limite de puissance** | Le GPU baisse sa fréquence quand il atteint sa limite (70 W sur T4). |
+| **Throttling / limite de puissance** | Watts maximum que le GPU peut consommer : 70 W par défaut sur notre T4, réglable de 60 à 70 W (`nvidia-smi -pl`). Quand il l'atteint, le GPU baisse sa fréquence (throttling). |
+| **Plafond de puissance (SW power cap)** | Le GPU baisse **lui-même** son horloge pour rester sous sa limite de puissance. C'est le bit `0x4` du masque de bridage : **normal** sous forte charge. |
+| **Verrouillage d'horloge** | Fixer la fréquence du GPU (`nvidia-smi -lgc min,max`) ; `-rgc` rend la main au GPU. Sert à mesurer l'énergie par token à chaque fréquence. |
+| **Tokens par joule** | Tokens produits pour chaque joule consommé (= tokens par seconde ÷ watts). Mesure d'efficacité énergétique. |
+| **dcgmi** | Commande de DCGM : état de santé (`dcgmi health`), diagnostics (`dcgmi diag -r 1/2/3`), injection d'erreurs de test (`dcgmi test --inject`). |
 | **XID** | Code d'erreur NVIDIA signalant un problème GPU (ex. 79 : GPU tombé du bus). |
 | **ECC / SBE / DBE** | Code qui détecte et corrige les erreurs de la mémoire du GPU. SBE = erreur simple, corrigée ; DBE = erreur double, non corrigeable (grave). |
 | **Retrait de pages (page retirement)** | Sur les GPU avant l'A100 (dont le T4), une zone mémoire défaillante est mise de côté définitivement ; le retrait prend effet au redémarrage. |
-| **Horloge (clock)** | Fréquence de travail du GPU, en MHz (≈ 585 au repos sur le T4, 1 590 au maximum d'après un relevé publié sur le forum NVIDIA). Elle baisse quand le GPU est bridé. |
+| **Horloge (clock)** | Fréquence de travail du GPU, en MHz (≈ 585 au repos sur le T4, 1 590 au maximum, relevé par `nvidia-smi -q` sur notre GPU). Elle baisse quand le GPU est bridé. |
 | **Raisons de bridage (clock event reasons)** | Les causes qui font baisser l'horloge : repos, plafond de puissance, ralentissement thermique ou matériel... Un masque de bits (`DCGM_FI_DEV_CLOCK_THROTTLE_REASONS`) à décoder. |
 | **nvidia-smi** | Commande NVIDIA qui affiche l'état du GPU : température, puissance, horloges, mémoire, erreurs. |
 | **Roofline** | Graphique qui dit si un calcul est limité par la mémoire ou par le calcul, selon le nombre d'opérations faites par octet lu. |

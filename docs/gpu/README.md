@@ -11,7 +11,7 @@ Ce dossier apprend à répondre, avec des chiffres et des graphiques, à quatre 
 > - **DCGM** : Outil NVIDIA qui mesure le GPU ; `dcgm-exporter` publie ces mesures pour Prometheus.
 > - **XID** : Code d'erreur NVIDIA signalant un problème GPU (ex. 79 : GPU tombé du bus).
 > - **ECC / SBE / DBE** : Code qui détecte et corrige les erreurs de la mémoire du GPU. SBE = erreur simple, corrigée ; DBE = erreur double, non corrigeable (grave).
-> - **Throttling / limite de puissance** : Le GPU baisse sa fréquence quand il atteint sa limite (70 W sur T4).
+> - **Throttling / limite de puissance** : Watts maximum que le GPU peut consommer : 70 W par défaut sur notre T4, réglable de 60 à 70 W (`nvidia-smi -pl`). Quand il l'atteint, le GPU baisse sa fréquence (throttling).
 > - **MFU / MBU** : Part du calcul (MFU) ou de la bande passante mémoire (MBU) réellement utilisée par rapport au maximum du GPU. Le MBU est le bon indicateur du décodage.
 > - **Roofline** : Graphique qui dit si un calcul est limité par la mémoire ou par le calcul, selon le nombre d'opérations faites par octet lu.
 > - **Méthode USE** : Pour chaque ressource, on regarde l'Utilisation (est-elle occupée ?), la Saturation (y a-t-il de la file ?) et les Erreurs.
@@ -19,7 +19,7 @@ Ce dossier apprend à répondre, avec des chiffres et des graphiques, à quatre 
 <!-- /mots -->
 
 Il s'appuie sur une recherche dans la documentation officielle NVIDIA, DCGM, vLLM, Azure/AKS et la littérature (liste complète et niveau de confiance de chaque source : [SOURCES.md](SOURCES.md)),
-et sur les **mesures réelles du lab** (T4, 1,5B FP16 et 7B AWQ, huit situations).
+et sur les **mesures réelles du lab** (T4, 1,5B FP16 et 7B AWQ, huit situations, puis la **séance GPU du 17/11/2026** : limites confirmées, decode et prefill purs, escalier de charge, limite de puissance, DCGM, XID : [chapitre 07](07-resultats-seance.md)).
 
 ## Les quatre questions
 
@@ -65,12 +65,14 @@ C'est la clé pour ne plus se contenter d'un seul chiffre (`GPU_UTIL`) : un GPU 
 
 ## Ce qui existait, ce que ce dossier ajoute
 
-| Avant (16-17/11) | Ajouté (dépôt, validé **statiquement** : pas encore sur un cluster) |
+| Avant (16-17/11) | Ajouté le 17/11 (validé statiquement, puis **lu sur le cluster** pendant la séance GPU) |
 |---|---|
 | Compteurs de base, dashboards « 02 GPU en profondeur » et « 03 Capacité et coût », alertes XID, température, bridage brut, inactivité | **9 champs DCGM de santé** (pages retirées, ECC cumulés, limites de puissance, durées de bridage), **14 règles KPI** `lab:gpu_*`, **5 nouvelles alertes** de santé et 1 alerte de bridage refondue (masque décodé), **2 dashboards** (07 et 08), **2 profils de charge** (prefill pur, decode pur), **1 scénario** (`gpu-health`), un script d'instantané `nvidia-smi`, **4 figures** tirées de vos mesures |
 
 Validations faites : 18 tests promtool, syntaxe des 158 requêtes de dashboards, noms de champs DCGM vérifiés contre le fichier officiel de la version déployée (dcgm-exporter 4.8.4).
-**Pas encore fait** : lire ces panneaux avec des données réelles et valider les seuils : c'est le rôle de la séance décrite dans [05](05-simulations.md).
+**Vérifié sur le cluster le 17/11/2026** ([chapitre 07](07-resultats-seance.md)) : les 9 champs de santé sont tous exportés, les 14 règles KPI évaluent sans erreur (359 règles saines au total), l'alerte d'inactivité est reçue par le récepteur, les limites du T4 sont confirmées, `dcgmi` fonctionne.
+**Corrigé grâce à la séance** : le bridage au repos vaut 0 (pas 1) ; `POWER_VIOLATION` ne signale pas le plafond logiciel ; la puissance instantanée dépasse 70 W ; l'estimation MBU de vLLM est fausse d'un facteur 7 ; une règle renvoyait +Inf.
+**Pas encore fait** : charge soutenue de 40 minutes, comparaison de deux GPU, `dcgmi diag` avec le GPU libre, mesure d'efficacité à faible débit.
 
 ## Ordre de lecture
 
@@ -80,6 +82,7 @@ Validations faites : 18 tests promtool, syntaxe des 158 requêtes de dashboards,
 4. [04 - Diagnostic et optimisation](04-diagnostic-et-optimisation.md) : états de santé, table XID, arbres de décision, leviers chiffrés.
 5. [05 - Simulations](05-simulations.md) : la séance de mesures (parcours court et complet), avec ce qu'on ne fera pas et pourquoi.
 6. [06 - Compétences NCP-AIO](06-competences-ncp-aio.md) : ce que ce travail démontre, point par point, et ce qu'il ne démontre pas.
-7. [SOURCES](SOURCES.md) : toutes les sources, ce qu'on en a retenu, et les écarts constatés.
+7. [07 - Résultats de la séance GPU](07-resultats-seance.md) : tout ce qui a été mesuré le 17/11/2026, avec les corrections de nos hypothèses.
+8. [SOURCES](SOURCES.md) : toutes les sources, ce qu'on en a retenu, et les écarts constatés.
 
 Liens utiles : [glossaire](../sre/GLOSSAIRE.md) · [module 5 de la formation](../formation/05-lire-un-gpu.md) · [guide GPU T4](../guide/05-gpu-t4.md).

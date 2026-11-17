@@ -29,19 +29,20 @@
 | RAG à 0,1 req/s | 0,48 | 0,10 | 0,08 | 50 W | 1 006 MHz | prefill : la mémoire se repose, le calcul domine |
 | Lot saturé à 2,5 req/s | 0,97 | 0,32 | 0,27 | 68 W | 1 110 MHz | GPU saturé : calcul à fond, cache KV à 100 % |
 
-Aucune de ces situations n'atteint l'horloge maximale (1 590 MHz d'après le forum NVIDIA) alors que la puissance frôle 70 W : le T4 est probablement **limité par sa puissance** (hypothèse : le masque de bridage n'a pas été relevé).
+Aucune de ces situations n'atteint l'horloge maximale (1 590 MHz, relevé par `nvidia-smi -q`) alors que la puissance frôle 70 W : le T4 est **limité par sa puissance**. **Confirmé le 17/11/2026** : le masque de bridage vaut **4** (plafond de puissance, normal) pendant toutes les charges, jamais de ralentissement thermique ou matériel ; dès 0,5 req/s le GPU passe 75 % du temps au plafond, et à 1,5 req/s tout le temps, alors que la file est encore vide ([chapitre 07](../gpu/07-resultats-seance.md#5-escalier-de-charge)).
 
 ## 3. Santé : ce qui est surveillé
 
 - **Marges** : température et puissance avant leur limite. **Bridage** : le masque de bits est décodé ; le plafond de puissance logiciel est **normal**, le ralentissement matériel ou thermique est **anormal**.
-- **Erreurs** : ECC simple (corrigée) ou double (grave), pages retirées, codes XID, rejeux PCIe. Sur une VM, on ne répare pas : on **vide, redémarre ou remplace le nœud**.
+- **Erreurs** : ECC simple (corrigée) ou double (grave), pages retirées, codes XID, rejeux PCIe. Sur une VM, on ne répare pas : on **vide, redémarre ou remplace le nœud**. On a **vérifié** sur le cluster que l'outil `dcgmi` répond (état de santé « Healthy », diagnostics de niveau 1 et 2 réussis) et que l'alerte d'inactivité arrive jusqu'au récepteur ([chapitre 07](../gpu/07-resultats-seance.md)).
 - AKS fournit des contrôles de santé GPU... **sauf** sur les pools sans pilote géré par AKS, comme le nôtre : on les a reconstruits avec Prometheus (6 alertes, 18 tests).
 
 ## 4. Efficacité : ce qui est mesuré
 
-- **Tokens par joule** : 4,2 en chat et **15,6 en lot saturé** sur le 1,5B : plus le GPU travaille, moins chaque token coûte en énergie.
+- **Tokens par joule** : 4,2 en chat et **15,6 en lot saturé** sur le 1,5B  ; de 1,0 (à 0,5 req/s) à **3,1 (à saturation)** sur le 7B AWQ : plus le GPU travaille, moins chaque token coûte en énergie (il consomme 31 W même à vide).
 - Sur Azure, **le GPU se paie à l'heure, pas au joule** : ce qui fait baisser la facture, c'est de produire plus de tokens par heure (0,16 $ contre 0,52 $ par million de tokens sur le 1,5B).
-- **MBU** (part de la bande passante utilisée) : le bon indicateur du décodage ; il demande `--enable-mfu-metrics` (scénario `gpu-health`).
+- **MBU** (part de la bande passante utilisée) : le bon indicateur du décodage ; il demande `--enable-mfu-metrics` (scénario `gpu-health`). **Piège observé** : l'estimation de vLLM (≈ 0,10) est 7 fois plus basse que le calcul à partir du temps par token (≈ 0,7) et que `DRAM_ACTIVE ÷ 0,8` (0,77) : toujours recouper.
+- **Régler la puissance** : sur ce T4, `nvidia-smi -pl 60` (limite de puissance) donne **+ 10 % de tokens par joule** pour − 6,5 % de débit, et verrouiller l'horloge à 900 MHz **+ 21 %** pour − 8 % de débit mais un premier token 3 fois plus lent au bord de la capacité ([chapitre 07, §6](../gpu/07-resultats-seance.md#6-limite-de-puissance-et-verrouillage-dhorloge)). C'est un choix de capacité, pas un gain gratuit.
 
 ## 5. À retenir
 
@@ -54,4 +55,4 @@ Aucune de ces situations n'atteint l'horloge maximale (1 590 MHz d'après le for
 1. Un GPU affiche `GPU_UTIL` 100 %, `SM_ACTIVE` 0,45, `DRAM_ACTIVE` 0,10 et une file vide. Est-il saturé ? Quel compteur vous trompe ?
 2. Le masque de bridage vaut 68. Quels bits sont actifs, et faut-il s'inquiéter ?
 3. Vous divisez la fréquence du GPU par deux. Prédisez le sens de variation du débit en décodage et de l'énergie par token, puis dites ce qu'il faudrait mesurer pour le vérifier.
-Vérification : 1 = non saturé (file vide, `SM_ACTIVE` et `DRAM_ACTIVE` bas), c'est `GPU_UTIL` qui trompe ; 2 = 68 = 0x40 + 0x4 : ralentissement thermique matériel (grave) et plafond de puissance (normal) : inquiétant ; 3 = pas de réponse unique : la littérature montre des courbes en U avec un genou, d'où l'expérience S5 de la [séance GPU](../gpu/05-simulations.md).
+Vérification : 1 = non saturé (file vide, `SM_ACTIVE` et `DRAM_ACTIVE` bas), c'est `GPU_UTIL` qui trompe ; 2 = 68 = 0x40 + 0x4 : ralentissement thermique matériel (grave) et plafond de puissance (normal) : inquiétant ; 3 = pas de réponse unique : la littérature montre des courbes en U avec un genou, et l'expérience S5 l'a retrouvé sur ce T4 (meilleur rendement à 900 MHz, moins bon à 750 MHz) : voir le [chapitre 07](../gpu/07-resultats-seance.md#6-limite-de-puissance-et-verrouillage-dhorloge).

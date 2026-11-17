@@ -2,9 +2,10 @@
 
 **Symptôme.** Le GPU a signalé une erreur XID (code d'erreur NVIDIA : matériel, pilote ou application).
 
-<!-- mots: xid -->
+<!-- mots: xid, dcgm -->
 > **Mots à connaître**
 > - **XID** : Code d'erreur NVIDIA signalant un problème GPU (ex. 79 : GPU tombé du bus).
+> - **DCGM** : Outil NVIDIA qui mesure le GPU ; `dcgm-exporter` publie ces mesures pour Prometheus.
 > - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
 <!-- /mots -->
 
@@ -13,6 +14,7 @@
 - Lire le code : métrique `DCGM_FI_DEV_XID_ERRORS` (dernier code vu) et journal du noyau du nœud (lignes `NVRM: Xid`).
 - Table officielle NVIDIA : https://docs.nvidia.com/deploy/xid-errors/ ; résumé : docs/gpu/04-diagnostic-et-optimisation.md.
 - `nvidia-smi -q` (ECC, pages retirées) depuis le pod `nvidia-driver-daemonset`.
+- `dcgmi health -c` depuis le pod `nvidia-dcgm` (DCGM autonome) : il décrit la panne (testé le 17/11/2026 avec un XID 79 injecté : « GPU 0 has fallen off the bus »). **`dcgmi diag -r 1` ne détecte pas un XID** : ne pas s'y fier seul.
 
 ## Leviers d'optimisation
 

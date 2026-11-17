@@ -14,8 +14,9 @@
 > - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
 <!-- /mots -->
 
-**Statut** : générés par `tests/gen_dashboards.py` et chargés par Argo CD comme les autres. Validés **statiquement** (les 158 requêtes PromQL des dashboards ont une syntaxe valide ; les noms de champs DCGM sont vérifiés).
-**Pas encore lus avec des données réelles** : au premier démarrage du cluster, `python3 tests/check_panels.py` dira quels panneaux sont vides, et la séance de mesures ([05](05-simulations.md)) les calibre.
+**Statut** : générés par `tests/gen_dashboards.py` et chargés par Argo CD comme les autres. Validés **statiquement** (158 requêtes PromQL de syntaxe valide, noms de champs DCGM vérifiés), puis **évalués sur des données réelles le 17/11/2026** (`python3 tests/check_panels.py http://127.0.0.1:19090 240`, fin de la séance GPU) : **les 36 panneaux des dashboards 07 et 08 renvoient des données**, aucun n'est vide.
+Sur l'ensemble des dashboards, 101 panneaux ont des données et 9 sont vides : tous du dashboard **06 (SLO par classe)**, parce que les mesures de la séance GPU ont été faites directement sur vLLM (`--target direct`) et que ces SLI se lisent dans les métriques de LiteLLM. C'est attendu, pas un défaut.
+**Limite** : on a vérifié que les requêtes renvoient des valeurs, pas que les graphiques sont lisibles à l'écran dans Grafana (non regardé).
 
 ## 1. Les dashboards du lab, et où se situent les nouveaux
 

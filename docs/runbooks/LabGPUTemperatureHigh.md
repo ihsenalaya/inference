@@ -4,7 +4,7 @@
 
 <!-- mots: throttling -->
 > **Mots à connaître**
-> - **Throttling / limite de puissance** : Le GPU baisse sa fréquence quand il atteint sa limite (70 W sur T4).
+> - **Throttling / limite de puissance** : Watts maximum que le GPU peut consommer : 70 W par défaut sur notre T4, réglable de 60 à 70 W (`nvidia-smi -pl`). Quand il l'atteint, le GPU baisse sa fréquence (throttling).
 > - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
 <!-- /mots -->
 

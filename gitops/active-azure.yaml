@@ -1,2 +1,2 @@
 # Scénario actif (azure). Modifié par `lab.sh scenario`, appliqué par Argo CD.
-scenario: gpu-health-diag
+scenario: baseline-7b

@@ -64,11 +64,24 @@ Format imposé par le prompt : ce qui a été fait, ce qui a été appris, ce qu
 **Heures GPU et coût (séances 1 et 2, second cluster)** : cluster actif de 08:38 à environ 12:30 (3 h 50 environ), dont ~3 h 45 de T4 ; coût estimé **≈ 2,7 $** (calcul : 3,8 h x 0,708 $/h). Estimation, pas une facture.
 Cluster détruit en fin de séance ; les snapshots Azure n'ont pas été touchés.
 
-## Séance GPU « santé et mesures » (préparée, non exécutée)
+## Séance GPU « santé et mesures » (exécutée le 17/11/2026)
 
-**Préparé le 17/11, sans cluster (aucun coût)** : recherche documentaire (NVIDIA, DCGM, vLLM, AKS, littérature), dossier [docs/gpu/](../gpu/README.md) (8 documents, 4 figures tirées des mesures réelles), 9 champs DCGM de santé, 14 règles KPI, 5 nouvelles alertes et le bridage décodé, dashboards 07 et 08, profils `prefill-only` et `decode-only`, scénarios `gpu-health` et `gpu-health-diag`, script `tests/gpu_snapshot.sh`.
-**Validé statiquement seulement** (18 tests promtool, 158 requêtes de dashboards, noms de champs DCGM). **À exécuter** : parcours court ≈ 3 h (≈ 2,1 $) ou complet ≈ 5,5 h (≈ 4,4 $) : [docs/gpu/05-simulations.md](../gpu/05-simulations.md).
-**Appris** : AKS ne surveille pas la santé GPU de notre pool ; NVSentinel est inadapté ici ; des valeurs attribuées à « la fiche NVIDIA » venaient d'un forum (corrigées).
+**Compte rendu complet** : [docs/gpu/07-resultats-seance.md](../gpu/07-resultats-seance.md). Préparation, recherche et plan : [docs/gpu/](../gpu/README.md).
+
+**Fait** : relevé statique (`nvidia-smi -q`), repos 10 min à 1 Hz, decode pur contre prefill pur, escalier de charge (3 paliers), limite de puissance (60 et 65 W) et verrouillage d'horloge (900 et 750 MHz), GPU alloué mais inactif (règle, alerte, récepteur), DCGM autonome (`dcgmi health`, `diag -r 1/2/3` avec vLLM chargé puis **GPU libre**), injection d'un XID 79 (alerte critique reçue).
+**Non fait** : charge soutenue de 40 minutes (S3), comparaison de deux T4 (S6), deux paliers de l'escalier, balayage complet de l'horloge à 5 fréquences, mesure à faible débit.
+
+**Résultats à retenir** :
+1. Les limites du T4 relevées par `nvidia-smi -q` **confirment** les valeurs du forum (70 W réglable de 60 à 70, 1 590 MHz, 85/93/96 °C) ; le masque de bridage au repos vaut 0 (pas 1) ; en charge il vaut 4 (plafond de puissance) et **jamais** un bit matériel ou thermique.
+2. Le plafond de puissance arrive **avant** la saturation (75 % du temps dès 0,5 req/s, 100 % à 1,5 req/s avec une file vide) ; la capacité est d'environ 1,3-1,4 req/s ; l'énergie par token est divisée par 3 entre 0,5 req/s et la saturation (1,03 à 3,06 tokens par joule).
+3. Meilleur rendement énergétique à **900 MHz** (+ 21 % de tokens par joule, − 8 % de débit) ; `-pl 60` : + 10 % pour − 6,5 % ; au prix d'une latence plus élevée au bord de la capacité.
+4. `dcgmi diag` sur T4 : 2 s (niveau 1), 10 s (niveau 2), **348 s** (niveau 3), tout réussi **GPU libre** ; avec vLLM chargé le test mémoire est ignoré et `targeted_power` échoue faute de mémoire.
+5. XID injecté : métrique vue en 5 s, alerte `firing` en 1 min 9 s, reçue par le récepteur.
+
+**Défauts trouvés et corrigés grâce à la séance** : label `hostname` (pas `Hostname`) dans les alertes et dashboards ([D-43](../DECISIONS.md)) ; règle kWh par million de tokens qui renvoyait +Inf ; estimation MBU de vLLM fausse d'un facteur 7 ([D-44](../DECISIONS.md)) ; **sources Istio arrêtées par le projet** (registre et dépôt Helm), qui bloquaient la Gateway après un redémarrage ([D-41](../DECISIONS.md)).
+**Découverte d'infrastructure** : un `az aks stop` puis `start` **recrée les nœuds** : le redémarrage a pris ≈ 15 minutes (nœuds créés à +4 min, driver prêt à +11 min, vLLM prêt à +15 min) et toutes les images ont été retirées de nouveau.
+
+**Heures GPU et coût** : cluster actif ≈ 13 h 40 à 14 h 30 UTC puis de 15 h 57 UTC à ≈ 17 h 45 UTC, soit **≈ 2,6 h** (arrêt de ≈ 85 minutes entre les deux : VM non facturées) ; coût estimé **≈ 1,9 $** (calcul : 2,6 h x 0,708 $/h), un peu **sous** les 2,1 $ annoncés pour le parcours court ; la durée **réelle** (horloge murale) a été bien plus longue à cause de la pause, de la panne Istio et des extractions. Estimation, pas une facture. Cluster détruit en fin de séance ; les snapshots Azure n'ont pas été touchés.
 
 ## Séances suivantes (non commencées)
 

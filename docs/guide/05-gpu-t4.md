@@ -13,7 +13,7 @@ Ce chapitre présente la carte, ce qu'elle ne sait pas faire, et comment lire se
 > - **GPU / VRAM** : Le processeur de calcul (ici un NVIDIA T4) et sa mémoire (16 Go). Le modèle et le cache KV doivent y tenir.
 > - **DCGM** : Outil NVIDIA qui mesure le GPU ; `dcgm-exporter` publie ces mesures pour Prometheus.
 > - **GPU_UTIL** : Part du temps où *au moins un* calcul tournait. **100 % ne veut pas dire saturé** (observé : le même GPU passe de 284 à 933 tokens/s à `GPU_UTIL` constant ou plus bas).
-> - **Throttling / limite de puissance** : Le GPU baisse sa fréquence quand il atteint sa limite (70 W sur T4).
+> - **Throttling / limite de puissance** : Watts maximum que le GPU peut consommer : 70 W par défaut sur notre T4, réglable de 60 à 70 W (`nvidia-smi -pl`). Quand il l'atteint, le GPU baisse sa fréquence (throttling).
 > - **XID** : Code d'erreur NVIDIA signalant un problème GPU (ex. 79 : GPU tombé du bus).
 > - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
 <!-- /mots -->
@@ -25,7 +25,9 @@ Ce chapitre présente la carte, ce qu'elle ne sait pas faire, et comment lire se
 | GPU | NVIDIA Tesla T4, architecture **Turing**, compute capability **7.5** | (observé) `nvidia-smi` : `Tesla T4`, `modelName` DCGM |
 | VRAM | 16 384 MiB (15,56 GiB utilisables vus par vLLM) | (observé) |
 | Bande passante mémoire | **320 Go/s** (la fiche NVIDIA de mars 2019 indique **300 Go/s**) | documents NVIDIA (doc) ; écart détaillé dans [docs/gpu/SOURCES.md](../gpu/SOURCES.md) |
-| Puissance maximale | 70 W | (observé) `nvidia-smi` : `70W` ; la consommation en charge atteint 58 à 68 W selon la charge (observé le 17/11) |
+| Puissance maximale | 70 W, **réglable de 60 à 70 W** | (observé) `nvidia-smi -q -d POWER` ; la consommation en charge atteint 58 à 68 W en moyenne (pointes instantanées à 103 W), 31 W à vide (observé le 17/11) |
+| Horloges SM / mémoire | repos 585 MHz, **maximum 1 590 MHz** / 5 001 MHz | (observé) `nvidia-smi -q -d CLOCK` le 17/11 ; sous charge soutenue l'horloge reste vers 1 000-1 200 MHz : le plafond de puissance la limite |
+| Seuils thermiques | fonctionnement 85 °C, ralentissement 93 °C, arrêt 96 °C | (observé) `nvidia-smi -q -d TEMPERATURE` ; maximum vu en charge : 69 °C |
 | Tensor cores FP16 | jusqu'à 65 TFLOP/s | fiche produit NVIDIA (doc) |
 | VM Azure | `Standard_NC4as_T4_v3` : 4 vCPU (4 **cœurs**, 1 thread/cœur, AMD EPYC 7V12), 28 Gio, disque temporaire de 180 Go | (observé) `lscpu` |
 | Driver / CUDA | 580.95.05 / 13.0 | (observé) `nvidia-smi` |
@@ -57,6 +59,7 @@ Quatre signaux DCGM de base, à lire **ensemble** (dashboard 02), puis les compt
 
 Valeurs lues sur ce lab pendant les sweeps (**observé**) : utilisation moyenne 71 % (7B) et 77 % (1,5B), moteur actif 78-84 %, DRAM active 16-22 %, puissance 55-65 W.
 Interprétation : **calcul** saturé, mémoire peu sollicitée, énergie proche du plafond. Le T4 est ici limité par ses unités de calcul et son budget de puissance, pas par sa mémoire.
+La séance GPU du 17/11/2026 a précisé ce tableau (decode pur contre prefill pur, escalier de charge, limite de puissance, DCGM, XID) : voir [docs/gpu/07-resultats-seance.md](../gpu/07-resultats-seance.md).
 
 ## 4. Les trois états d'un GPU d'inférence
 

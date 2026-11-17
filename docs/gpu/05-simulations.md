@@ -6,17 +6,17 @@ les KPI et les alertes de ce dossier disent la vérité.
 <!-- mots: nvidia-smi, horloge, raisons de bridage, dcgm, dcgm hostengine, xid, throttling, mbu -->
 > **Mots à connaître**
 > - **nvidia-smi** : Commande NVIDIA qui affiche l'état du GPU : température, puissance, horloges, mémoire, erreurs.
-> - **Horloge (clock)** : Fréquence de travail du GPU, en MHz (≈ 585 au repos sur le T4, 1 590 au maximum d'après un relevé publié sur le forum NVIDIA). Elle baisse quand le GPU est bridé.
+> - **Horloge (clock)** : Fréquence de travail du GPU, en MHz (≈ 585 au repos sur le T4, 1 590 au maximum, relevé par `nvidia-smi -q` sur notre GPU). Elle baisse quand le GPU est bridé.
 > - **Raisons de bridage (clock event reasons)** : Les causes qui font baisser l'horloge : repos, plafond de puissance, ralentissement thermique ou matériel... Un masque de bits (`DCGM_FI_DEV_CLOCK_THROTTLE_REASONS`) à décoder.
 > - **DCGM** : Outil NVIDIA qui mesure le GPU ; `dcgm-exporter` publie ces mesures pour Prometheus.
 > - **DCGM hostengine** : Le processus DCGM qui collecte les mesures du GPU ; l'exporteur peut l'embarquer ou se connecter à un hostengine séparé (doc DCGM).
 > - **XID** : Code d'erreur NVIDIA signalant un problème GPU (ex. 79 : GPU tombé du bus).
-> - **Throttling / limite de puissance** : Le GPU baisse sa fréquence quand il atteint sa limite (70 W sur T4).
+> - **Throttling / limite de puissance** : Watts maximum que le GPU peut consommer : 70 W par défaut sur notre T4, réglable de 60 à 70 W (`nvidia-smi -pl`). Quand il l'atteint, le GPU baisse sa fréquence (throttling).
 > - **MFU / MBU** : Part du calcul (MFU) ou de la bande passante mémoire (MBU) réellement utilisée par rapport au maximum du GPU. Le MBU est le bon indicateur du décodage.
 > - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
 <!-- /mots -->
 
-**Statut : préparée, pas encore exécutée.** Tout ce qui est décrit ici a été préparé dans le dépôt (scénarios, profils, scripts, règles) et validé par des tests statiques ; rien n'a été lancé sur un cluster. Les durées sont des **estimations** (calcul) bâties sur ce qui a été mesuré : cluster prêt en ≈ 19 min, nœud GPU prêt en 12 min, changement de modèle en 3,5 min, un run de charge en ≈ 8 min.
+**Statut : exécutée le 17/11/2026 (parcours court + S5).** Les résultats sont dans le [chapitre 07](07-resultats-seance.md) ; ce chapitre garde le **plan** tel qu'il avait été écrit avant la séance, avec une ligne « **Résultat** » ajoutée à chaque expérience. Non faites : S3 (charge soutenue 40 min), S6 (deux T4), `dcgmi diag -r 2/-r 3` (voir le chapitre 07, §1). Les durées ci-dessous sont les **estimations d'avant séance** ; la séance a **dépassé** les 3 h annoncées (pause de 100 minutes, panne de la Gateway Istio, extraction lente des résultats).
 
 ## 1. Ce que la séance doit prouver
 
@@ -79,12 +79,14 @@ gantt
 - **Vérifier** : les 9 nouveaux champs DCGM apparaissent-ils sur `:9400/metrics` ? Quelle est l'unité réelle de `DCGM_FI_DEV_POWER_VIOLATION` (comparer la hausse du compteur au temps écoulé) ? Les métriques `vllm:estimated_*` existent-elles avec le drapeau ?
 - **Critère de réussite** : chaque valeur « (forum) » de [01](01-signaux-du-gpu.md) est confirmée ou corrigée, et `gpuLimits` (`values.yaml`) mis à jour si besoin.
 - **Risque** : un champ DCGM non supporté par le T4 est absent : on le note, on n'insiste pas.
+- **Résultat** : limites confirmées (70 W réglable de 60 à 70 W, 1 590 MHz, 85/93/96 °C) ; les **9 champs de santé** existent tous ; l'unité de `POWER_VIOLATION` est la **nanoseconde** ; `DCGM_FI_DEV_XID_ERRORS` **n'apparaît pas** tant qu'aucune erreur n'a eu lieu ; les métriques `vllm:estimated_*` existent mais l'estimation du MBU est 7 fois trop basse ([07 §2](07-resultats-seance.md#2-les-vraies-limites-du-t4-confirmées)).
 
 ### S1 - Repos
 
 - **Comment** : modèle chargé, aucune requête, `tests/gpu_snapshot.sh repos 600` (enregistrement à 1 Hz pendant 10 min).
 - **Attendu** : ≈ 30,6 W, 585 MHz, ≈ 50 °C, `GPU_UTIL` 0 ; **masque de bridage = 0x1** (repos). Les règles `lab:gpu_throttle_*` doivent valoir 0.
 - **Critère** : seul le bit « repos » est actif.
+- **Résultat** : le masque au repos vaut **0** (pas 1) : 31 W, 585 MHz, 46-47 °C ; le bit `GpuIdle` n'apparaît qu'en repos profond, **sans aucun processus sur le GPU** (16 W, 300 MHz). L'attendu était faux ([07 §3](07-resultats-seance.md#3-le-gpu-au-repos)).
 
 ### S4 - Prefill pur contre decode pur
 
@@ -92,6 +94,7 @@ gantt
 - **Relever** : `SM_ACTIVE`, `TENSOR`, `DRAM_ACTIVE`, puissance, horloge, MBU, part de prefill (`tests/run_window.py`).
 - **Critère** : `DRAM ÷ 0,8` ≥ 0,5 en decode pur et < 0,5 en prefill pur (les seuils provisoires de l'arbre 2 de [04](04-diagnostic-et-optimisation.md)) ; sinon on corrige les seuils.
 - **Hypothèse à tester** : les tensor cores travaillent plus en decode AWQ qu'en prefill (les observations actuelles vont dans ce sens, sans l'isoler).
+- **Résultat** : `DRAM ÷ 0,8` = **0,77** en decode pur et **0,06** en prefill pur (critère rempli) ; `TENSOR` 0,22 contre 0,07 : l'hypothèse est **confirmée** ([07 §4](07-resultats-seance.md#4-decode-pur-contre-prefill-pur)). Réserve : le prefill pur n'occupait le GPU que 33 % du temps.
 
 ### S2 - Escalier de charge
 
@@ -99,12 +102,14 @@ gantt
 - **Relever par palier** : tokens/s, TTFT/TPOT, `GPU_UTIL`, `SM_ACTIVE`, `DRAM ÷ 0,8`, puissance, horloge, température, **masque de bridage**, MBU, tokens par joule.
 - **Critère** : on trace puissance et horloge en fonction du débit ; on repère le palier où la puissance atteint le plafond et celui où la file apparaît ; le plafond est atteint **avant ou après** la saturation de file ?
 - **À écrire pendant la préparation** : un petit script qui découpe les enregistrements par palier (les fenêtres de temps sont dans les annotations Grafana).
+- **Résultat** : fait en 3 paliers (0,5 / 1,5 / 2,5 req/s) avec `tests/gpu_escalier.sh` ; le **plafond de puissance arrive avant la saturation** (bit `0x4` actif 75 % du temps dès 0,5 req/s) ; la capacité est d'environ 1,3-1,4 req/s ; l'énergie par token est divisée par 3 entre le palier bas et la saturation ([07 §5](07-resultats-seance.md#5-escalier-de-charge)).
 
 ### S3 - Charge soutenue
 
 - **Comment** : 7B à environ 80 % du plateau (≈ 1,4 req/s) pendant 40 minutes, `tests/gpu_snapshot.sh soutenu 2400`.
 - **Relever** : température au cours du temps (constante de temps de montée), horloge, puissance, apparition d'un bit de bridage.
 - **Critère** : la température se stabilise en dessous de la limite (observé jusqu'ici : 69 °C au maximum sur 5 minutes) ; aucune alerte de santé.
+- **Résultat** : **non fait** (40 minutes de cluster en plus). Ce qu'on sait déjà : la température maximale vue pendant la séance est **67 °C** (`dmon` à 1 Hz sur 50 minutes de charges successives, [07 §3](07-resultats-seance.md#3-le-gpu-au-repos)) et pendant `dcgmi diag -r 3` **66 °C** : la marge est de 18 °C, mais la constante de temps d'une charge de 40 minutes n'est pas mesurée.
 
 ### S5 - Balayage d'horloge (si l'environnement l'autorise)
 
@@ -113,12 +118,14 @@ gantt
 - **Relever** : tokens/s, TPOT, TTFT, puissance, **tokens par joule**.
 - **Critère** : une courbe énergie par token en fonction de la fréquence ; le genou (littérature : courbes en U avec des genoux différents pour prefill et decode) existe-t-il sur T4 ?
 - **Risques** : le verrouillage peut être refusé sur une VM Azure ; dans ce cas on essaie `nvidia-smi -pl` (limite de puissance, valeur entre le minimum et le maximum affichés), et si cela échoue aussi **on abandonne cette expérience** et on le consigne. Aucune source consultée ne confirme que `-pl` fonctionne sur T4.
+- **Résultat** : **ni refus ni erreur** : `-pl 60`, `-pl 65`, `-lgc 900,900` et `-lgc 750,750` fonctionnent sur la VM. Meilleur rendement à **900 MHz** (+ 21 % de tokens par joule pour − 8 % de débit) ; `-pl 60` : + 10 % pour − 6,5 % ; à 750 MHz le gain disparaît. Verrouiller l'horloge **supprime le plafond de puissance** (masque 0). Un seul débit mesuré (1,5 req/s, au bord de la capacité) ; le balayage à 5 fréquences, avec decode et prefill séparés, n'a **pas** été fait ([07 §6](07-resultats-seance.md#6-limite-de-puissance-et-verrouillage-dhorloge)).
 
 ### S7 - GPU alloué mais inactif
 
 - **Comment** : modèle chargé, aucun trafic pendant au moins **12 minutes** (le scénario `gpu-health` ramène le seuil de l'alerte de 30 à 5 minutes : 5 minutes de moyenne basse puis 5 minutes de maintien).
 - **Vérifier** : `lab:gpu_allocated_idle` = 1 ; `lab:gpu_idle_cost_usd_per_hour` = 0,526 ; l'alerte `LabGPUIdleCost` est reçue par le récepteur d'alertes ; elle disparaît quand on renvoie du trafic.
 - **Critère** : le chemin règle → Prometheus → Alertmanager → récepteur est prouvé (comme pour `LabSLOBurnSlow`).
+- **Résultat** : prouvé ; `LabGPUIdleCost` en `firing` puis `resolved`, 0,526 $/h ; délai mesuré 13 minutes de bout en bout ([07 §7](07-resultats-seance.md#7-gpu-alloué-mais-inactif)).
 
 ### S6 - Comparer deux T4
 
@@ -126,6 +133,7 @@ gantt
 - **Relever** : température, puissance, horloge et joules par token **par GPU** ; `lab:gpu_temp_spread_celsius`.
 - **Critère** : écart de température et d'énergie par token entre les deux GPU ; proposition de seuil « GPU différent » (provisoire : plus de 5 °C d'écart durable ou plus de 10 % d'énergie par token).
 - **Risque** : capacité T4 insuffisante pour le 2e nœud malgré le quota (déjà signalée par la communauté en 2026) ; on retomberait sur le parcours court.
+- **Résultat** : **non fait** (≈ 45 minutes et un 2e T4). Aucun écart GPU-GPU mesuré : `lab:gpu_temp_spread_celsius` vaut 0 avec un seul GPU. Le seuil « GPU différent » reste **provisoire**.
 
 ### S8 - Santé DCGM
 
@@ -133,6 +141,7 @@ gantt
 - **Comment** : `dcgmi discovery -l` ; `dcgmi health -s a` puis `dcgmi health -c` (surveillance PCIe, mémoire, thermique et puissance, pilote...) ; `dcgmi diag -r 1` (secondes). Pour `-r 2` et `-r 3`, **libérer le GPU** : `./lab.sh scenario gpu-health-diag` (aucun réplica ; la doc DCGM précise que le test de déploiement échoue si un autre processus utilise le GPU).
 - **Relever** : résultats (réussite, échec), **durée réelle** sur T4 (la doc donne moins de 2,5 min pour `-r 2` et moins de 10 min pour `-r 3` sur 4 GPU Hopper ; le guide de triage dit environ 30 minutes), puissance et température atteintes pendant les tests « targeted power » et « targeted stress ».
 - **Critère** : le diagnostic réussit sur un GPU sain ; on garde les durées et la sortie comme **référence de comparaison** pour un futur nœud suspect.
+- **Résultat** : fait ; `dcgmi` disponible grâce au DCGM autonome ([D-42](../DECISIONS.md)) ; `health` « Healthy » ; `diag -r 1` en 2 s ; `-r 2` en 6,7 s et `-r 3` en 3 min 43 avec vLLM chargé (tests mémoire ignorés, `targeted_power` en échec par manque de mémoire) ; relancés **GPU libre** ensuite : voir [07 §8](07-resultats-seance.md#8-dcgm-autonome-et-santé).
 
 ### S9 - Injection d'un XID (test du chemin d'alerte)
 
@@ -140,6 +149,7 @@ gantt
 - **Précautions (doc NVIDIA et guide EKS)** : réservé à un hôte de test isolé ; **la valeur injectée persiste jusqu'au remplacement du nœud** et ne peut pas être annulée. Notre cluster est jetable et détruit à la fin : on le fait **en dernier**.
 - **Vérifier** : `DCGM_FI_DEV_XID_ERRORS` = 79 dans Prometheus, `LabGPUXidError` passe en `firing`, le récepteur reçoit l'alerte.
 - **Condition à vérifier avant** : l'exporteur doit lire le **même** hostengine que celui où l'on injecte (DCGM autonome partagé). Sinon l'injection n'est pas visible : on le consigne et le test d'alerte reste couvert par promtool.
+- **Résultat** : **prouvé** : `DCGM_FI_DEV_XID_ERRORS` = 79 vu 5 s après, `LabGPUXidError` en `firing` 1 min 9 s après l'injection, reçue par le récepteur (critique). Défaut trouvé : label `hostname` ([D-43](../DECISIONS.md)). Aucun écart avec l'attendu sur le chemin d'alerte ([07 §9](07-resultats-seance.md#9-injection-dun-xid)).
 
 ### S10 - Analyse (sans cluster)
 
@@ -164,21 +174,21 @@ Par défaut l'installation est **en observation seule** (elle ne vide ni ne red�
 
 ## 5. Préparation (gratuite) et vérifications avant la séance
 
-| À faire | État |
+| À faire | État après la séance |
 |---|---|
-| Scénarios `gpu-health` (MFU activé, seuil d'inactivité à 5 min) et `gpu-health-diag` (aucun réplica) | fait |
-| Profils `prefill-only` et `decode-only` | fait |
-| Dashboards 07 et 08, 14 règles KPI, 5 nouvelles alertes et l'alerte de bridage refondue, 5 runbooks | fait (validé statiquement) |
-| Scripts `tests/gpu_snapshot.sh` et `tests/run_window.py` | fait (`gpu_snapshot.sh` non testé sur cluster) |
-| Script de découpage par palier (S2) | à faire |
-| Vérifier dans la doc du GPU Operator 26.7 : activation du DCGM autonome (`dcgm.enabled`) et connexion de l'exporteur | à faire (S8, S9) |
-| Vérifier avec `nvidia-smi --help` : `-rgc`, `-ac`, `-pl` | à faire (S5) |
-| Mesurer l'effet du drapeau `--enable-mfu-metrics` sur le débit (comparer à `baseline-7b`) | à faire en S2 |
+| Scénarios `gpu-health` (MFU activé, seuil d'inactivité à 5 min) et `gpu-health-diag` (aucun réplica) | `gpu-health` utilisé ; `gpu-health-diag` **non utilisé** (pas de `diag` GPU libre) |
+| Profils `prefill-only` et `decode-only` | utilisés (S4) |
+| Dashboards 07 et 08, 14 règles KPI, 5 nouvelles alertes et l'alerte de bridage refondue, 5 runbooks | **vérifiés sur données réelles** : 36 panneaux avec données, 359 règles saines ; une règle corrigée (+Inf) |
+| Scripts `tests/gpu_snapshot.sh` et `tests/run_window.py` | **testés sur cluster** (enregistrements 1 Hz, colonnes `pviol` et `tviol`) |
+| Script de découpage par palier (S2) | fait : `tests/gpu_escalier.sh` |
+| Vérifier dans la doc du GPU Operator 26.7 : activation du DCGM autonome (`dcgm.enabled`) et connexion de l'exporteur | **fait** : `dcgm.enabled: true` crée le pod `nvidia-dcgm` (port 5555) ; l'exporteur reçoit `DCGM_REMOTE_HOSTENGINE_INFO=nvidia-dcgm:5555` ([D-42](../DECISIONS.md)) |
+| Vérifier avec `nvidia-smi --help` : `-rgc`, `-ac`, `-pl` | **fait** : `-pl`, `-lgc`, `-rgc` acceptés ; `-ac` non testé |
+| Mesurer l'effet du drapeau `--enable-mfu-metrics` sur le débit (comparer à `baseline-7b`) | **non fait** |
 
 ## 6. À retenir
 
 1. La séance répond à **huit questions précises** ; chaque expérience a un critère de réussite écrit **avant** le run.
-2. Tout ce qui est « (forum) » dans ce dossier est **remplacé par une mesure** en S0.
+2. Tout ce qui était « (forum) » dans ce dossier a été **remplacé par une mesure** en S0 (toutes les valeurs étaient exactes).
 3. On provoque des situations **sans abîmer le matériel** : horloge verrouillée, GPU laissé inactif, valeur d'erreur injectée.
 
 ## 7. Exercice (à faire vous-même)

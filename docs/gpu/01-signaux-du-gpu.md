@@ -11,7 +11,7 @@ Ce chapitre les range par famille, donne leurs **valeurs réelles sur le T4 du l
 > - **Tensor core** : Unité du GPU spécialisée en multiplications de matrices, très rapide pour l'IA.
 > - **DCGM** : Outil NVIDIA qui mesure le GPU ; `dcgm-exporter` publie ces mesures pour Prometheus.
 > - **nvidia-smi** : Commande NVIDIA qui affiche l'état du GPU : température, puissance, horloges, mémoire, erreurs.
-> - **Horloge (clock)** : Fréquence de travail du GPU, en MHz (≈ 585 au repos sur le T4, 1 590 au maximum d'après un relevé publié sur le forum NVIDIA). Elle baisse quand le GPU est bridé.
+> - **Horloge (clock)** : Fréquence de travail du GPU, en MHz (≈ 585 au repos sur le T4, 1 590 au maximum, relevé par `nvidia-smi -q` sur notre GPU). Elle baisse quand le GPU est bridé.
 > - **Raisons de bridage (clock event reasons)** : Les causes qui font baisser l'horloge : repos, plafond de puissance, ralentissement thermique ou matériel... Un masque de bits (`DCGM_FI_DEV_CLOCK_THROTTLE_REASONS`) à décoder.
 > - **ECC / SBE / DBE** : Code qui détecte et corrige les erreurs de la mémoire du GPU. SBE = erreur simple, corrigée ; DBE = erreur double, non corrigeable (grave).
 > - **Retrait de pages (page retirement)** : Sur les GPU avant l'A100 (dont le T4), une zone mémoire défaillante est mise de côté définitivement ; le retrait prend effet au redémarrage.
@@ -20,7 +20,7 @@ Ce chapitre les range par famille, donne leurs **valeurs réelles sur le T4 du l
 > - Tous les mots : [glossaire](../sre/GLOSSAIRE.md).
 <!-- /mots -->
 
-Marques de fiabilité : **(observé)** vu sur le cluster · **(doc)** documentation officielle · **(calcul)** déduit d'un calcul · **(forum)** relevé publié par un utilisateur sur le forum NVIDIA, non officiel · **(non vérifié)**.
+Marques de fiabilité : **(observé)** vu sur le cluster · **(doc)** documentation officielle · **(calcul)** déduit d'un calcul · **(forum)** relevé publié par un utilisateur sur le forum NVIDIA, non officiel (plus utilisé : toutes ces valeurs ont été confirmées sur notre GPU) · **(non vérifié)**.
 
 ## 1. Comment on mesure un GPU (trois niveaux)
 
@@ -38,12 +38,12 @@ Marques de fiabilité : **(observé)** vu sur le cluster · **(doc)** documentat
 | Calcul de pointe | 8,1 TFLOPS en FP32 ; **65 TFLOPS** en précision mixte FP16/FP32 ; 130 TOPS en INT8 ; 260 TOPS en INT4 | fiche NVIDIA (doc) |
 | Mémoire | 16 Go GDDR6 | fiche NVIDIA (doc) ; VM Azure `NC4as_T4_v3` : 1 T4 de 16 Go (doc Microsoft) |
 | Bande passante mémoire | **300 Go/s** dans la fiche de mars 2019, **320 Go/s** dans d'autres documents NVIDIA | (doc) : on garde 320 pour les bornes théoriques et on garde l'écart de 6 % en tête |
-| Puissance maximale | **70 W** | fiche NVIDIA (doc) |
+| Puissance maximale | **70 W** par défaut et au maximum ; **réglable de 60 à 70 W** | fiche NVIDIA (doc) ; plage relevée par `nvidia-smi -q -d POWER` le 17/11 (**observé**) |
 | Refroidissement | **passif** (le refroidissement vient du châssis du fournisseur) | fiche NVIDIA (doc) |
 | Lien PCIe | Gen3 x16 (32 Go/s) | fiche NVIDIA (doc) |
 | ECC (mémoire protégée) | oui | fiche NVIDIA (doc) |
-| Horloges | repos ≈ **585 MHz** ; maximum **1 590 MHz** pour les SM et **5 001 MHz** pour la mémoire | repos : observé ; maximum : relevé publié sur le forum NVIDIA **(forum)**, à relire avec `nvidia-smi -q -d CLOCK` |
-| Seuils thermiques | limite de fonctionnement **85 °C**, ralentissement matériel **93 °C**, arrêt **96 °C** | relevés de sorties `nvidia-smi` sur le forum NVIDIA **(forum)**, à relire avec `nvidia-smi -q -d TEMPERATURE` |
+| Horloges | repos ≈ **585 MHz** ; maximum **1 590 MHz** pour les SM et **5 001 MHz** pour la mémoire (une seconde fréquence mémoire, 405 MHz, existe pour le repos profond) ; avec la mémoire à 5 001 MHz, **87 fréquences SM** acceptées de 1 590 à 300 MHz par pas de 15 MHz | **observé** le 17/11 (`nvidia-smi -q -d CLOCK` et `SUPPORTED_CLOCKS`) : le relevé du forum NVIDIA est confirmé |
+| Seuils thermiques | limite de fonctionnement **85 °C**, ralentissement matériel **93 °C**, arrêt **96 °C** ; `T.Limit` et température mémoire : N/A | **observé** le 17/11 (`nvidia-smi -q -d TEMPERATURE`) : confirmés |
 
 Ce que les seuils thermiques veulent dire (doc `nvidia-smi`) : *Max Operating Temp* = au-delà, le **logiciel** baisse les horloges ; *Slowdown Temp* = le **matériel** commence à baisser les horloges ;
 *Shutdown Temp* = le GPU s'éteint pour se protéger.
@@ -62,7 +62,7 @@ Les valeurs « observé » sont des moyennes sur la fenêtre de mesure de huit r
 | `DCGM_FI_PROF_SM_OCCUPANCY` | warps résidents par rapport au maximum possible | 0,13 à 0,28 | une occupation élevée n'est pas forcément mieux (doc DCGM) |
 | `DCGM_FI_PROF_PIPE_TENSOR_ACTIVE` | part des cycles où les tensor cores travaillent ; 1 = une instruction tensor tous les deux cycles (doc) | 0,04 à 0,14 (1,5B FP16) ; 0,10 à 0,32 (7B AWQ) | la valeur plus haute avec l'AWQ est **observée** ; sa cause (noyaux Marlin) est une hypothèse **non vérifiée** |
 | `DCGM_FI_PROF_PIPE_FP16_ACTIVE` | cycles où le pipeline FP16 est actif | 0,00 à 0,08 | les multiplications de matrices passent surtout par les tensor cores |
-| `DCGM_FI_PROF_DRAM_ACTIVE` | cycles où la mémoire envoie ou reçoit des données | 0,08 à 0,70 | « en pratique, **0,8 est le maximum atteignable** » (doc DCGM) : 0,7 est donc déjà très haut |
+| `DCGM_FI_PROF_DRAM_ACTIVE` | cycles où la mémoire envoie ou reçoit des données | 0,05 à 0,70 | « en pratique, **0,8 est le maximum atteignable** » (doc DCGM) : 0,7 est donc déjà très haut |
 
 ### B. Mémoire
 
@@ -75,23 +75,23 @@ Les valeurs « observé » sont des moyennes sur la fenêtre de mesure de huit r
 
 | Compteur | En clair | Observé | Piège |
 |---|---|---|---|
-| `DCGM_FI_DEV_POWER_USAGE` | puissance instantanée (W) | **30,6 W à vide** ; 50 à 68 W en charge ; plafond 70 W | près de 70 W, le GPU baisse ses horloges pour rester dans l'enveloppe |
+| `DCGM_FI_DEV_POWER_USAGE` | puissance instantanée (W) | **31 W à vide** (16 W en repos profond) ; 42 à 69 W en charge ; la puissance **instantanée** monte jusqu'à **103 W** (`dmon` 1 Hz) car la limite de 70 W s'applique à une moyenne | près de 70 W, le GPU baisse ses horloges pour rester dans l'enveloppe |
 | `DCGM_FI_DEV_TOTAL_ENERGY_CONSUMPTION` | énergie cumulée (mJ) depuis le chargement du pilote | - | sert aux calculs de joules par token |
-| `DCGM_FI_DEV_POWER_MGMT_LIMIT`, `..._ENFORCED_POWER_LIMIT` | limite configurée et limite réellement appliquée (W) | **nouveau**, pas encore observé | sert à lire le vrai plafond au lieu de supposer 70 W |
-| `DCGM_FI_DEV_POWER_VIOLATION`, `..._THERMAL_VIOLATION` | durée cumulée de bridage due à la puissance, à la température | **nouveau**, pas encore observé | le fichier du tag 4.8.4 indique des **nanosecondes** ; l'unité est à confirmer sur le cluster |
+| `DCGM_FI_DEV_POWER_MGMT_LIMIT`, `..._ENFORCED_POWER_LIMIT` | limite configurée et limite réellement appliquée (W) | **observé** : 70 W ; 60 puis 65 W pendant l'expérience S5 ([07](07-resultats-seance.md#6-limite-de-puissance-et-verrouillage-dhorloge)) | sert à lire le vrai plafond au lieu de supposer 70 W ; suit une modification par `nvidia-smi -pl` |
+| `DCGM_FI_DEV_POWER_VIOLATION`, `..._THERMAL_VIOLATION` | durée cumulée de bridage due à la puissance, à la température | **observé** : reste à **0** pendant que le plafond logiciel est actif 100 % du temps (limite 70 W) | le fichier du tag 4.8.4 indique des **nanosecondes** (non confirmé) ; il ne compte que les **dépassements de la limite**, pas le bridage : ne pas s'en servir pour détecter le plafond (utiliser le bit `0x4`) |
 
 ### D. Horloges
 
 | Compteur | En clair | Observé | Piège |
 |---|---|---|---|
-| `DCGM_FI_DEV_SM_CLOCK` | fréquence des unités de calcul (MHz) | **585 MHz à vide** ; 1 006 à 1 383 MHz en charge, soit 63 à 87 % du maximum de 1 590 MHz | **aucune** charge mesurée n'atteint le maximum (voir la figure 2) |
-| `DCGM_FI_DEV_MEM_CLOCK` | fréquence de la mémoire (MHz) | - | maximum 5 001 MHz **(forum)** |
+| `DCGM_FI_DEV_SM_CLOCK` | fréquence des unités de calcul (MHz) | **585 MHz à vide** (300 MHz en repos profond) ; 1 006 à 1 383 MHz en charge, soit 63 à 87 % du maximum de 1 590 MHz ; des **pointes à 1 590 MHz** de quelques secondes au début d'une rafale (`dmon`) | **aucune** charge soutenue n'atteint le maximum (voir la figure 2) : le plafond de puissance l'en empêche |
+| `DCGM_FI_DEV_MEM_CLOCK` | fréquence de la mémoire (MHz) | **5 000 MHz** en usage, constante | maximum 5 001 MHz (**observé**) ; en charge la mémoire reste à 5 000 MHz : on ne la fait pas varier, seul l'horloge SM se règle |
 
 ### E. Thermique
 
 | Compteur | En clair | Observé | Piège |
 |---|---|---|---|
-| `DCGM_FI_DEV_GPU_TEMP` | température du GPU (°C) | 50 °C à vide ; 54 à 69 °C en charge | les seuils (85, 93, 96 °C) viennent du forum : à relire sur notre GPU |
+| `DCGM_FI_DEV_GPU_TEMP` | température du GPU (°C) | 46-47 °C à vide ; 54 à 69 °C en charge (maximum observé 67 °C pendant la séance GPU) | seuils **confirmés** : 85, 93, 96 °C (§2) ; la marge est de 18 °C au pire |
 
 ### F. Bridage : pourquoi les horloges baissent
 
@@ -110,6 +110,8 @@ Les valeurs « observé » sont des moyennes sur la fenêtre de mesure de huit r
 | `0x100` | DisplayClockSetting | réglage d'affichage (Volta seulement, en voie de retrait) | sans objet |
 | `0x200` | BoardLimit | une politique de limite de carte bride les horloges | à regarder |
 | `0x400` | Reliability | une politique de fiabilité bride les horloges | à regarder |
+
+**Observé sur notre T4** (460 échantillons de 15 s, séance du 17/11) : seulement trois valeurs, **0** (repos normal : 31 W, 585 MHz), **1** (`GpuIdle`, repos profond sans aucun processus sur le GPU : 16 W, 300 MHz) et **4** (`SwPowerCap`, charge : 66 W en moyenne, 1 037 MHz en moyenne) ; **jamais** de bit matériel ou thermique ([07](07-resultats-seance.md#3-le-gpu-au-repos)). Le masque au repos vaut donc **0**, pas 1.
 
 Exemples : **5** = `0x1` + `0x4` (repos et plafond de puissance : normal) ; **132** = `0x80` + `0x4` (frein de puissance matériel : anormal). Les règles du dépôt font ce décodage : `lab:gpu_throttle_sw_power_cap` (bit 0x4) et `lab:gpu_throttle_hw_slowdown` (bits 0x8, 0x20, 0x40, 0x80).
 
@@ -156,8 +158,8 @@ Tableau équivalent de la figure (moyennes sur 5 minutes de chaque run ; une seu
 
 ![Puissance moyenne en fonction de l'horloge moyenne pour chaque situation, avec la limite de 70 W et l'horloge maximale](img/puissance-horloge.svg)
 
-Les horloges moyennes vont de **1 006 à 1 383 MHz** (63 à 87 % de 1 590) alors que la puissance atteint **68 W sur 70**. Les charges chargées sont donc probablement **limitées par la puissance** et non par la fréquence maximale.
-**Réserve importante** : le masque de bridage n'a **pas été relevé** pendant ces runs ; on ne sait donc pas si la cause est le plafond logiciel (`0x4`, normal) ou autre chose. Lire ce masque est la première mesure de la séance GPU ([05](05-simulations.md)).
+Les horloges moyennes vont de **1 006 à 1 383 MHz** (63 à 87 % de 1 590) alors que la puissance atteint **68 W sur 70**. Les charges chargées sont **limitées par la puissance** et non par la fréquence maximale : **confirmé** le 17/11/2026 en lisant le masque de bridage, qui vaut **4** (`SwPowerCap`, normal) pendant toutes les charges et jamais autre chose ([07](07-resultats-seance.md#5-escalier-de-charge)).
+(Pour ces huit situations le masque n'avait pas été relevé ; il l'a été dans la séance GPU, sur d'autres runs du même modèle.)
 Autre indice : à puissance voisine (58-60 W), l'horloge varie de 1 116 à 1 383 MHz selon la charge : la puissance consommée **par cycle** dépend de ce que fait le GPU (les tensor cores consomment plus).
 
 ## 5. Calcul ou mémoire ? Le roofline du T4
@@ -186,7 +188,7 @@ Le **MFU** est son équivalent pour le calcul. vLLM peut les estimer (`vllm:esti
 4. Les compteurs de profilage demandent des droits d'administrateur et s'excluent avec les outils Nsight.
 5. `DCGM_FI_DEV_XID_ERRORS` est le **dernier** code vu, pas un compteur : il reste affiché jusqu'au reset du GPU (ou du nœud).
 6. Les horloges et la puissance sont liées : un GPU peut être « limité par la puissance » tout en restant sous le maximum de fréquence.
-7. Un seuil thermique relevé sur un forum n'est pas une spécification : relire `nvidia-smi -q` sur **votre** GPU.
+7. Un seuil relevé sur un forum n'est pas une spécification : relire `nvidia-smi -q` sur **votre** GPU (ici, les valeurs du forum se sont révélées exactes, mais on ne le savait pas avant de mesurer).
 8. Les noms de métriques changent avec la version de l'exporteur : valider les noms contre le fichier de **la version déployée**.
 9. Un compteur « 0 » peut signifier « non supporté » : vérifier qu'il bouge en charge avant de lui faire confiance.
 10. Ne comparer deux runs que s'ils ont le même protocole ([module 1](../formation/01-mesurer-sans-se-tromper.md)).
@@ -203,4 +205,4 @@ Objectif : classer une situation **sans** regarder la table. On vous donne `GPU_
 1. Est-ce un chat (decode) ou un RAG (prefill) ? Quel compteur vous le dit ?
 2. Le GPU est-il saturé ? Quelle mesure supplémentaire vous faudrait-il pour le savoir ?
 3. Pourquoi l'horloge est-elle si loin de 1 590 MHz alors que la température est basse ?
-Vérification : la réponse à 1 est « chat » (`DRAM_ACTIVE` haut), à 2 « il faut la file d'attente vLLM », à 3 « la puissance approche 70 W ; il faut lire le masque de bridage pour confirmer ».
+Vérification : la réponse à 1 est « chat » (`DRAM_ACTIVE` haut), à 2 « il faut la file d'attente vLLM », à 3 « la puissance approche 70 W : le plafond de puissance est actif, ce que le masque de bridage confirme (valeur 4) ».
